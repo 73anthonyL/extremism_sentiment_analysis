@@ -2,11 +2,11 @@
   "project_name": "extremism_text_classification_comparison",
   "dataset_version": "extremism_dataset_v1",
   "split_version": "split_v1_stratified_70_15_15_seed30",
-  "created_at_utc": "2026-06-20T20:50:21Z",
+  "created_at_utc": "2026-06-27T19:16:31Z",
   "random_seed": 30,
   "source_data_path": "/kaggle/input/datasets/adityasureshgithub/digital-extremism-detection-curated-dataset/dataset.csv",
   "source_data_file_name": "dataset.csv",
-  "source_data_sha256_16": "b77520495635b0b9",
+  "source_data_sha256_16": "ea585a13cbdf93c0",
   "text_col_original": "Original_Message",
   "label_col_original": "Extremism_Label",
   "processed_text_col": "text",
@@ -19,18 +19,18 @@
   "processed_rows": 2999,
   "rows_removed_summary": {
     "initial_rows": 3000,
-    "empty_or_missing_text_rows": 1,
-    "unmapped_or_missing_label_rows": 0,
+    "empty_or_missing_text_rows": 0,
+    "unmapped_or_missing_label_rows": 1,
     "rows_removed_total": 1
   },
   "num_duplicates_by_text_hash": 0,
   "label_counts": {
-    "0": 1602,
-    "1": 1397
+    "0": 1870,
+    "1": 1129
   },
   "label_proportions": {
-    "0": 0.5341780593531177,
-    "1": 0.4658219406468823
+    "0": 0.6235411803934645,
+    "1": 0.3764588196065355
   },
   "split_ratios_requested": {
     "train": 0.7,

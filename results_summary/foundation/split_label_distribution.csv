@@ -1,7 +1,7 @@
 split,label,count,split_count,proportion_within_split,class_name
-test,0,240,450,0.5333333333333333,non_extremist
-test,1,210,450,0.4666666666666667,extremist
-train,0,1121,2099,0.5340638399237733,non_extremist
-train,1,978,2099,0.4659361600762268,extremist
-validation,0,241,450,0.5355555555555556,non_extremist
-validation,1,209,450,0.46444444444444444,extremist
+test,0,280,450,0.6222222222222222,non_extremist
+test,1,170,450,0.37777777777777777,extremist
+train,0,1309,2099,0.6236303001429252,non_extremist
+train,1,790,2099,0.3763696998570748,extremist
+validation,0,281,450,0.6244444444444445,non_extremist
+validation,1,169,450,0.37555555555555553,extremist

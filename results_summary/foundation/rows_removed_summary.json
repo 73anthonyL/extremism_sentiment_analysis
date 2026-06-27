@@ -1,6 +1,6 @@
 {
   "initial_rows": 3000,
-  "empty_or_missing_text_rows": 1,
-  "unmapped_or_missing_label_rows": 0,
+  "empty_or_missing_text_rows": 0,
+  "unmapped_or_missing_label_rows": 1,
   "rows_removed_total": 1
 }
