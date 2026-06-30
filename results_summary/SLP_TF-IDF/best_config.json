@@ -1,0 +1,49 @@
+{
+  "config": {
+    "max_features": 20000,
+    "ngram_range": [
+      1,
+      2
+    ],
+    "min_df": 1,
+    "max_df": 0.95,
+    "sublinear_tf": true,
+    "learning_rate": 0.001,
+    "weight_decay": 0.001,
+    "batch_size": 64,
+    "use_pos_weight": true,
+    "config_index": 52
+  },
+  "train_config": {
+    "learning_rate": 0.001,
+    "weight_decay": 0.001,
+    "batch_size": 64,
+    "use_pos_weight": true
+  },
+  "val_metrics": {
+    "threshold": 0.5,
+    "accuracy": 0.8088888888888889,
+    "balanced_accuracy": 0.7974478300237949,
+    "positive_precision": 0.7426900584795322,
+    "positive_recall": 0.7514792899408284,
+    "positive_f1": 0.7470588235294118,
+    "macro_f1": 0.7967436974789917,
+    "weighted_f1": 0.8091097105508869,
+    "roc_auc": 0.8676114468613785,
+    "pr_auc": 0.8375774178599943,
+    "brier_score": 0.22828949521896952,
+    "tn": 237,
+    "fp": 44,
+    "fn": 42,
+    "tp": 127,
+    "false_positive_rate": 0.15658362989323843,
+    "false_negative_rate": 0.2485207100591716,
+    "support": 450,
+    "positive_support": 169,
+    "negative_support": 281,
+    "positive_rate": 0.37555555555555553
+  },
+  "best_epoch": 4,
+  "epochs_trained": 9,
+  "pos_weight_value": 1.6569620253164556
+}

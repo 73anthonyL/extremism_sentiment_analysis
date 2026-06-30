@@ -1,0 +1,122 @@
+{
+  "run_id": "SLP_TF-IDF_20260627T231340Z",
+  "technique": "SLP_TF-IDF",
+  "created_at_utc": "2026-06-27T23:26:31Z",
+  "project_name": "extremism_text_classification",
+  "dataset_version": "extremism_dataset_clean_v1",
+  "split_version": "split_v1",
+  "random_seed": 30,
+  "processed_dataset_path": "/kaggle/input/notebooks/anthony73/extremism-research-dataset-creation-splits-nb/research_foundation/processed_dataset.csv",
+  "processed_dataset_sha256_16": "5d5c8906772ae262",
+  "split_assignments_path": "/kaggle/input/notebooks/anthony73/extremism-research-dataset-creation-splits-nb/research_foundation/split_assignments.csv",
+  "split_assignments_sha256_16": "d80b760f13e3a9f1",
+  "dataset_manifest": {
+    "project_name": "extremism_text_classification_comparison",
+    "dataset_version": "extremism_dataset_v1",
+    "split_version": "split_v1_stratified_70_15_15_seed30",
+    "created_at_utc": "2026-06-27T19:21:20Z",
+    "random_seed": 30,
+    "source_data_path": "/kaggle/input/datasets/adityasureshgithub/digital-extremism-detection-curated-dataset/dataset.csv",
+    "source_data_file_name": "dataset.csv",
+    "source_data_sha256_16": "ea585a13cbdf93c0",
+    "text_col_original": "Original_Message",
+    "label_col_original": "Extremism_Label",
+    "processed_text_col": "text",
+    "processed_label_col": "label",
+    "positive_class": 1,
+    "positive_class_name": "extremist",
+    "negative_class": 0,
+    "negative_class_name": "non_extremist",
+    "raw_rows": 3000,
+    "processed_rows": 2999,
+    "rows_removed_summary": {
+      "initial_rows": 3000,
+      "empty_or_missing_text_rows": 0,
+      "unmapped_or_missing_label_rows": 1,
+      "rows_removed_total": 1
+    },
+    "num_duplicates_by_text_hash": 0,
+    "label_counts": {
+      "0": 1870,
+      "1": 1129
+    },
+    "label_proportions": {
+      "0": 0.6235411803934645,
+      "1": 0.3764588196065355
+    },
+    "split_ratios_requested": {
+      "train": 0.7,
+      "validation": 0.15,
+      "test": 0.15
+    },
+    "split_counts_actual": {
+      "train": 2099,
+      "test": 450,
+      "validation": 450
+    },
+    "artifact_files": {
+      "processed_dataset_csv": "processed_dataset.csv",
+      "processed_dataset_parquet": "processed_dataset.parquet",
+      "split_assignments": "split_assignments.csv",
+      "label_distribution": "label_distribution.csv",
+      "split_label_distribution": "split_label_distribution.csv",
+      "duplicate_text_report": "duplicate_text_report.csv"
+    },
+    "software_environment": {
+      "python_version": "3.12.13",
+      "platform": "Linux-6.12.90+-x86_64-with-glibc2.35",
+      "pandas_version": "2.3.3",
+      "numpy_version": "2.4.6"
+    },
+    "notes": [
+      "All downstream model notebooks must reuse this processed dataset and split_assignments.csv.",
+      "Hyperparameter tuning must use the train and validation splits only.",
+      "The test split must be used only for final locked evaluation."
+    ]
+  },
+  "software_environment": {
+    "python_version": "3.12.13",
+    "platform": "Linux-6.12.90+-x86_64-with-glibc2.35",
+    "numpy_version": "2.4.6",
+    "pandas_version": "2.3.3",
+    "torch_version": "2.10.0+cu128",
+    "cuda_available": true
+  },
+  "sklearn_version": "1.6.1",
+  "model_selection": {
+    "ablation_split": "validation",
+    "primary_selection_metric": "positive_f1",
+    "test_set_used_for_selection": false
+  },
+  "final_evaluation": {
+    "test_split_used_once_after_selection": true,
+    "threshold_selected_on": "validation"
+  },
+  "explainability_protocol": {
+    "primary_method": "exact_linear_logit_contribution",
+    "primary_formula": "tfidf_value * slp_linear_weight",
+    "secondary_method": "shap_style_linear_background_adjusted_attribution",
+    "secondary_formula": "slp_linear_weight * (tfidf_value - train_background_mean_tfidf)",
+    "shap_package_used_for_slp": false,
+    "explanation_scale": "logit",
+    "feature_space": "word_tfidf",
+    "background_split": "train",
+    "note": "Because the SLP is a single linear layer over TF-IDF features, exact linear contributions decompose the model logit. Background-adjusted attributions are also saved to align with SHAP-style linear attribution logic. These are model-behavior explanations, not causal explanations."
+  },
+  "outputs": {
+    "config": "config.json",
+    "best_config": "best_config.json",
+    "ablation_results": "ablation/ablation_results.csv",
+    "training_history": "training_history.csv",
+    "metrics_validation": "metrics_validation.json",
+    "metrics_test": "metrics_test.json",
+    "predictions_validation": "predictions_validation.csv",
+    "predictions_test": "predictions_test.csv",
+    "model_artifacts": "model_artifacts/",
+    "plots": "plots/",
+    "interpretability": "interpretability/",
+    "direct_linear_interpretability": "interpretability/linear_contributions/",
+    "shap_style_linear_interpretability": "interpretability/shap_style_linear/",
+    "error_analysis": "error_analysis/"
+  }
+}
