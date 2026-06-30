@@ -1,0 +1,100 @@
+{
+  "technique_name": "LIN-SVM_TF-IDF",
+  "model_family": "calibrated_linear_svm",
+  "feature_family": "tfidf_word",
+  "selection_rule": {
+    "primary": "highest validation positive_f1",
+    "tie_breakers": [
+      "higher validation pr_auc",
+      "higher validation positive_recall",
+      "higher validation positive_precision",
+      "fewer fitted features"
+    ],
+    "test_set_used": false
+  },
+  "tfidf": {
+    "max_features": 20000,
+    "ngram_range": [
+      1,
+      2
+    ],
+    "min_df": 1,
+    "max_df": 0.95,
+    "sublinear_tf": true,
+    "lowercase": true
+  },
+  "model": {
+    "type": "CalibratedClassifierCV(LinearSVC)",
+    "C": 10.0,
+    "class_weight": "balanced",
+    "max_iter": 5000,
+    "tol": 0.0001,
+    "calibration_method": "sigmoid",
+    "calibration_cv": 3,
+    "random_state": 30
+  },
+  "best_validation_metrics": {
+    "threshold": 0.47000000000000003,
+    "support": 450,
+    "positive_support": 169,
+    "negative_support": 281,
+    "positive_rate": 0.37555555555555553,
+    "accuracy": 0.8266666666666667,
+    "balanced_accuracy": 0.8081450441154794,
+    "positive_precision": 0.7898089171974523,
+    "positive_recall": 0.7337278106508875,
+    "positive_f1": 0.7607361963190185,
+    "macro_f1": 0.8124238472884291,
+    "weighted_f1": 0.8252883293074824,
+    "roc_auc": 0.8789614437027522,
+    "pr_auc": 0.8341472799161738,
+    "brier_score": 0.15004319917564235,
+    "tn": 248,
+    "fp": 33,
+    "fn": 45,
+    "tp": 124,
+    "false_positive_rate": 0.11743772241992882,
+    "false_negative_rate": 0.26627218934911245
+  },
+  "best_ablation_row": {
+    "run_id": "LIN-SVM_TF-IDF_20260627_231047",
+    "technique": "LIN-SVM_TF-IDF",
+    "config_index": 56,
+    "selection_metric": "validation_positive_f1",
+    "fit_seconds": 1.4803144931793213,
+    "num_features_fit": 20000,
+    "calibration_method": "sigmoid",
+    "calibration_cv": 3,
+    "max_features": 20000,
+    "ngram_range": [
+      1,
+      2
+    ],
+    "min_df": 1,
+    "max_df": 0.95,
+    "sublinear_tf": true,
+    "C": 10.0,
+    "class_weight": "balanced",
+    "validation_threshold": 0.47000000000000003,
+    "validation_support": 450,
+    "validation_positive_support": 169,
+    "validation_negative_support": 281,
+    "validation_positive_rate": 0.37555555555555553,
+    "validation_accuracy": 0.8266666666666667,
+    "validation_balanced_accuracy": 0.8081450441154794,
+    "validation_positive_precision": 0.7898089171974523,
+    "validation_positive_recall": 0.7337278106508875,
+    "validation_positive_f1": 0.7607361963190185,
+    "validation_macro_f1": 0.8124238472884291,
+    "validation_weighted_f1": 0.8252883293074824,
+    "validation_roc_auc": 0.8789614437027522,
+    "validation_pr_auc": 0.8341472799161738,
+    "validation_brier_score": 0.15004319917564235,
+    "validation_tn": 248,
+    "validation_fp": 33,
+    "validation_fn": 45,
+    "validation_tp": 124,
+    "validation_false_positive_rate": 0.11743772241992882,
+    "validation_false_negative_rate": 0.26627218934911245
+  }
+}
