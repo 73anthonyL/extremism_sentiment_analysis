@@ -100,6 +100,7 @@ extremism_sentiment_analysis/
 │   └── split_assignments.csv
 ├── README.md
 └── requirements.txt
+└── requirements-lock.txt
 ```
 
 Recommended documentation files as the repository develops:
