@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this dataset, code, or experimental framework, please cite this repository."
+title: "Social Media Extremism Detection"
+type: software
+authors:
+  - family-names: Suresh
+    given-names: Aditya
+  - family-names: Lu
+    given-names: Anthony
+  - family-names: Iyer
+    given-names: Vishnu
+repository-code: "https://github.com/asuresh952/extremism_sentiment_analysis"
+url: "https://www.kaggle.com/datasets/adityasureshgithub/digital-extremism-detection-curated-dataset"
+version: "0.1.0"
+date-released: "2026-06-30"
+keywords:
+  - natural language processing
+  - text classification
+  - extremism detection
+  - interpretability
+  - machine learning
+license: "NOASSERTION"
