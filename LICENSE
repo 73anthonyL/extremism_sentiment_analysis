@@ -1,0 +1,10 @@
+Copyright (c) 2026 Aditya Suresh and Anthony Lu.
+All rights reserved.
+
+This repository is made publicly visible for academic review, research transparency, and replication of the reported experimental workflow.
+
+Unless a separate license is added by the authors, no permission is granted to copy, modify, redistribute, sublicense, commercialize, deploy, or use this repository's code, data, documentation, model outputs, or derived artifacts outside of personal review or academic replication.
+
+The models, notebooks, and documentation are not intended for production moderation, surveillance, automated decision-making, or operational use.
+
+For citation, see CITATION.cff.
