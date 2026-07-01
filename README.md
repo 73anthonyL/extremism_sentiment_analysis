@@ -23,7 +23,7 @@ The repository is public so that the research process can be reviewed, replicate
   - [Dataset and fixed splits](#dataset-and-fixed-splits)
   - [Current baseline results](#current-baseline-results)
   - [Reproducibility workflow](#reproducibility-workflow)
-  - [Installation](#installation)
+  - [Installation and environment](#installation-and-environment)
   - [Running the experiments](#running-the-experiments)
     - [Option A: Kaggle](#option-a-kaggle)
     - [Option B: Local environment](#option-b-local-environment)
@@ -98,24 +98,32 @@ extremism_sentiment_analysis/
 │   └── SLP_TF-IDF/
 ├── splits/
 │   └── split_assignments.csv
+├── docs/
+│   ├── DATA_CARD.md
+│   ├── EXPERIMENTS.md
+│   ├── MODEL_CARD.md
+│   ├── RESPONSIBLE_USE.md
+│   ├── RESULTS_SCHEMA.md
+│   └── COMPETITION.md
+├── CITATION.cff
+├── LICENSE
 ├── README.md
-└── requirements.txt
+├── requirements.txt
 └── requirements-lock.txt
 ```
 
-Recommended documentation files as the repository develops:
+The `docs/` files are intended to support research transparency and replication:
 
-```text
-docs/
-├── DATA_CARD.md          # Dataset construction, labels, caveats, and intended use
-├── EXPERIMENTS.md        # Standard experiment protocol and comparison rules
-├── MODEL_CARD.md         # Model families, metrics, risks, and evaluation notes
-├── RESPONSIBLE_USE.md    # Safety, misuse, and deployment limitations
-├── RESULTS_SCHEMA.md     # Expected result files for each model folder
-└── COMPETITION.md        # Optional summary of Kaggle competition context
-```
+| File | Purpose |
+|---|---|
+| `docs/DATA_CARD.md` | Dataset construction, labels, intended use, and caveats. |
+| `docs/EXPERIMENTS.md` | Standard experiment protocol and comparison rules. |
+| `docs/MODEL_CARD.md` | Model families, metrics, risks, and evaluation notes. |
+| `docs/RESPONSIBLE_USE.md` | Safety, misuse, and deployment limitations. |
+| `docs/RESULTS_SCHEMA.md` | Expected result files for each model folder. |
+| `docs/COMPETITION.md` | Kaggle competition context and how competition results relate to this repository. |
 
-These files are for research transparency and replication. They are not meant to turn the repository into a general community-contribution project.
+These files are not meant to turn the repository into a general community-contribution project. They exist so that readers can understand, audit, and replicate the research workflow.
 
 ## Dataset and fixed splits
 
@@ -193,7 +201,7 @@ results_summary/<TECHNIQUE>/
 └── metrics_test.json
 ```
 
-## Installation
+## Installation and environment
 
 Clone the repository:
 
@@ -210,11 +218,25 @@ source .venv/bin/activate  # macOS/Linux
 # .venv\Scripts\activate   # Windows
 ```
 
-Install dependencies:
+This repository includes two dependency files:
+
+| File | Purpose |
+|---|---|
+| `requirements.txt` | Cleaner list of the main direct dependencies needed to run the research notebooks. This is the recommended starting point for most readers. |
+| `requirements-lock.txt` | Frozen environment snapshot from the working research environment. This is preserved for stricter replication and debugging. |
+
+For most users, install the main dependencies:
 
 ```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
+```
+
+For stricter replication of the original working environment, use the lock file instead:
+
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements-lock.txt
 ```
 
 Optional Jupyter kernel setup:
@@ -304,6 +326,8 @@ External readers are welcome to inspect the code, reproduce the notebooks, and c
 ## Citation
 
 If you use this dataset, repository, or related competition materials, please cite the project authors and link to the repository and Kaggle dataset. A formal citation entry can be added after the manuscript, version, or DOI is finalized.
+
+If a `CITATION.cff` file is included in the repository, use it as the preferred machine-readable citation metadata for the repository artifact.
 
 ## Authors
 
