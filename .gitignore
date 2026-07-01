@@ -1,13 +1,57 @@
-# virtualenv
-.venv/
-
-# Python bytecode
+# Python bytecode and caches
 __pycache__/
 *.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# Jupyter checkpoints
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
 .ipynb_checkpoints/
+.virtual_documents/
 
-# Editor folders
-.vscode/
+# Operating system files
+.DS_Store
+._*
+__MACOSX/
+Thumbs.db
+
+# IDE/editor files
 .idea/
+.vscode/
+*.swp
+*.swo
+
+# Local secrets and credentials
+.env
+.env.*
+kaggle.json
+
+# Local-only scratch outputs
+tmp/
+temp/
+scratch/
+outputs_local/
+logs/
+*.log
+
+# Large model artifacts should be added intentionally, not by accident
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.pkl
+*.joblib
+
+# Keep research artifacts that are part of the published replication package
+!results_summary/**/*.json
+!results_summary/**/*.csv
+!splits/**/*.csv
+!data/**/*.csv
+!data/**/*.txt
