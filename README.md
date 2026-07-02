@@ -59,7 +59,7 @@ This project treats extremist-content detection as a distinct text-classificatio
 
 ## Project links
 
-- **GitHub repository:** <https://github.com/asuresh952/extremism_sentiment_analysis>
+- **GitHub repository:** <https://github.com/73anthonyL/extremism_sentiment_analysis>
 - **Kaggle dataset:** <https://www.kaggle.com/datasets/adityasureshgithub/digital-extremism-detection-curated-dataset>
 - **Kaggle competition:** <https://www.kaggle.com/competitions/social-media-extremism-detection-challenge>
 
@@ -206,7 +206,7 @@ results_summary/<TECHNIQUE>/
 Clone the repository:
 
 ```bash
-git clone https://github.com/asuresh952/extremism_sentiment_analysis.git
+git clone https://github.com/73anthonyL/extremism_sentiment_analysis.git
 cd extremism_sentiment_analysis
 ```
 
