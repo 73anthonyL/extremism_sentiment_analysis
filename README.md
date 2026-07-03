@@ -45,7 +45,8 @@ This is an active research repository maintained by the project authors. The cur
 
 In order to improve model accuracy (and other relevant model metrics) we are currently doing testing on different ways to represent texts. 
 
-Additional model families and analysis notebooks are being developed internally. Results and paper language should be treated as evolving until the final manuscript is complete.
+Additional model families and analysis notebooks are being developed internally. Results and paper language should be treated as evolving until the final manuscript is complete. There are two ways that we are trying right now:
+    A. Use TF-IDF with character groups to avoid misclassification of texts with mispelled words (common in the social media space)
 
 ## Research motivation
 
