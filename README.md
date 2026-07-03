@@ -43,6 +43,8 @@ This is an active research repository maintained by the project authors. The cur
 - Calibrated Linear SVM with TF-IDF features
 - Single-Layer Perceptron with TF-IDF features
 
+In order to improve model accuracy (and other relevant model metrics) we are currently doing testing on different ways to represent texts. 
+
 Additional model families and analysis notebooks are being developed internally. Results and paper language should be treated as evolving until the final manuscript is complete.
 
 ## Research motivation
