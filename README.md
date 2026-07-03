@@ -51,6 +51,8 @@ There are two ways that we are trying right now:
     A. Use TF-IDF with character groups to avoid misclassification of texts with mispelled words (common in the social media space)
     B. Researching on using slightly more complicated vectorization techniques so we can embed information about word order
 
+We also intend to test out more complicated models. If we intend to use decision trees and such then we have to find out how to represent our messages in a data structure that is more dense rather than sparse like TF-IDF.
+
 ## Research motivation
 
 Most online safety NLP work focuses on toxicity, hate speech, or general harmful-content classification. Violent extremist text can overlap with those categories, but it is not identical to them. It may involve ideological framing, support for violence, coded language, or contextual references that are not captured well by surface-level offensiveness alone.
