@@ -48,7 +48,7 @@ In order to improve model accuracy (and other relevant model metrics) we are cur
 Additional model families and analysis notebooks are being developed internally. Results and paper language should be treated as evolving until the final manuscript is complete. 
 
 There are two ways that we are trying right now:
-    A. Use TF-IDF with character groups to avoid misclassification of texts with mispelled words (common in the social media space)
+    A. Use TF-IDF with character groups to avoid misclassification of texts with mispelled words (common in the social media space) [07/07/26]
     B. Researching on using slightly more complicated vectorization techniques so we can embed information about word order
 
 We also intend to test out more complicated models. If we intend to use decision trees and such then we have to find out how to represent our messages in a data structure that is more dense rather than sparse like TF-IDF.
