@@ -1,57 +1,24 @@
 # Social Media Extremism Detection
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Kaggle Dataset](https://img.shields.io/badge/Kaggle-Dataset-20BEFF.svg)](https://www.kaggle.com/datasets/adityasureshgithub/digital-extremism-detection-curated-dataset)
-[![Kaggle Competition](https://img.shields.io/badge/Kaggle-Competition-20BEFF.svg)](https://www.kaggle.com/competitions/social-media-extremism-detection-challenge)
-[![Status](https://img.shields.io/badge/status-research%20repo-orange.svg)](#project-status)
+This repository contains a reproducible NLP research project for binary classification of social-media text as extremist or non-extremist. It includes a curated dataset, fixed train/validation/test splits, classical machine-learning baselines, embedding-based experiments, a transformer fine-tuning experiment, standardized result summaries, and interpretability-oriented analysis artifacts.
 
-This repository contains a reproducible NLP research project for **binary classification of social-media text as extremist or non-extremist**. It includes a curated dataset, fixed train/validation/test splits, baseline machine-learning experiments, standardized result summaries, and interpretability-oriented analysis artifacts.
+The repository is public so that the research process can be reviewed, replicated, and evaluated. It is not intended to be a production moderation system, a general-purpose software package, or a community-maintained open-source project.
 
-The repository is public so that the research process can be reviewed, replicated, and evaluated. It is **not** intended to be a production moderation system, a general-purpose software package, or a community-maintained open-source project.
-
-> **Responsible-use note:** The models in this repository should not be used to make automated decisions about people, accounts, posts, or communities. Extremism detection is a high-stakes task with serious false-positive and false-negative risks. Any applied use would require domain-expert review, bias evaluation, privacy review, and human oversight.
-
-## Table of contents
-
-- [Social Media Extremism Detection](#social-media-extremism-detection)
-  - [Table of contents](#table-of-contents)
-  - [Project status](#project-status)
-  - [Research motivation](#research-motivation)
-  - [Project links](#project-links)
-  - [Kaggle competition](#kaggle-competition)
-  - [Repository structure](#repository-structure)
-  - [Dataset and fixed splits](#dataset-and-fixed-splits)
-  - [Current baseline results](#current-baseline-results)
-  - [Reproducibility workflow](#reproducibility-workflow)
-  - [Installation and environment](#installation-and-environment)
-  - [Running the experiments](#running-the-experiments)
-    - [Option A: Kaggle](#option-a-kaggle)
-    - [Option B: Local environment](#option-b-local-environment)
-  - [Experiment protocol](#experiment-protocol)
-  - [Interpretability](#interpretability)
-  - [Planned internal experiments](#planned-internal-experiments)
-  - [Limitations](#limitations)
-  - [Repository maintenance](#repository-maintenance)
-  - [Citation](#citation)
-  - [Authors](#authors)
+> Responsible-use note: The models in this repository should not be used to make automated decisions about people, accounts, posts, or communities. Extremism detection is a high-stakes task with serious false-positive and false-negative risks. Any applied use would require domain-expert review, bias evaluation, privacy review, and human oversight.
 
 ## Project status
 
-This is an active research repository maintained by the project authors. The current version contains the dataset foundation, fixed split assignments, and three completed baseline model families:
+This is an active research repository maintained by the project authors. The current version contains the dataset foundation, fixed split assignments, and seven completed model families:
 
-- Logistic Regression with TF-IDF features
-- Calibrated Linear SVM with TF-IDF features
-- Single-Layer Perceptron with TF-IDF features
+* Logistic Regression with word-level TF-IDF features.
+* Calibrated Linear SVM with word-level TF-IDF features.
+* Single-Layer Perceptron with word-level TF-IDF features.
+* Calibrated Linear SVM with character-level TF-IDF features.
+* Calibrated Linear SVM with combined word + character TF-IDF features.
+* Logistic Regression with FastText document embeddings.
+* Twitter-RoBERTa transformer fine-tuning.
 
-In order to improve model accuracy (and other relevant model metrics) we are currently doing testing on different ways to represent texts. 
-
-Additional model families and analysis notebooks are being developed internally. Results and paper language should be treated as evolving until the final manuscript is complete. 
-
-There are two ways that we are trying right now:
-    A. Use TF-IDF with character groups to avoid misclassification of texts with mispelled words (common in the social media space) [07/07/26]
-    B. Researching on using slightly more complicated vectorization techniques so we can embed information about word order
-
-We also intend to test out more complicated models. If we intend to use decision trees and such then we have to find out how to represent our messages in a data structure that is more dense rather than sparse like TF-IDF.
+The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster around a similar performance range, while the contextual Twitter-RoBERTa model provides the strongest held-out test result. This supports the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
 
 ## Research motivation
 
@@ -67,25 +34,13 @@ This project treats extremist-content detection as a distinct text-classificatio
 
 ## Project links
 
-- **GitHub repository:** <https://github.com/73anthonyL/extremism_sentiment_analysis>
-- **Kaggle dataset:** <https://www.kaggle.com/datasets/adityasureshgithub/digital-extremism-detection-curated-dataset>
-- **Kaggle competition:** <https://www.kaggle.com/competitions/social-media-extremism-detection-challenge>
+* GitHub repository: <https://github.com/73anthonyL/extremism_sentiment_analysis>
+* Kaggle dataset: <https://www.kaggle.com/datasets/adityasureshgithub/digital-extremism-detection-curated-dataset>
+* Kaggle competition: <https://www.kaggle.com/competitions/social-media-extremism-detection-challenge>
 
 ## Kaggle competition
 
-We also hosted the **Social Media Extremism Detection Challenge** on Kaggle as a separate public benchmark for the same binary classification task. The competition invited participants to build models that classify social-media text as `EXTREMIST` or `NON_EXTREMIST`.
-
-In this repository, the competition is treated as an external research reference rather than as the main experimental protocol. The leaderboard and participant approaches are useful for understanding what other modeling strategies may perform well, but the results reported in this repository are based on our controlled train/validation/test split workflow.
-
-The distinction is important:
-
-| Source | Purpose | How it is used here |
-|---|---|---|
-| Kaggle dataset | Public release of the curated dataset | Source dataset for replication and external review |
-| Kaggle competition | Public benchmark and community exploration | Reference point for future comparison and model ideas |
-| This repository | Controlled research pipeline | Main source for reproducible experiments, metrics, and analysis |
-
-Future versions of this repository may include a short competition-analysis document summarizing high-level lessons from the Kaggle challenge, but competition leaderboard results should not be mixed directly with the controlled baseline results unless they are rerun under the same split and metric protocol.
+The Social Media Extremism Detection Challenge on Kaggle is treated as an external research reference for the same binary classification task. Competition results should not be mixed directly with the controlled results in this repository unless they are rerun under the same fixed split and metric protocol.
 
 ## Repository structure
 
@@ -98,12 +53,20 @@ extremism_sentiment_analysis/
 │   ├── 00_create_dataset_and_splits.ipynb
 │   ├── 01_LOG-REG_TF-IDF.ipynb
 │   ├── 02_LIN-SVM_TF-IDF.ipynb
-│   └── 03_SLP_TF-IDF.ipynb
+│   ├── 03_SLP_TF-IDF.ipynb
+│   ├── 04_CHAR-TF-IDF_LIN-SVM.ipynb
+│   ├── 05_WORD-CHAR-TF-IDF_LIN-SVM.ipynb
+│   ├── 06_FASTTEXT-EMB_LOG-REG.ipynb
+│   └── 07_TWITTER-ROBERTA_FINE-TUNE.ipynb
 ├── results_summary/
 │   ├── foundation/
-│   ├── LOG-REG_TF-IDF/
-│   ├── LIN-SVM_TF-IDF/
-│   └── SLP_TF-IDF/
+│   ├── 01_LOG-REG_TF-IDF/
+│   ├── 02_LIN-SVM_TF-IDF/
+│   ├── 03_SLP_TF-IDF/
+│   ├── 04_CHAR-TF-IDF_LIN-SVM/
+│   ├── 05_WORD-CHAR-TF-IDF_LIN-SVM/
+│   ├── 06_FASTTEXT-EMB_LOG-REG/
+│   └── 07_TWITTER-ROBERTA_FINE-TUNE/
 ├── splits/
 │   └── split_assignments.csv
 ├── docs/
@@ -112,7 +75,9 @@ extremism_sentiment_analysis/
 │   ├── MODEL_CARD.md
 │   ├── RESPONSIBLE_USE.md
 │   ├── RESULTS_SCHEMA.md
-│   └── COMPETITION.md
+│   ├── REPLICATION_GUIDE.md
+│   ├── COMPETITION.md
+│   └── RELEASE_CHECKLIST.md
 ├── CITATION.cff
 ├── LICENSE
 ├── README.md
@@ -120,7 +85,7 @@ extremism_sentiment_analysis/
 └── requirements-lock.txt
 ```
 
-The `docs/` files are intended to support research transparency and replication:
+The `docs/` files support research transparency and replication:
 
 | File | Purpose |
 |---|---|
@@ -128,10 +93,10 @@ The `docs/` files are intended to support research transparency and replication:
 | `docs/EXPERIMENTS.md` | Standard experiment protocol and comparison rules. |
 | `docs/MODEL_CARD.md` | Model families, metrics, risks, and evaluation notes. |
 | `docs/RESPONSIBLE_USE.md` | Safety, misuse, and deployment limitations. |
-| `docs/RESULTS_SCHEMA.md` | Expected result files for each model folder. |
+| `docs/RESULTS_SCHEMA.md` | Expected result files and metric fields for each experiment folder. |
+| `docs/REPLICATION_GUIDE.md` | Step-by-step workflow for reproducing the experiments. |
 | `docs/COMPETITION.md` | Kaggle competition context and how competition results relate to this repository. |
-
-These files are not meant to turn the repository into a general community-contribution project. They exist so that readers can understand, audit, and replicate the research workflow.
+| `docs/RELEASE_CHECKLIST.md` | Pre-release checklist before public result updates or manuscript-aligned releases. |
 
 ## Dataset and fixed splits
 
@@ -160,44 +125,62 @@ The dataset uses fixed stratified train/validation/test splits:
 
 All model notebooks should reuse `splits/split_assignments.csv`. Do not regenerate splits unless the dataset is intentionally revised and a new split version is created.
 
-## Current baseline results
+## Current controlled results
 
 The table below reports held-out test metrics from `results_summary/`. The positive class is `EXTREMIST`.
 
-| Technique | Accuracy | Positive F1 | Positive precision | Positive recall | ROC-AUC | PR-AUC | Threshold |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| `LOG-REG_TF-IDF` | 0.8533 | 0.8024 | 0.8171 | 0.7882 | 0.9111 | 0.8881 | 0.45 |
-| `LIN-SVM_TF-IDF` | 0.8556 | 0.7962 | 0.8523 | 0.7471 | 0.9037 | 0.8825 | 0.47 |
-| `SLP_TF-IDF` | 0.8378 | 0.7768 | 0.8089 | 0.7471 | 0.9022 | 0.8777 | 0.50 |
+| Technique | Representation / model family | Accuracy | Positive F1 | Positive precision | Positive recall | ROC-AUC | PR-AUC | Threshold |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| `01_LOG-REG_TF-IDF` | word TF-IDF + logistic regression | 0.8533 | 0.8024 | 0.8171 | 0.7882 | 0.9111 | 0.8881 | 0.45 |
+| `02_LIN-SVM_TF-IDF` | word TF-IDF + calibrated linear SVM | 0.8556 | 0.7962 | 0.8523 | 0.7471 | 0.9037 | 0.8825 | 0.47 |
+| `03_SLP_TF-IDF` | word TF-IDF + single-layer perceptron | 0.8378 | 0.7768 | 0.8089 | 0.7471 | 0.9022 | 0.8777 | 0.50 |
+| `04_CHAR-TF-IDF_LIN-SVM` | character TF-IDF + calibrated linear SVM | 0.8333 | 0.7875 | 0.7596 | 0.8176 | 0.9028 | 0.8745 | 0.40 |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | combined word + character TF-IDF + calibrated linear SVM | 0.8356 | 0.7886 | 0.7667 | 0.8118 | 0.9032 | 0.8818 | 0.42 |
+| `06_FASTTEXT-EMB_LOG-REG` | FastText document embeddings + logistic regression | 0.8178 | 0.7722 | 0.7316 | 0.8176 | 0.9033 | 0.8763 | 0.47 |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | Twitter-RoBERTa transformer fine-tuning | 0.8889 | 0.8555 | 0.8409 | 0.8706 | 0.9496 | 0.9233 | 0.72 |
+
 
 Confusion-matrix summary:
 
 | Technique | TN | FP | FN | TP | FPR | FNR |
 |---|---:|---:|---:|---:|---:|---:|
-| `LOG-REG_TF-IDF` | 250 | 30 | 36 | 134 | 0.1071 | 0.2118 |
-| `LIN-SVM_TF-IDF` | 258 | 22 | 43 | 127 | 0.0786 | 0.2529 |
-| `SLP_TF-IDF` | 250 | 30 | 43 | 127 | 0.1071 | 0.2529 |
+| `01_LOG-REG_TF-IDF` | 250 | 30 | 36 | 134 | 0.1071 | 0.2118 |
+| `02_LIN-SVM_TF-IDF` | 258 | 22 | 43 | 127 | 0.0786 | 0.2529 |
+| `03_SLP_TF-IDF` | 250 | 30 | 43 | 127 | 0.1071 | 0.2529 |
+| `04_CHAR-TF-IDF_LIN-SVM` | 236 | 44 | 31 | 139 | 0.1571 | 0.1824 |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | 238 | 42 | 32 | 138 | 0.1500 | 0.1882 |
+| `06_FASTTEXT-EMB_LOG-REG` | 229 | 51 | 31 | 139 | 0.1821 | 0.1824 |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | 252 | 28 | 22 | 148 | 0.1000 | 0.1294 |
+
 
 Current ranking by held-out test PR-AUC:
 
-1. `LOG-REG_TF-IDF` — PR-AUC 0.8881, ROC-AUC 0.9111, positive F1 0.8024
-2. `LIN-SVM_TF-IDF` — PR-AUC 0.8825, ROC-AUC 0.9037, positive F1 0.7962
-3. `SLP_TF-IDF` — PR-AUC 0.8777, ROC-AUC 0.9022, positive F1 0.7768
+1. `07_TWITTER-ROBERTA_FINE-TUNE` — PR-AUC 0.9233, ROC-AUC 0.9496, positive F1 0.8555.
+2. `01_LOG-REG_TF-IDF` — PR-AUC 0.8881, ROC-AUC 0.9111, positive F1 0.8024.
+3. `02_LIN-SVM_TF-IDF` — PR-AUC 0.8825, ROC-AUC 0.9037, positive F1 0.7962.
+4. `05_WORD-CHAR-TF-IDF_LIN-SVM` — PR-AUC 0.8818, ROC-AUC 0.9032, positive F1 0.7886.
+5. `03_SLP_TF-IDF` — PR-AUC 0.8777, ROC-AUC 0.9022, positive F1 0.7768.
+6. `06_FASTTEXT-EMB_LOG-REG` — PR-AUC 0.8763, ROC-AUC 0.9033, positive F1 0.7722.
+7. `04_CHAR-TF-IDF_LIN-SVM` — PR-AUC 0.8745, ROC-AUC 0.9028, positive F1 0.7875.
 
 These are baseline research metrics. They should not be interpreted as deployment readiness.
 
 ## Reproducibility workflow
 
-The project is organized around a small set of notebooks that can be run in order.
+Run notebooks in numeric order:
 
 | Notebook | Purpose |
 |---|---|
 | `00_create_dataset_and_splits.ipynb` | Creates the processed dataset, validates labels, assigns canonical row IDs, creates fixed stratified splits, and writes the dataset manifest. |
-| `01_LOG-REG_TF-IDF.ipynb` | Trains and evaluates Logistic Regression with TF-IDF features. |
-| `02_LIN-SVM_TF-IDF.ipynb` | Trains and evaluates calibrated Linear SVM with TF-IDF features. |
+| `01_LOG-REG_TF-IDF.ipynb` | Trains and evaluates Logistic Regression with word-level TF-IDF features. |
+| `02_LIN-SVM_TF-IDF.ipynb` | Trains and evaluates calibrated Linear SVM with word-level TF-IDF features. |
 | `03_SLP_TF-IDF.ipynb` | Trains and evaluates a single-layer perceptron over TF-IDF features. |
+| `04_CHAR-TF-IDF_LIN-SVM.ipynb` | Tests whether character n-grams improve robustness to misspellings, obfuscation, hashtags, and noisy social-media phrasing. |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM.ipynb` | Combines word-level semantic lexical cues with character-level robustness. |
+| `06_FASTTEXT-EMB_LOG-REG.ipynb` | Tests dense FastText document embeddings with logistic regression. |
+| `07_TWITTER-ROBERTA_FINE-TUNE.ipynb` | Fine-tunes a contextual Twitter-RoBERTa transformer and saves token-attribution interpretability outputs. |
 
-Expected output structure for each model family:
+Expected compact output structure for most classical and embedding model families:
 
 ```text
 results_summary/<TECHNIQUE>/
@@ -207,6 +190,18 @@ results_summary/<TECHNIQUE>/
 ├── confusion_matrix_test.csv
 ├── metrics_validation.json
 └── metrics_test.json
+```
+
+The RoBERTa folder may instead save a compact image confusion matrix and threshold sweep:
+
+```text
+results_summary/07_TWITTER-ROBERTA_FINE-TUNE/
+├── ablation_results.csv
+├── best_config.json
+├── confusion_matrix_test.png
+├── metrics_validation.json
+├── metrics_test.json
+└── threshold_sweep_validation.csv
 ```
 
 ## Installation and environment
@@ -226,14 +221,7 @@ source .venv/bin/activate  # macOS/Linux
 # .venv\Scripts\activate   # Windows
 ```
 
-This repository includes two dependency files:
-
-| File | Purpose |
-|---|---|
-| `requirements.txt` | Cleaner list of the main direct dependencies needed to run the research notebooks. This is the recommended starting point for most readers. |
-| `requirements-lock.txt` | Frozen environment snapshot from the working research environment. This is preserved for stricter replication and debugging. |
-
-For most users, install the main dependencies:
+Install dependencies:
 
 ```bash
 python -m pip install --upgrade pip
@@ -261,7 +249,7 @@ python -m ipykernel install --user --name extremism-research --display-name "Pyt
 2. Run `00_create_dataset_and_splits.ipynb` first.
 3. Save the generated processed dataset, split assignments, and dataset manifest.
 4. Run each model notebook using the fixed split assignments.
-5. Commit the summarized results needed for review and replication.
+5. Commit only compact, reviewable result summaries. Avoid committing raw prediction files or large model artifacts.
 
 ### Option B: Local environment
 
@@ -275,70 +263,47 @@ python -m ipykernel install --user --name extremism-research --display-name "Pyt
 
 To keep the model comparison research-grade:
 
-- Use the same processed dataset for every technique.
-- Use the same `split_assignments.csv` for every technique.
-- Tune hyperparameters on the training and validation splits only.
-- Select thresholds using validation data only.
-- Evaluate on the test split only after model configuration and threshold selection are complete.
-- Report accuracy, positive-class precision, positive-class recall, positive-class F1, ROC-AUC, PR-AUC, and confusion-matrix counts.
-- Save the best configuration, validation metrics, test metrics, and confusion matrix for each technique.
-- Treat preprocessing changes as part of the experimental condition, not as an uncontrolled implementation detail.
+* Use the same processed dataset for every technique.
+* Use the same `split_assignments.csv` for every technique.
+* Tune hyperparameters on the training and validation splits only.
+* Select thresholds using validation data only.
+* Evaluate on the test split only after model configuration and threshold selection are complete.
+* Report accuracy, positive-class precision, positive-class recall, positive-class F1, ROC-AUC, PR-AUC, and confusion-matrix counts.
+* Save the best configuration, validation metrics, test metrics, and confusion matrix for each technique.
+* Treat preprocessing changes, external pretraining, and task-specific transfer learning as part of the experimental condition.
 
 ## Interpretability
 
-The current experiments emphasize interpretable baseline models and feature-level analysis.
+The project emphasizes explainable AI and model auditing. Interpretability methods differ by model family:
 
-Current interpretability directions include:
+* Linear TF-IDF models: coefficient- or margin-based feature analysis.
+* SLP over TF-IDF: linear logit contribution analysis.
+* FastText embeddings: embedding-direction and token-contribution approximations.
+* Twitter-RoBERTa: token-level gradient attribution and local error review.
 
-- Coefficient-based analysis for Logistic Regression.
-- Margin/coefficient-based analysis for Linear SVM.
-- Linear logit contribution analysis for the Single-Layer Perceptron.
-- Local error analysis for false positives and false negatives.
-- Future SHAP-based or SHAP-compatible comparisons where appropriate.
-
-Interpretability artifacts should be used to inspect model behavior and guide error analysis. They should not be treated as proof that the model understands ideology, intent, or real-world risk.
-
-## Planned internal experiments
-
-The next stage of the project is a controlled comparison across additional feature/model combinations. Planned internal techniques include:
-
-- `LOG-REG_WORD-CHAR-TF-IDF`
-- `XGBOOST_TF-IDF`
-- `XGBOOST_WORD-CHAR-TF-IDF`
-- `RAND-FOREST_TF-IDF`
-- `SENT-EMB_LOG-REG`
-- `SENT-EMB_XGBOOST`
-- `HATEBERT-FEATS_LOG-REG`
-
-Each technique should follow the same split protocol and write results into a standardized `results_summary/<TECHNIQUE>/` folder.
+Interpretability artifacts should be used to inspect model behavior and guide error analysis. They should not be treated as proof that a model understands ideology, intent, or real-world risk.
 
 ## Limitations
 
-This project has several important limitations:
-
-- The dataset is relatively small for a high-stakes NLP task.
-- Labels depend on human interpretation and may contain subjective judgment calls.
-- Social-media language changes over time, so model performance may degrade on future data.
-- The binary label structure simplifies a complex phenomenon.
-- Models may learn surface-level lexical cues rather than robust contextual understanding.
-- Strong held-out metrics do not guarantee fairness, safety, or reliability in applied moderation settings.
-
-These limitations are central to the research and should be discussed alongside any reported results.
+* The task is high-stakes and cannot be reduced safely to a single automated label.
+* The dataset is small enough that external validation is necessary before broad claims.
+* The binary label simplifies a complex social and political phenomenon.
+* Models may learn lexical, ideological, demographic, or topical shortcuts.
+* The transformer result demonstrates performance gains under this split, not deployment readiness.
 
 ## Repository maintenance
 
-This repository is maintained by the research authors for transparency, replication, and project review. It is not currently structured as an open community-development project.
+When adding or rerunning a model notebook:
 
-External readers are welcome to inspect the code, reproduce the notebooks, and cite or discuss the work, but the primary development workflow is internal to the research team.
+1. Keep the fixed split protocol unchanged unless a new split version is explicitly introduced.
+2. Save only compact result artifacts to `results_summary/`.
+3. Avoid committing large model artifacts, raw-text predictions, or local explanation files containing raw text.
+4. Update `README.md`, `docs/EXPERIMENTS.md`, `docs/MODEL_CARD.md`, `docs/RESULTS_SCHEMA.md`, `docs/REPLICATION_GUIDE.md`, `notebooks/README.md`, and `results_summary/README.md` when a new technique becomes part of the controlled comparison.
 
 ## Citation
 
-If you use this dataset, repository, or related competition materials, please cite the project authors and link to the repository and Kaggle dataset. A formal citation entry can be added after the manuscript, version, or DOI is finalized.
-
-If a `CITATION.cff` file is included in the repository, use it as the preferred machine-readable citation metadata for the repository artifact.
+See `CITATION.cff` for citation metadata.
 
 ## Authors
 
-- Aditya Suresh
-- Anthony Lu
-- Vishnu Iyer
+Maintained by the project authors as a research and replication artifact.
