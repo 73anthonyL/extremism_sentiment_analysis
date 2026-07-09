@@ -1,0 +1,23 @@
+{
+  "threshold": 0.47000000000000003,
+  "support": 450,
+  "positive_support": 169,
+  "negative_support": 281,
+  "positive_rate": 0.37555555555555553,
+  "accuracy": 0.7888888888888889,
+  "balanced_accuracy": 0.7885089178546612,
+  "positive_precision": 0.6927083333333334,
+  "positive_recall": 0.7869822485207101,
+  "positive_f1": 0.7368421052631579,
+  "macro_f1": 0.780294893076848,
+  "weighted_f1": 0.7911098091549219,
+  "roc_auc": 0.8464065362505001,
+  "pr_auc": 0.7955382968652195,
+  "brier_score": 0.15756434803945518,
+  "tn": 222,
+  "fp": 59,
+  "fn": 36,
+  "tp": 133,
+  "false_positive_rate": 0.2099644128113879,
+  "false_negative_rate": 0.21301775147928995
+}
