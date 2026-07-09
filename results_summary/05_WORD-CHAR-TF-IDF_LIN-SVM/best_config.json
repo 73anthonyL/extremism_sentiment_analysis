@@ -1,0 +1,121 @@
+{
+  "technique_name": "LIN-SVM_WORD-CHAR-TF-IDF",
+  "model_family": "calibrated_linear_svm",
+  "feature_family": "tfidf_word_char",
+  "selection_rule": {
+    "primary": "highest validation positive_f1",
+    "tie_breakers": [
+      "higher validation pr_auc",
+      "higher validation positive_recall",
+      "higher validation positive_precision",
+      "fewer fitted features"
+    ],
+    "test_set_used": false
+  },
+  "tfidf": {
+    "word_tfidf": {
+      "analyzer": "word",
+      "max_features": 20000,
+      "ngram_range": [
+        1,
+        2
+      ],
+      "min_df": 1,
+      "max_df": 0.95,
+      "sublinear_tf": true,
+      "lowercase": true
+    },
+    "char_tfidf": {
+      "analyzer": "char_wb",
+      "max_features": 100000,
+      "ngram_range": [
+        3,
+        6
+      ],
+      "min_df": 1,
+      "max_df": 0.95,
+      "sublinear_tf": true,
+      "lowercase": true
+    },
+    "combined_num_features_fit": 74183
+  },
+  "model": {
+    "type": "CalibratedClassifierCV(LinearSVC)",
+    "C": 3.0,
+    "class_weight": null,
+    "max_iter": 5000,
+    "tol": 0.0001,
+    "calibration_method": "sigmoid",
+    "calibration_cv": 3,
+    "random_state": 30
+  },
+  "best_validation_metrics": {
+    "threshold": 0.42000000000000004,
+    "support": 450,
+    "positive_support": 169,
+    "negative_support": 281,
+    "positive_rate": 0.37555555555555553,
+    "accuracy": 0.8155555555555556,
+    "balanced_accuracy": 0.808682010570869,
+    "positive_precision": 0.7415730337078652,
+    "positive_recall": 0.7810650887573964,
+    "positive_f1": 0.760806916426513,
+    "macro_f1": 0.8053582502566561,
+    "weighted_f1": 0.8164465822321585,
+    "roc_auc": 0.8772979005664469,
+    "pr_auc": 0.8410492511493617,
+    "brier_score": 0.1484060038111832,
+    "tn": 235,
+    "fp": 46,
+    "fn": 37,
+    "tp": 132,
+    "false_positive_rate": 0.16370106761565836,
+    "false_negative_rate": 0.21893491124260356
+  },
+  "best_ablation_row": {
+    "run_id": "LIN-SVM_WORD-CHAR-TF-IDF_20260708_095719",
+    "technique": "LIN-SVM_WORD-CHAR-TF-IDF",
+    "config_index": 47,
+    "selection_metric": "validation_positive_f1",
+    "fit_seconds": 2.1591856479644775,
+    "num_features_fit": 74183,
+    "calibration_method": "sigmoid",
+    "calibration_cv": 3,
+    "word_max_features": 20000,
+    "word_ngram_range": [
+      1,
+      2
+    ],
+    "char_max_features": 100000,
+    "char_ngram_range": [
+      3,
+      6
+    ],
+    "min_df": 1,
+    "max_df": 0.95,
+    "sublinear_tf": true,
+    "C": 3.0,
+    "class_weight": null,
+    "validation_threshold": 0.42000000000000004,
+    "validation_support": 450,
+    "validation_positive_support": 169,
+    "validation_negative_support": 281,
+    "validation_positive_rate": 0.37555555555555553,
+    "validation_accuracy": 0.8155555555555556,
+    "validation_balanced_accuracy": 0.808682010570869,
+    "validation_positive_precision": 0.7415730337078652,
+    "validation_positive_recall": 0.7810650887573964,
+    "validation_positive_f1": 0.760806916426513,
+    "validation_macro_f1": 0.8053582502566561,
+    "validation_weighted_f1": 0.8164465822321585,
+    "validation_roc_auc": 0.8772979005664469,
+    "validation_pr_auc": 0.8410492511493617,
+    "validation_brier_score": 0.1484060038111832,
+    "validation_tn": 235,
+    "validation_fp": 46,
+    "validation_fn": 37,
+    "validation_tp": 132,
+    "validation_false_positive_rate": 0.16370106761565836,
+    "validation_false_negative_rate": 0.21893491124260356
+  }
+}
