@@ -17,6 +17,7 @@ This is an active research repository maintained by the project authors. The cur
 * Calibrated Linear SVM with combined word + character TF-IDF features.
 * Logistic Regression with FastText document embeddings.
 * Twitter-RoBERTa transformer fine-tuning.
+* NEW ACCURACY 89.55% ACHIEVED
 
 The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster around a similar performance range, while the contextual Twitter-RoBERTa model provides the strongest held-out test result. This supports the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
 
