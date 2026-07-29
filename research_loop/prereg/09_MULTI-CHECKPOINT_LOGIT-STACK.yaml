@@ -1,0 +1,232 @@
+cycle: "09"
+technique_id: "09_MULTI-CHECKPOINT_LOGIT-STACK"
+
+hypothesis: >
+  The champion's remaining errors are not recoverable by combining existing model
+  outputs: a CPU pilot on validation shows that averaging a fine-tuned transformer
+  with three TF-IDF models moves accuracy by +0.22pp, and that 42/450 validation
+  rows (9.3%) are misclassified by every one of those four members. Combination
+  rules over the current member set are therefore exhausted. The one untried axis
+  with mechanistic headroom is REPRESENTATION CAPACITY. Fine-tuning larger
+  backbones (355M-435M vs the champion's 125M) should improve the ranking of the
+  subtle hate-speech-versus-extremism boundary cases that dominate the error set,
+  because those cases require compositional stance and target resolution rather
+  than lexical cues. Combining checkpoints that differ in pretraining corpus and
+  tokenizer -- rather than only in random seed, which 08 tried and which failed
+  (test 0.8778 < 0.8889) -- should additionally decorrelate errors, since seed
+  variation perturbs only the fine-tuning trajectory while checkpoint variation
+  perturbs the learned representation itself. Predicted: validation accuracy
+  0.865-0.880 versus the champion's 0.8578, mapping through the repository's
+  measured val->test offset of +2.83pp (sd 0.38, n=7 techniques) to test accuracy
+  0.893-0.908.
+
+rationale: >
+  Chosen over four alternatives on measured, not assumed, grounds.
+  (1) Transformer + TF-IDF stacking: measured at +0.22pp on validation in a CPU
+      pilot. Five test rows short of detectable and below the 90% target. Rejected.
+  (2) Calibration (Platt, isotonic, temperature): every such map is monotone, so
+      the maximum-accuracy-over-threshold is mathematically invariant. Expected
+      effect on the primary metric is exactly 0.0pp. Rejected for this objective.
+  (3) Threshold re-derivation on 07: threshold_sweep_validation.csv shows t=0.72 is
+      simultaneously the val-F1 and the val-accuracy optimum, on a flat plateau
+      (0.705-0.745 all within 0.5pp). Zero headroom. Rejected.
+  (4) A single large backbone: strictly dominated, because this design measures
+      each backbone alone as a validation-only ablation row at no extra cost.
+  This design also repairs a methodological defect in 08, which selected its
+  combination rule and threshold on the same 450 validation rows. Here the
+  ensemble weights are fit on 2099 out-of-fold TRAIN rows (5 parameters), the
+  per-backbone learning rate and epoch count are selected on held-out TRAIN folds,
+  and validation is consumed by exactly 7 declared candidates plus one threshold
+  grid -- a smaller validation budget than 07 itself spent.
+  Input text, tokenizer max_length, dataset version and split are unchanged from
+  07, so this is a drop-in comparison and NOT a new experimental condition under
+  docs/DATA_CARD.md.
+
+compute_class: "GPU"
+
+notebook_source: "notebooks/08_BEST-ROBERTA_SEED-ENSEMBLE.ipynb"
+notebook_source_note: >
+  08 is the correct structural base, not 07: it already contains the multi-model
+  averaging loop, the FocalLoss class and the ensemble probability plumbing that 09
+  generalises from seeds to checkpoints. 07 is the comparator and the source of the
+  fixed training recipe. Note that the brief describing 07 as "weighted focal loss,
+  3 epochs" is incorrect -- 07 uses nn.CrossEntropyLoss(weight=...) for 2 epochs
+  with positive_f1 selection; focal loss and label smoothing are 08's.
+
+config_delta:
+  BLOCKING_PRECONDITIONS:
+    - "splits/split_assignments.csv is the stale pre-repair file: it disagrees with
+       data/dataset.csv on 728 labels (24.3%) and with the canonical assignment on
+       1420 rows (47.3%), and its split label distribution (train 1121/978,
+       val 241/209, test 240/210) contradicts results_summary/foundation/
+       (1309/790, 281/169, 280/170). Notebook 09 MUST NOT read this file. It must
+       use the Kaggle-side split_assignments.csv emitted by notebook 00, or
+       reconstruct deterministically. Repair the mirror before this cycle closes."
+    - "tools/*.py and all of research_loop/ are missing from the repo (only
+       __pycache__ survives). compare_techniques.py is the only thing permitted to
+       issue a verdict and cannot currently run. Restore before 09 is adjudicated."
+    - "README.md line 20 claims 'NEW ACCURACY 89.55% ACHIEVED', unsupported by any
+       committed artifact. Remove or source it."
+  split_integrity_assert:
+    require_counts: {train: [1309, 790], validation: [281, 169], test: [280, 170]}
+    on_mismatch: "raise; do not train"
+  backbones:
+    B1: "cardiffnlp/twitter-roberta-large-hate-latest"        # 355M, domain+task matched
+    B2: "microsoft/deberta-v3-large"                          # 435M, different tokenizer/pretraining
+    B3: "cardiffnlp/twitter-roberta-base-hate-latest"         # 125M, the champion, as member + control
+    B4: "facebook/roberta-hate-speech-dynabench-r4-target"    # 125M, adversarial hate corpus
+  all_four_verified_ungated_on_hf_hub: true
+  fixed_recipe_inherited_from_07:
+    batch_size: 8
+    gradient_accumulation_steps: 2
+    max_length: 192
+    weight_decay: 0.01
+    warmup_ratio: 0.10
+    max_grad_norm: 1.0
+    loss: "weighted_cross_entropy(class_weight=balanced)"
+    label_smoothing: 0.0
+    seed: 30
+  train_side_cross_validation:
+    n_folds: 5
+    stratified: true
+    scope: "TRAIN SPLIT ONLY (2099 rows). Validation and test are never in any fold."
+    epoch_selection: "held-out fold, metric=accuracy, max_epochs=4, patience=1"
+    lr_selection: "held-out fold OOF accuracy; large={1e-5,2e-5}, base={2e-5}"
+    inference: "mean of the 5 fold models' logits (fold-bagging), per backbone"
+  validation_candidates:      # the ONLY things validation is used for
+    C1: "B1 alone"
+    C2: "B2 alone"
+    C3: "B3 alone"
+    C4: "B4 alone"
+    C5: "equal-weight mean of the four members' LOGITS"
+    C6: "equal-weight mean of the four members' PROBABILITIES"
+    C7: "logistic stack over the four OOF logit columns, fit on 2099 TRAIN rows"
+  selection_rule: "argmax validation accuracy over {C1..C7}; ties -> higher val ROC-AUC"
+  threshold_grid: "np.linspace(0.05, 0.95, 181), applied once to the winner"
+  probability_export:
+    primary: "research_loop/probs/09_MULTI-CHECKPOINT_LOGIT-STACK__{validation,test}.csv"
+    per_member: "research_loop/probs/09_MEMBER-<B1..B4>__{validation,test}.csv"
+    schema: ["row_id", "split", "y_true", "y_prob"]
+    no_raw_text: true
+    note: >
+      The per-member exports are the highest-leverage side effect of this run. They
+      are what makes the zero-GPU family (cross-technique ensembling, stacking,
+      cost-sensitive thresholding) runnable in future cycles. No probability
+      artifact currently exists for ANY technique in this repository.
+  results_folder: "results_summary/09_MULTI-CHECKPOINT_LOGIT-STACK/ per docs/RESULTS_SCHEMA.md"
+
+primary_metric: "test_accuracy"
+
+secondary_gates:
+  balanced_accuracy_non_inferiority_margin: 0.005   # vs 07 test balanced acc 0.8853
+  fpr_flag_threshold: 0.02                          # flag if test FPR > 0.10 + 0.02
+
+threshold_objective: "maximize_val_accuracy"
+
+n_validation_candidates_declared: 7
+
+expected_effect_size_pp: 1.2
+
+power_assessment: >
+  NO -- the expected effect is NOT detectable at n=450, and this is preregistered as
+  the most likely outcome. Expected effect +1.2pp is about 5 test rows. With roughly
+  40 discordant pairs against 07, unadjusted two-sided exact McNemar needs
+  |b-c| >= 14, i.e. +3.11pp, i.e. test accuracy >= 0.9200. Under Holm with a family
+  size of 9 (01-07 have committed metrics_test.json, 08 reported 0.8778, 09 would be
+  the ninth unlock; test_ledger.jsonl is MISSING so this count is reconstructed from
+  artifacts and must be confirmed), the required alpha is 0.05/9 = 0.0056, which
+  needs |b-c| >= 20, i.e. +4.44pp, i.e. test accuracy >= 0.9333. A CPU pilot found
+  42/450 validation rows (9.3%) misclassified by every member of a four-model
+  heterogeneous set, so 0.9333 is at or above the plausible annotation-ambiguity
+  floor for this dataset. INCONCLUSIVE is therefore the modal preregistered outcome.
+  The run is justified only by (a) the descriptive 90% target, which IS reachable at
+  validation accuracy 0.8717 via the measured +2.83pp val->test offset, and (b) the
+  per-member probability artifacts it produces. Note also that the +2.83pp offset
+  means the test split is systematically easier than validation for all seven
+  existing techniques; any test number must be read with that in mind and must not
+  be presented as evidence that validation underestimated the model.
+
+validation_gate:
+  rule: >
+    UNLOCK TEST ONLY IF the winning candidate reaches validation accuracy >= 0.8733
+    (393/450) AND validation ROC-AUC >= 0.9350. The accuracy gate is the value that
+    the measured val->test offset (+2.83pp, sd 0.38, n=7) maps to a predicted test
+    accuracy of 0.9016 -- i.e. the minimum validation result consistent with the
+    stated 90% goal. The AUC gate (champion: 0.9257) requires the gain to appear in
+    ranking quality, not only at one lucky threshold.
+  if_gate_not_met: >
+    DO NOT unlock test. Write the validation-only result set, log every candidate to
+    val_log.jsonl, commit the probability artifacts, and close this line of work. A
+    candidate that cannot clear validation 0.8733 cannot reach the 90% target and
+    must not consume a test-budget slot or raise the Holm correction for every
+    future candidate.
+
+decision_rule:
+  SUPERIOR: >
+    test_accuracy >= 0.9333 AND McNemar exact two-sided p < 0.0056 (Holm, m=9)
+    AND test balanced accuracy >= 0.8803 AND test FPR <= 0.12. Only this
+    combination may change the champion in registry.json.
+  MEETS_TARGET_INCONCLUSIVE: >
+    test_accuracy >= 0.9000 but McNemar not significant at the Holm-adjusted alpha.
+    Report as: "reaches the project's 90% target; NOT statistically distinguishable
+    from 07_TWITTER-ROBERTA_FINE-TUNE at n=450." Champion is UNCHANGED. This phrase
+    must appear verbatim in the results folder and in any doc table footnote.
+  INCONCLUSIVE: "any test_accuracy in [0.8578, 0.9000) -- the default expectation."
+  INFERIOR: "test_accuracy < 0.8578 with significant McNemar."
+  verdict_authority: >
+    tools/compare_techniques.py issues the verdict string. No agent decides. That
+    tool is currently MISSING from the repo and must be restored first.
+
+ablation_plan:
+  all_validation_only_written_to_ablation_results_csv:
+    - "C1 vs C3: same family, 355M vs 125M -> isolates the effect of SCALE, the
+       central hypothesis. This row is the scientific payload even if the ensemble
+       fails."
+    - "C3 vs C4: same size, different hate-speech pretraining corpus -> isolates
+       PRETRAINING DOMAIN at fixed capacity."
+    - "C5 vs C6: logit-level vs probability-level averaging, previously untried."
+    - "C5 vs C7: equal weights vs OOF-learned weights -> does learning the
+       combination on 2099 train rows beat uniform averaging?"
+    - "C7 + a fifth word-TF-IDF OOF logit column: PREREGISTERED PREDICTION +0.2pp
+       or less, based on the CPU pilot. Recorded to falsify the lexical-
+       complementarity hypothesis on the record rather than by assumption."
+    - "Per-backbone OOF accuracy on the 2099 train rows, reported alongside
+       validation accuracy, to expose any val-selection luck."
+    - "Optional if time permits: 3-seed replicate of the best single backbone --
+       reproduces 08's design at large scale as a control."
+
+compute_budget:
+  runs: "6 fine-tune configs x 5 folds = 30 training runs"
+  per_run: "base ~1 min (measured in 07's ablation: 44-65s), large ~3.5 min on P100"
+  training_total: "~80 min on P100, ~150 min on T4"
+  inference: "900 rows x 4 backbones x 5 folds, ~10 min"
+  session_total: "1.5-3 h, comfortably under the 9 h Kaggle limit"
+  gpu: "single T4 or P100, fp16, batch 8 + grad-accum 2 as in 07"
+
+abort_criteria:
+  - "Split integrity assert fails -> raise before training. Do not proceed."
+  - "deberta-v3-large produces NaN loss under fp16 (a known deberta-v3 AMP issue)
+     -> retry that backbone in bf16, else fp32; if it still fails, DROP B2, record
+     the drop in ablation_results.csv, and proceed with three backbones. Do not
+     substitute a different checkpoint mid-run."
+  - "Any backbone's train-side OOF accuracy < 0.78 -> exclude it from C5/C6/C7,
+     record the exclusion, do not retune it."
+  - "Elapsed > 4 h -> drop B2 and finish with three backbones."
+  - "Validation gate not met -> no test unlock (see validation_gate)."
+  - "Any temptation to evaluate more than one candidate on test -> forbidden. One
+     configuration, one threshold, one unlock, ever."
+
+stop_rule: >
+  If the validation gate is not met, this line of work ends: representation scale
+  and checkpoint heterogeneity will have been shown not to move validation accuracy
+  on this dataset, and no further architecture or ensembling proposal should be
+  funded. If the gate is met and the test result is INCONCLUSIVE or
+  MEETS_TARGET_INCONCLUSIVE, the architecture line ALSO ends -- 07, 08 and 09 will
+  then have established that the plateau is a property of the data, not of the model
+  family. In either case redirect to: (a) a label-quality audit of the ~9% of rows
+  misclassified by every model, which is the most likely true ceiling; (b) building
+  the committed probability-artifact infrastructure so all future work is CPU-LOCAL;
+  and (c) reporting the plateau itself as the finding, which is publishable and
+  honest. Only a SUPERIOR verdict justifies a cycle 10 in this direction.
+
+comparator: "07_TWITTER-ROBERTA_FINE-TUNE"

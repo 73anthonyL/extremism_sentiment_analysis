@@ -1,0 +1,9 @@
+{
+  "champion": {
+    "technique": "07_TWITTER-ROBERTA_FINE-TUNE",
+    "cycle": "07",
+    "test_accuracy": 0.8888888888888888,
+    "promoted_at_utc": "2026-07-29T00:00:00+00:00"
+  },
+  "note": "Registry initialized 2026-07-29 during verification-layer reconstruction. The champion field reflects the committed artifact record (results_summary/07_TWITTER-ROBERTA_FINE-TUNE/metrics_test.json); the original registry.json was lost with research_loop/ (never committed to git). promoted_at_utc is the initialization date, not the date of the original promotion. From here on, ledger.py promote is the sole write path to the champion field."
+}
