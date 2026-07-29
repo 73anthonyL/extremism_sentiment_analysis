@@ -130,19 +130,24 @@ All model notebooks should reuse `splits/split_assignments.csv`. Do not regenera
 
 The table below reports held-out test metrics from `results_summary/`. The positive class is `EXTREMIST`.
 
-| Technique | Representation / model family | Accuracy | Positive F1 | Positive precision | Positive recall | ROC-AUC | PR-AUC | Threshold |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| `01_LOG-REG_TF-IDF` | word TF-IDF + logistic regression | 0.8533 | 0.8024 | 0.8171 | 0.7882 | 0.9111 | 0.8881 | 0.45 |
-| `02_LIN-SVM_TF-IDF` | word TF-IDF + calibrated linear SVM | 0.8556 | 0.7962 | 0.8523 | 0.7471 | 0.9037 | 0.8825 | 0.47 |
-| `03_SLP_TF-IDF` | word TF-IDF + single-layer perceptron | 0.8378 | 0.7768 | 0.8089 | 0.7471 | 0.9022 | 0.8777 | 0.50 |
-| `04_CHAR-TF-IDF_LIN-SVM` | character TF-IDF + calibrated linear SVM | 0.8333 | 0.7875 | 0.7596 | 0.8176 | 0.9028 | 0.8745 | 0.40 |
-| `05_WORD-CHAR-TF-IDF_LIN-SVM` | combined word + character TF-IDF + calibrated linear SVM | 0.8356 | 0.7886 | 0.7667 | 0.8118 | 0.9032 | 0.8818 | 0.42 |
-| `06_FASTTEXT-EMB_LOG-REG` | FastText document embeddings + logistic regression | 0.8178 | 0.7722 | 0.7316 | 0.8176 | 0.9033 | 0.8763 | 0.47 |
-| `07_TWITTER-ROBERTA_FINE-TUNE` | Twitter-RoBERTa transformer fine-tuning | 0.8889 | 0.8555 | 0.8409 | 0.8706 | 0.9496 | 0.9233 | 0.72 |
+<!-- RENDERED-TABLE:BEGIN id=main-comparison -->
+| Technique | Validation accuracy | Test accuracy | Test balanced accuracy | Test macro F1 | Test ROC-AUC |
+|---|---:|---:|---:|---:|---:|
+| `01_LOG-REG_TF-IDF` | 0.8244 | 0.8533 | 0.8405 | 0.8429 | 0.9111 |
+| `02_LIN-SVM_TF-IDF` | 0.8267 | 0.8556 | 0.8342 | 0.8422 | 0.9037 |
+| `03_SLP_TF-IDF` | 0.8089 | 0.8378 | 0.8200 | 0.8247 | 0.9022 |
+| `04_CHAR-TF-IDF_LIN-SVM` | 0.8022 | 0.8333 | 0.8303 | 0.8252 | 0.9028 |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | 0.8156 | 0.8356 | 0.8309 | 0.8270 | 0.9032 |
+| `06_FASTTEXT-EMB_LOG-REG` | 0.7889 | 0.8178 | 0.8178 | 0.8102 | 0.9033 |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | 0.8578 | 0.8889 | 0.8853 | 0.8826 | 0.9496 |
+
+Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
+<!-- RENDERED-TABLE:END id=main-comparison -->
 
 
 Confusion-matrix summary:
 
+<!-- RENDERED-TABLE:BEGIN id=confusion-test -->
 | Technique | TN | FP | FN | TP | FPR | FNR |
 |---|---:|---:|---:|---:|---:|---:|
 | `01_LOG-REG_TF-IDF` | 250 | 30 | 36 | 134 | 0.1071 | 0.2118 |
@@ -152,6 +157,9 @@ Confusion-matrix summary:
 | `05_WORD-CHAR-TF-IDF_LIN-SVM` | 238 | 42 | 32 | 138 | 0.1500 | 0.1882 |
 | `06_FASTTEXT-EMB_LOG-REG` | 229 | 51 | 31 | 139 | 0.1821 | 0.1824 |
 | `07_TWITTER-ROBERTA_FINE-TUNE` | 252 | 28 | 22 | 148 | 0.1000 | 0.1294 |
+
+Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
+<!-- RENDERED-TABLE:END id=confusion-test -->
 
 
 Current ranking by held-out test PR-AUC:
