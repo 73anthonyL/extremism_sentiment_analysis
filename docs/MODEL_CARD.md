@@ -26,6 +26,7 @@ These are research models. They are not production moderation systems and should
 | `05_WORD-CHAR-TF-IDF_LIN-SVM` | Calibrated Linear SVM trained on combined word + character TF-IDF features. |
 | `06_FASTTEXT-EMB_LOG-REG` | Logistic Regression trained on FastText document embeddings. |
 | `07_TWITTER-ROBERTA_FINE-TUNE` | Fine-tuned Twitter-RoBERTa transformer classifier. Current champion. |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | Equal-weight mean-log-odds pool over four admitted transformer checkpoints at a fixed 0.50 cutoff. Strongest registered result; not yet adjudicated against the champion. |
 
 ## Model families without registered results
 
@@ -38,7 +39,6 @@ none of them is backed by a derivable, schema-valid result folder.
 | `08_BEST-ROBERTA_SEED-ENSEMBLE` | Seed ensemble of the fine-tuned transformer, probability-averaged. | Ran; regressed against `07`. Unregistered. |
 | `09_MULTI-CHECKPOINT_LOGIT-STACK` | Learned stacker over multiple transformer checkpoints. | Built; never run. Superseded by `11`. |
 | `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | Mean-log-odds pooling across three seeds of `cardiffnlp/twitter-roberta-base-hate-latest` at a fixed 0.50 cutoff. | Ran; unregistered. |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | Mean-log-odds pooling across the admitted subset of five checkpoints spanning fine-tuning lineage, pretraining corpus, architecture/tokenizer, and scale. | Ran; unregistered pending artifact retrieval. |
 
 Notebook `10` reports a higher raw test accuracy than the champion — 403 of 450
 rows against 400 of 450. That 3-row gap is well inside the noise floor of a
@@ -62,6 +62,7 @@ hand.
 | `05_WORD-CHAR-TF-IDF_LIN-SVM` | 0.8356 | 0.7886 | 0.7667 | 0.8118 | 0.9032 | 0.8818 | 0.42 |
 | `06_FASTTEXT-EMB_LOG-REG` | 0.8178 | 0.7722 | 0.7316 | 0.8176 | 0.9033 | 0.8763 | 0.47 |
 | `07_TWITTER-ROBERTA_FINE-TUNE` | 0.8889 | 0.8555 | 0.8409 | 0.8706 | 0.9496 | 0.9233 | 0.72 |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 0.9089 | 0.8746 | 0.9108 | 0.8412 | 0.9682 | 0.9553 | 0.5 |
 
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
 <!-- RENDERED-TABLE:END id=test-detail -->
@@ -79,6 +80,7 @@ Rendered by tools/render_tables.py from results_summary/ — do not edit by hand
 | `05_WORD-CHAR-TF-IDF_LIN-SVM` | 238 | 42 | 32 | 138 | 0.1500 | 0.1882 |
 | `06_FASTTEXT-EMB_LOG-REG` | 229 | 51 | 31 | 139 | 0.1821 | 0.1824 |
 | `07_TWITTER-ROBERTA_FINE-TUNE` | 252 | 28 | 22 | 148 | 0.1000 | 0.1294 |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 266 | 14 | 27 | 143 | 0.0500 | 0.1588 |
 
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
 <!-- RENDERED-TABLE:END id=confusion-test -->

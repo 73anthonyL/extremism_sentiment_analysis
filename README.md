@@ -8,7 +8,7 @@ The repository is public so that the research process can be reviewed, replicate
 
 ## Project status
 
-This is an active research repository maintained by the project authors. The current version contains the dataset foundation, fixed split assignments, a verification toolkit, and seven model families whose results are registered in the controlled comparison:
+This is an active research repository maintained by the project authors. The current version contains the dataset foundation, fixed split assignments, a verification toolkit, and eight model families whose results are registered in the controlled comparison:
 
 * Logistic Regression with word-level TF-IDF features.
 * Calibrated Linear SVM with word-level TF-IDF features.
@@ -17,10 +17,11 @@ This is an active research repository maintained by the project authors. The cur
 * Calibrated Linear SVM with combined word + character TF-IDF features.
 * Logistic Regression with FastText document embeddings.
 * Twitter-RoBERTa transformer fine-tuning.
+* Heterogeneous multi-checkpoint logit-pooled transformer ensemble.
 
-Four further transformer-ensemble notebooks (`08`–`11`) exist but are **not** part of the controlled comparison. Three of them ran and reported test numbers without leaving a derivable result folder; one was never run. The section [Transformer ensemble work in progress](#transformer-ensemble-work-in-progress) records where each one stands and why its numbers appear in no results table.
+Three further transformer-ensemble notebooks (`08`, `09`, `10`) exist but are **not** part of the controlled comparison. Two ran and reported test numbers without leaving a derivable result folder; one was never run. The section [Transformer ensemble work in progress](#transformer-ensemble-work-in-progress) records where each one stands and why its numbers appear in no results table.
 
-The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster around a similar performance range, while the contextual Twitter-RoBERTa model provides the strongest registered held-out test result. This supports the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
+The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster around a similar performance range, while contextual transformer models provide the strongest registered held-out test results — the single fine-tuned Twitter-RoBERTa run, and above it a logit-pooled ensemble of heterogeneous checkpoints. This supports the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
 
 A second finding is methodological, and it constrains how the first one may be stated: the test split is 450 rows, so detecting a difference at McNemar exact significance requires roughly +3 accuracy points, about 14 rows. The transformer family's margin over the classical baselines clears that floor comfortably. The gaps *among* the classical baselines do not come close, and the gaps *among* the transformer variants tried so far sit at or below it — and no amount of decimal places changes that. `INCONCLUSIVE` is therefore a first-class, publishable outcome here, and a higher accuracy number is not by itself evidence of a better model.
 
@@ -65,7 +66,7 @@ extremism_sentiment_analysis/
 │   ├── 08_BEST-ROBERTA_SEED-ENSEMBLE.ipynb          # ran; unregistered
 │   ├── 09_MULTI-CHECKPOINT_LOGIT-STACK.ipynb        # built; superseded by 11
 │   ├── 10_TWITTER-ROBERTA_LOGIT-POOL-STABLE.ipynb   # ran; unregistered
-│   └── 11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb         # ran; artifacts pending
+│   └── 11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb         # ran; result registered
 ├── results_summary/
 │   ├── foundation/
 │   ├── 01_LOG-REG_TF-IDF/
@@ -74,7 +75,8 @@ extremism_sentiment_analysis/
 │   ├── 04_CHAR-TF-IDF_LIN-SVM/
 │   ├── 05_WORD-CHAR-TF-IDF_LIN-SVM/
 │   ├── 06_FASTTEXT-EMB_LOG-REG/
-│   └── 07_TWITTER-ROBERTA_FINE-TUNE/
+│   ├── 07_TWITTER-ROBERTA_FINE-TUNE/
+│   └── 11_MULTI-CHECKPOINT_LOGIT-POOL/
 ├── research_loop/
 │   ├── STATE.md                  # current cycle, stage, and blockers
 │   ├── registry.json             # current champion
@@ -192,7 +194,7 @@ All model notebooks should reuse `splits/split_assignments.csv`. Do not regenera
 
 The table below reports held-out test metrics from `results_summary/`. The positive class is `EXTREMIST`.
 
-It is rendered from the committed result artifacts by `tools/render_tables.py`. A technique appears here only once it has a complete, schema-valid result folder — which is why notebooks `08`–`11` are absent.
+It is rendered from the committed result artifacts by `tools/render_tables.py`. A technique appears here only once it has a complete, schema-valid result folder derived from a committed probability artifact — which is why notebooks `08`, `09`, and `10` are absent.
 
 <!-- RENDERED-TABLE:BEGIN id=main-comparison -->
 | Technique | Validation accuracy | Test accuracy | Test balanced accuracy | Test macro F1 | Test ROC-AUC |
@@ -204,6 +206,7 @@ It is rendered from the committed result artifacts by `tools/render_tables.py`. 
 | `05_WORD-CHAR-TF-IDF_LIN-SVM` | 0.8156 | 0.8356 | 0.8309 | 0.8270 | 0.9032 |
 | `06_FASTTEXT-EMB_LOG-REG` | 0.7889 | 0.8178 | 0.8178 | 0.8102 | 0.9033 |
 | `07_TWITTER-ROBERTA_FINE-TUNE` | 0.8578 | 0.8889 | 0.8853 | 0.8826 | 0.9496 |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 0.8733 | 0.9089 | 0.8956 | 0.9015 | 0.9682 |
 
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
 <!-- RENDERED-TABLE:END id=main-comparison -->
@@ -221,6 +224,7 @@ Confusion-matrix summary:
 | `05_WORD-CHAR-TF-IDF_LIN-SVM` | 238 | 42 | 32 | 138 | 0.1500 | 0.1882 |
 | `06_FASTTEXT-EMB_LOG-REG` | 229 | 51 | 31 | 139 | 0.1821 | 0.1824 |
 | `07_TWITTER-ROBERTA_FINE-TUNE` | 252 | 28 | 22 | 148 | 0.1000 | 0.1294 |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 266 | 14 | 27 | 143 | 0.0500 | 0.1588 |
 
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
 <!-- RENDERED-TABLE:END id=confusion-test -->
@@ -228,46 +232,48 @@ Rendered by tools/render_tables.py from results_summary/ — do not edit by hand
 
 Current ranking by held-out test PR-AUC:
 
-1. `07_TWITTER-ROBERTA_FINE-TUNE` — PR-AUC 0.9233, ROC-AUC 0.9496, positive F1 0.8555.
-2. `01_LOG-REG_TF-IDF` — PR-AUC 0.8881, ROC-AUC 0.9111, positive F1 0.8024.
-3. `02_LIN-SVM_TF-IDF` — PR-AUC 0.8825, ROC-AUC 0.9037, positive F1 0.7962.
-4. `05_WORD-CHAR-TF-IDF_LIN-SVM` — PR-AUC 0.8818, ROC-AUC 0.9032, positive F1 0.7886.
-5. `03_SLP_TF-IDF` — PR-AUC 0.8777, ROC-AUC 0.9022, positive F1 0.7768.
-6. `06_FASTTEXT-EMB_LOG-REG` — PR-AUC 0.8763, ROC-AUC 0.9033, positive F1 0.7722.
-7. `04_CHAR-TF-IDF_LIN-SVM` — PR-AUC 0.8745, ROC-AUC 0.9028, positive F1 0.7875.
+1. `11_MULTI-CHECKPOINT_LOGIT-POOL` — PR-AUC 0.9553, ROC-AUC 0.9682, positive F1 0.8746.
+2. `07_TWITTER-ROBERTA_FINE-TUNE` — PR-AUC 0.9233, ROC-AUC 0.9496, positive F1 0.8555.
+3. `01_LOG-REG_TF-IDF` — PR-AUC 0.8881, ROC-AUC 0.9111, positive F1 0.8024.
+4. `02_LIN-SVM_TF-IDF` — PR-AUC 0.8825, ROC-AUC 0.9037, positive F1 0.7962.
+5. `05_WORD-CHAR-TF-IDF_LIN-SVM` — PR-AUC 0.8818, ROC-AUC 0.9032, positive F1 0.7886.
+6. `03_SLP_TF-IDF` — PR-AUC 0.8777, ROC-AUC 0.9022, positive F1 0.7768.
+7. `06_FASTTEXT-EMB_LOG-REG` — PR-AUC 0.8763, ROC-AUC 0.9033, positive F1 0.7722.
+8. `04_CHAR-TF-IDF_LIN-SVM` — PR-AUC 0.8745, ROC-AUC 0.9028, positive F1 0.7875.
+
+A ranking is not a significance test. `11_MULTI-CHECKPOINT_LOGIT-POOL` leads on every column, but no verdict has been issued for it — see below.
 
 These are baseline research metrics. They should not be interpreted as deployment readiness.
 
 ## Transformer ensemble work in progress
 
-Notebooks `08`–`11` explore whether ensembling contextual transformers beats the single fine-tuned Twitter-RoBERTa run. None of them is currently part of the controlled comparison, and none of their numbers appears in the tables above.
+Notebooks `08`–`11` explore whether ensembling contextual transformers improves on the single fine-tuned Twitter-RoBERTa run. Only `11` has a registered result; the other three do not appear in the tables above.
 
-| Notebook | State | Why it is not registered |
+| Notebook | State | Status |
 |---|---|---|
-| `08_BEST-ROBERTA_SEED-ENSEMBLE` | ran on Kaggle | No result folder and no probability export; its test metrics exist only in saved cell outputs. Its own reported test accuracy (0.8778) is *below* the registered champion, so the `BEST` in its filename is a claim its numbers contradict — the file should be renamed `08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb`. |
+| `08_BEST-ROBERTA_SEED-ENSEMBLE` | ran on Kaggle | Not registered. No result folder and no probability export; its test metrics exist only in saved cell outputs. Its own reported test accuracy (0.8778) is *below* the champion, so the `BEST` in its filename is a claim its numbers contradict — the file should be renamed `08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb`. |
 | `09_MULTI-CHECKPOINT_LOGIT-STACK` | built, never run | Superseded by notebook `11`, which keeps the multi-checkpoint idea but replaces the learned logit stacker with notebook `10`'s equal-weight mean-log-odds pool. |
-| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | ran on Kaggle | Evaluated the test split — so it spent a test unlock — but has no preregistration, no ledger entry, no result folder, and no probability-export cell, so the folder cannot be derived without a rerun. |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | ran on Kaggle | Its probability artifacts have not been retrieved from the Kaggle output, so `research_loop/probs/` is empty and the result folder cannot yet be derived. This is the closest of the four to registration — the artifacts exist, they just have not landed. |
+| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | ran on Kaggle | Not registered. Evaluated the test split — so it spent a test unlock — but has no preregistration, no ledger entry, and no probability-export cell, so its folder cannot be derived without a rerun. |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | ran on Kaggle | **Registered.** Its probability artifacts were derived through `tools/eval_from_probs.py` into `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/`, so it appears in the tables above. Not yet adjudicated — see below. |
 
-### About the accuracy figures in the 89–91% range
+### About the highest accuracy figures
 
-Two notebooks report held-out test accuracies above the registered champion. Neither is an established improvement, and both are absent from the tables above for the same reason: no committed probability artifact, so no derivable result folder and no verdict.
+Notebook `11` reports the strongest held-out test result in the repository: **409 of 450 rows, accuracy 0.9089**, ROC-AUC 0.9682, PR-AUC 0.9553. It pools mean log-odds across four admitted checkpoints — a fifth, `microsoft/deberta-v3-base`, was excluded by the prespecified 0.84 validation admission floor — at a fixed 0.50 cutoff.
+
+The way it got there is worth as much as the number. Its validation gate passed at 393/450 against a prespecified bar of 392, and the prespecified primary decision rule was **retained**, because the strongest of four challengers gained only 2 correct validation examples against a required 3. The result was not tuned into existence after the fact.
 
 | Technique | Correct / 450 | Accuracy | Status |
 |---|---:|---:|---|
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 409 | 0.9089 | ran; artifacts not retrieved |
-| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | 403 | 0.8956 | ran; no probability export |
-| `07_TWITTER-ROBERTA_FINE-TUNE` | 400 | 0.8889 | **registered champion** |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 409 | 0.9089 | registered, not adjudicated |
+| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | 403 | 0.8956 | unregistered, no probability export |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | 400 | 0.8889 | **current champion** |
 
-Notebook `11` pools mean log-odds across four admitted checkpoints — a fifth, `microsoft/deberta-v3-base`, was excluded by the prespecified 0.84 validation floor — at a fixed 0.50 cutoff. Its validation gate passed at 393/450, and the prespecified primary rule was retained because the strongest challenger gained only 2 validation rows against a required 3. The run followed its own prespecification, which is the part that matters most.
+Two caveats still apply, and they are the difference between a strong measurement and an established improvement:
 
-Read the numbers with three caveats:
+1. **The margin is below the detection floor.** Notebook `11` leads the champion by 9 test rows. Roughly 14 are needed for a McNemar-detectable difference on a 450-row split, before Holm correction over a family that has now consumed ten test unlocks. It may well come back `INCONCLUSIVE`.
+2. **No verdict has been issued.** Only `tools/compare_techniques.py` may adjudicate a candidate against the champion, and it has not been run. `07_TWITTER-ROBERTA_FINE-TUNE` therefore remains the champion in `research_loop/registry.json`, and notebook `11` has no preregistration or ledger entry yet.
 
-1. **They are transcribed, not derived.** Both come from saved notebook cell outputs, not from artifacts that `tools/eval_from_probs.py` can rebuild and `tools/validate_results_folder.py` can check.
-2. **The margins are below the detection floor.** Notebook `11` leads the champion by 9 test rows and notebook `10` by 3. Roughly 14 rows are needed for a McNemar-detectable difference on a 450-row split, so both may well come back `INCONCLUSIVE` under Holm correction.
-3. **No verdict has been issued.** Only `tools/compare_techniques.py` may adjudicate a candidate against the champion, and it has been run for neither. `07_TWITTER-ROBERTA_FINE-TUNE` remains the champion in `research_loop/registry.json`.
-
-So notebook `11` is the most promising candidate this project has produced, and it is not yet a result. The path to registering it is described in `docs/RESEARCH_LOOP.md`; `research_loop/STATE.md` lists the exact remaining steps.
+So notebook `11` is a real, derived, schema-valid result that leads on every metric — and it is not yet a promotion. `research_loop/STATE.md` lists the remaining steps.
 
 ## Reproducibility workflow
 

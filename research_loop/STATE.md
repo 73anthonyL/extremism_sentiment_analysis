@@ -4,7 +4,7 @@ Updated: 2026-08-09
 
 ## Current cycle: 11 — MULTI-CHECKPOINT_LOGIT-POOL
 
-- Stage: **run complete; blocked on artifact retrieval before integrate**
+- Stage: **integrated; blocked on decide (prereg + ledger + adjudication)**
 - Merged to `main` via PR #3; the completed run is commit `99d0f8d8`.
 - Notebook: `notebooks/11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb`
 
@@ -36,26 +36,36 @@ rows above the registered champion's 400/450 — still short of the ~14 rows thi
 split needs for a McNemar-detectable difference, and **no verdict has been
 issued**, so it is not yet an established improvement. See "Statistical reality".
 
-### What is blocking integration
+### Integration: done
 
-The commit contains only the notebook. `research_loop/probs/` is still empty, so
-the sanitized probability artifacts the run produced are sitting in the Kaggle
-output and have not been retrieved. Until they land, the result folder cannot be
-derived and the comparison cannot be run.
+The probability artifacts were retrieved from the Kaggle output and committed to
+`research_loop/probs/`, and `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/`
+was derived from them:
 
-1. Copy `probs/*.csv` and `probs/*__meta.json` from the Kaggle output into
-   `research_loop/probs/`.
-2. Derive the folder:
-   `tools/eval_from_probs.py --technique 11_MULTI-CHECKPOINT_LOGIT-POOL
-   --threshold 0.5`
-3. Add `ablation_results.csv` by hand — RESULTS_SCHEMA requires it and
-   `eval_from_probs.py` does not derive it.
-4. Adjudicate:
+```bash
+python3 tools/eval_from_probs.py --technique 11_MULTI-CHECKPOINT_LOGIT-POOL --threshold 0.5
+```
+
+The derived metrics reproduce the run's own reported numbers exactly
+(validation 0.8733, test 0.9089), `tools/validate_results_folder.py --all`
+passes on the folder, and `tools/render_tables.py --write` has pulled the
+technique into every rendered comparison table. `ablation_results.csv` was
+copied from the run's `ablation/` output, since `eval_from_probs.py` does not
+derive it.
+
+### What is still blocking a verdict
+
+1. **No preregistration.** See below.
+2. **No ledger entry.** The test unlock is already spent — the run read the test
+   split — so recording it is documenting a fact, not authorizing one.
+3. **No adjudication.** Nothing has compared this against the champion:
    `tools/compare_techniques.py --candidate 11_MULTI-CHECKPOINT_LOGIT-POOL
    --champion 07_TWITTER-ROBERTA_FINE-TUNE --cycle 11 --prereg-sha <sha>
    --family-size 10` (see the Holm caveat below).
-5. Record the test unlock in the ledger. **The unlock is already spent** — the
-   run read the test split — so this is recording a fact, not authorizing one.
+
+Until step 3 runs, `07_TWITTER-ROBERTA_FINE-TUNE` remains the champion in
+`registry.json`, and notebook 11's presence in the results tables is a
+statement of measurement, not of superiority.
 
 ### Preregistration
 
@@ -120,7 +130,7 @@ unlocks consumed to date:
 | 7 | cycles 01–07 (committed `metrics_test.json` in each result folder) |
 | 1 | 08 (test metrics exist only in notebook cell outputs) |
 | 1 | 10 (test metrics exist only in notebook cell outputs) |
-| 1 | 11 (test metrics exist only in notebook cell outputs, pending retrieval) |
+| 1 | 11 (derived result folder committed; ledger entry still pending) |
 | **10** | **total consumed** |
 
 **Every comparison must pass `--family-size` explicitly: 10 for cycle 11,
@@ -140,7 +150,7 @@ together:
 
 | Technique | Correct / 450 | Accuracy | Registered |
 |---|---:|---:|---|
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 409 | 0.9089 | no |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 409 | 0.9089 | yes, not adjudicated |
 | `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | 403 | 0.8956 | no |
 | `07_TWITTER-ROBERTA_FINE-TUNE` | 400 | 0.8889 | **yes, champion** |
 | `08_BEST-ROBERTA_SEED-ENSEMBLE` | 395 | 0.8778 | no |
@@ -194,10 +204,10 @@ and `python3 tools/scan_text_leakage.py` reports **FAIL (2 blocking)**:
 - 08 should be renamed `08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb` to drop the
   claim-bearing `BEST` — its own numbers (test accuracy 0.8778) are a
   regression against 07.
-- Notebooks 08, 09, 10, and 11 have no `results_summary/` folder. For 09 that is
+- Notebooks 08, 09, and 10 have no `results_summary/` folder. For 09 that is
   correct (never run). For 08 and 10 it is a gap: both spent a test unlock and
-  neither left a derivable artifact. For 11 it is pending: the artifacts exist
-  but have not been retrieved from Kaggle.
+  neither left a derivable artifact. Notebook 11's folder now exists and
+  validates clean.
 - `README.md` no longer carries the bare "89.55%" claim; it now describes
   notebook 10's number as unregistered and not distinguishable from the
   champion (2026-08-09 documentation pass).

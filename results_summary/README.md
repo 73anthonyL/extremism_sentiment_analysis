@@ -15,14 +15,15 @@ results_summary/
 ├── 04_CHAR-TF-IDF_LIN-SVM/
 ├── 05_WORD-CHAR-TF-IDF_LIN-SVM/
 ├── 06_FASTTEXT-EMB_LOG-REG/
-└── 07_TWITTER-ROBERTA_FINE-TUNE/
+├── 07_TWITTER-ROBERTA_FINE-TUNE/
+└── 11_MULTI-CHECKPOINT_LOGIT-POOL/
 ```
 
-Notebooks `08`–`11` have no folder here. For `09` and `11` that is correct —
-they have not been run. For `08` and `10` it is a gap: both evaluated the test
-split, but neither exported a probability artifact, so neither folder can be
-derived. Their numbers therefore appear nowhere in this repository's result
-tables. See `research_loop/STATE.md`.
+Notebooks `08`, `09`, and `10` have no folder here. For `09` that is correct —
+it was never run. For `08` and `10` it is a gap: both evaluated the test split,
+but neither exported a probability artifact, so neither folder can be derived
+without a rerun. Their numbers therefore appear nowhere in this repository's
+result tables. See `research_loop/STATE.md`.
 
 ## How these folders are produced
 
@@ -91,6 +92,7 @@ not edit it by hand — edits inside the marker pair are clobbered on the next
 | `05_WORD-CHAR-TF-IDF_LIN-SVM` | 0.8356 | 0.7886 | 0.7667 | 0.8118 | 0.9032 | 0.8818 | 0.42 |
 | `06_FASTTEXT-EMB_LOG-REG` | 0.8178 | 0.7722 | 0.7316 | 0.8176 | 0.9033 | 0.8763 | 0.47 |
 | `07_TWITTER-ROBERTA_FINE-TUNE` | 0.8889 | 0.8555 | 0.8409 | 0.8706 | 0.9496 | 0.9233 | 0.72 |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 0.9089 | 0.8746 | 0.9108 | 0.8412 | 0.9682 | 0.9553 | 0.5 |
 
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
 <!-- RENDERED-TABLE:END id=test-detail -->

@@ -24,7 +24,7 @@ be regenerated.
 
 ## Candidate notebooks
 
-These explore transformer ensembling. None has a registered result; see
+These explore transformer ensembling. Only `11` has a registered result; see
 `research_loop/STATE.md` for live status.
 
 | Notebook | Purpose | State |
@@ -32,7 +32,7 @@ These explore transformer ensembling. None has a registered result; see
 | `08_BEST-ROBERTA_SEED-ENSEMBLE.ipynb` | Probability-averaged seed ensemble of the fine-tuned transformer. | Ran; regressed against `07`. No result folder, no probability export. Should be renamed `08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb` — the `BEST` is a claim its own numbers contradict. |
 | `09_MULTI-CHECKPOINT_LOGIT-STACK.ipynb` | Learned stacker over several transformer checkpoints. | Built; never run. Superseded by `11`. |
 | `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE.ipynb` | Mean-log-odds seed pooling with exact probability-change threshold intervals. | Ran; spent a test unlock but left no derivable artifact. |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb` | Mean-log-odds pooling over five checkpoints spanning fine-tuning lineage, pretraining corpus, architecture/tokenizer, and scale. | Ran; reported 409/450 on test. Probability artifacts not yet retrieved, so no result folder. Still the reference implementation for the conventions below — its saved outputs contain no dataset text. |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb` | Mean-log-odds pooling over the admitted subset of five checkpoints spanning fine-tuning lineage, pretraining corpus, architecture/tokenizer, and scale. | Ran; 409/450 on test. **Registered** — its probability artifacts were derived into `results_summary/`, so it appears in the comparison tables. The reference implementation for the conventions below; its saved outputs contain no dataset text. |
 
 ## Notebook conventions
 

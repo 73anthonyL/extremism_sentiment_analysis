@@ -170,6 +170,7 @@ tables.
 | `05_WORD-CHAR-TF-IDF_LIN-SVM` | calibrated Linear SVM | combined word + character TF-IDF | completed |
 | `06_FASTTEXT-EMB_LOG-REG` | Logistic Regression | FastText document embeddings | completed |
 | `07_TWITTER-ROBERTA_FINE-TUNE` | fine-tuned transformer classifier | Twitter-RoBERTa contextual representations | completed, current champion |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | logit-pooled heterogeneous transformer ensemble | four admitted checkpoints spanning fine-tuning lineage, pretraining corpus, and scale | completed, not yet adjudicated |
 
 ## Candidate techniques not in the comparison
 
@@ -182,7 +183,6 @@ not be mixed into the tables below.
 | `08_BEST-ROBERTA_SEED-ENSEMBLE` | seed ensemble of the fine-tuned transformer | ran; test unlock spent | No result folder and no probability export; test metrics live only in cell outputs. Reported test accuracy is below `07`, and the claim-bearing `BEST` should be dropped from the name. |
 | `09_MULTI-CHECKPOINT_LOGIT-STACK` | learned stacker over transformer checkpoints | built; never run | Superseded by `11`, which replaces the learned stacker with an equal-weight mean-log-odds pool. |
 | `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | mean-log-odds seed pool | ran; test unlock spent | No preregistration, no ledger entry, no probability export, no result folder. Registering it requires a rerun. |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | heterogeneous checkpoint pool | ran; test unlock spent | Probability artifacts exist but have not been retrieved from the Kaggle output, so the result folder cannot yet be derived. Closest of the four to registration. |
 
 `research_loop/STATE.md` holds the live status; `docs/RESEARCH_LOOP.md`
 describes what registering one of these would take.
@@ -199,6 +199,7 @@ describes what registering one of these would take.
 | `05_WORD-CHAR-TF-IDF_LIN-SVM` | 0.8356 | 0.7886 | 0.7667 | 0.8118 | 0.9032 | 0.8818 | 0.42 |
 | `06_FASTTEXT-EMB_LOG-REG` | 0.8178 | 0.7722 | 0.7316 | 0.8176 | 0.9033 | 0.8763 | 0.47 |
 | `07_TWITTER-ROBERTA_FINE-TUNE` | 0.8889 | 0.8555 | 0.8409 | 0.8706 | 0.9496 | 0.9233 | 0.72 |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 0.9089 | 0.8746 | 0.9108 | 0.8412 | 0.9682 | 0.9553 | 0.5 |
 
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
 <!-- RENDERED-TABLE:END id=test-detail -->
