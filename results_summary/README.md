@@ -18,6 +18,31 @@ results_summary/
 └── 07_TWITTER-ROBERTA_FINE-TUNE/
 ```
 
+Notebooks `08`–`11` have no folder here. For `09` and `11` that is correct —
+they have not been run. For `08` and `10` it is a gap: both evaluated the test
+split, but neither exported a probability artifact, so neither folder can be
+derived. Their numbers therefore appear nowhere in this repository's result
+tables. See `research_loop/STATE.md`.
+
+## How these folders are produced
+
+Results are derived, not transcribed:
+
+```bash
+python3 tools/eval_from_probs.py --technique <TECHNIQUE> --threshold <selected>
+```
+
+`eval_from_probs.py` builds the whole folder from a committed probability
+artifact in `research_loop/probs/`. Never hand-copy a number out of a notebook
+into one of these files — a metric that cannot be rebuilt from an artifact
+cannot be checked by anyone, including the person who wrote it.
+
+Validate a folder against `docs/RESULTS_SCHEMA.md` with:
+
+```bash
+python3 tools/validate_results_folder.py --all
+```
+
 ## Foundation artifacts
 
 The `foundation/` folder stores dataset-level artifacts such as label counts, split counts, duplicate checks, removed-row summaries, and the dataset manifest.
@@ -52,6 +77,10 @@ Additional transformer artifacts, raw predictions, local attribution files, and 
 
 The positive class is `EXTREMIST`.
 
+This table is rendered from the folders above by `tools/render_tables.py`. Do
+not edit it by hand — edits inside the marker pair are clobbered on the next
+`--write`, and `--check` exits 1 in the meantime.
+
 <!-- RENDERED-TABLE:BEGIN id=test-detail -->
 | Technique | Accuracy | Positive F1 | Positive precision | Positive recall | ROC-AUC | PR-AUC | Threshold |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -71,6 +100,25 @@ Rendered by tools/render_tables.py from results_summary/ — do not edit by hand
 
 Results in this folder are baseline research metrics. They should not be interpreted as deployment readiness or as evidence that the models can safely make automated moderation decisions.
 
+## Interpretation caution: statistical power
+
+The test split is 450 rows. Distinguishing two techniques at McNemar exact
+significance needs roughly 14 rows of difference, and most gaps in the table
+above are far smaller. The ordering of the classical baselines carries no
+statistical weight, and `INCONCLUSIVE` is the expected verdict for most
+comparisons this project can run.
+
+Only `tools/compare_techniques.py` may issue a verdict. A higher number in this
+table is not, by itself, a better model.
+
 ## Update rule
 
-When a notebook is rerun and results change, update the corresponding result folder and verify that README tables are still accurate.
+When a notebook is rerun and results change:
+
+1. Re-derive the folder with `tools/eval_from_probs.py` from the new
+   probability artifact.
+2. Re-validate with `tools/validate_results_folder.py --all`.
+3. Regenerate every documentation table with `tools/render_tables.py --write`,
+   then confirm `--check` exits 0.
+
+Do not update a table by editing it.

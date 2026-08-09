@@ -25,9 +25,32 @@ These are research models. They are not production moderation systems and should
 | `04_CHAR-TF-IDF_LIN-SVM` | Calibrated Linear SVM trained on character-level TF-IDF features. |
 | `05_WORD-CHAR-TF-IDF_LIN-SVM` | Calibrated Linear SVM trained on combined word + character TF-IDF features. |
 | `06_FASTTEXT-EMB_LOG-REG` | Logistic Regression trained on FastText document embeddings. |
-| `07_TWITTER-ROBERTA_FINE-TUNE` | Fine-tuned Twitter-RoBERTa transformer classifier. |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | Fine-tuned Twitter-RoBERTa transformer classifier. Current champion. |
+
+## Model families without registered results
+
+Four transformer-ensemble notebooks exist whose results are **not** part of this
+card's metrics. Their numbers are not reported here as model metrics because
+none of them is backed by a derivable, schema-valid result folder.
+
+| Technique | Description | Status |
+|---|---|---|
+| `08_BEST-ROBERTA_SEED-ENSEMBLE` | Seed ensemble of the fine-tuned transformer, probability-averaged. | Ran; regressed against `07`. Unregistered. |
+| `09_MULTI-CHECKPOINT_LOGIT-STACK` | Learned stacker over multiple transformer checkpoints. | Built; never run. Superseded by `11`. |
+| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | Mean-log-odds pooling across three seeds of `cardiffnlp/twitter-roberta-base-hate-latest` at a fixed 0.50 cutoff. | Ran; unregistered. |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | Mean-log-odds pooling across the admitted subset of five checkpoints spanning fine-tuning lineage, pretraining corpus, architecture/tokenizer, and scale. | Ran; unregistered pending artifact retrieval. |
+
+Notebook `10` reports a higher raw test accuracy than the champion — 403 of 450
+rows against 400 of 450. That 3-row gap is well inside the noise floor of a
+450-row test split, which needs roughly 14 rows for a McNemar-detectable
+difference, and no verdict has been issued by `tools/compare_techniques.py`. It
+is not treated as an improvement, and `07_TWITTER-ROBERTA_FINE-TUNE` remains the
+champion in `research_loop/registry.json`.
 
 ## Current held-out test metrics
+
+Rendered from `results_summary/` by `tools/render_tables.py`; do not edit by
+hand.
 
 <!-- RENDERED-TABLE:BEGIN id=test-detail -->
 | Technique | Accuracy | Positive F1 | Positive precision | Positive recall | ROC-AUC | PR-AUC | Threshold |
@@ -110,4 +133,25 @@ Any attribution analysis should be paired with manual error review.
 
 ## Result interpretation
 
-The classical TF-IDF and FastText-based approaches remain useful interpretable baselines. The Twitter-RoBERTa fine-tuning run is the strongest current model by PR-AUC, ROC-AUC, positive F1, and accuracy, but the result should be understood as a controlled research result on this split rather than as deployment evidence.
+The classical TF-IDF and FastText-based approaches remain useful interpretable baselines. The Twitter-RoBERTa fine-tuning run is the strongest current registered model by PR-AUC, ROC-AUC, positive F1, and accuracy, but the result should be understood as a controlled research result on this split rather than as deployment evidence.
+
+### Statistical power
+
+The held-out test split is 450 rows, so the resolution of any comparison made on
+it is coarse. Detecting a difference at McNemar exact significance needs roughly
++3 accuracy points, about 14 rows.
+
+Read the metrics table accordingly:
+
+* The classical and embedding baselines sit within a handful of rows of each
+  other — `01` and `02` differ by a single test row. Their ordering carries no
+  statistical weight.
+* The transformer's margin over them is the one gap in this table wide enough to
+  take seriously as a direction.
+* The transformer *variants* explored so far — `07`, `08`, `10`, and `11` —
+  span 395 to 409 correct rows. Only the widest pair reaches the detection floor
+  at all, and Holm correction over ten consumed test unlocks raises the bar
+  further, so none of them should be treated as separated without a verdict.
+
+A ranking is not a significance test, and `tools/compare_techniques.py` is the
+only thing in this repository that issues a verdict.

@@ -8,7 +8,7 @@ The repository is public so that the research process can be reviewed, replicate
 
 ## Project status
 
-This is an active research repository maintained by the project authors. The current version contains the dataset foundation, fixed split assignments, and seven completed model families:
+This is an active research repository maintained by the project authors. The current version contains the dataset foundation, fixed split assignments, a verification toolkit, and seven model families whose results are registered in the controlled comparison:
 
 * Logistic Regression with word-level TF-IDF features.
 * Calibrated Linear SVM with word-level TF-IDF features.
@@ -17,9 +17,12 @@ This is an active research repository maintained by the project authors. The cur
 * Calibrated Linear SVM with combined word + character TF-IDF features.
 * Logistic Regression with FastText document embeddings.
 * Twitter-RoBERTa transformer fine-tuning.
-* NEW ACCURACY 89.55% ACHIEVED
 
-The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster around a similar performance range, while the contextual Twitter-RoBERTa model provides the strongest held-out test result. This supports the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
+Four further transformer-ensemble notebooks (`08`–`11`) exist but are **not** part of the controlled comparison. Three of them ran and reported test numbers without leaving a derivable result folder; one was never run. The section [Transformer ensemble work in progress](#transformer-ensemble-work-in-progress) records where each one stands and why its numbers appear in no results table.
+
+The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster around a similar performance range, while the contextual Twitter-RoBERTa model provides the strongest registered held-out test result. This supports the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
+
+A second finding is methodological, and it constrains how the first one may be stated: the test split is 450 rows, so detecting a difference at McNemar exact significance requires roughly +3 accuracy points, about 14 rows. The transformer family's margin over the classical baselines clears that floor comfortably. The gaps *among* the classical baselines do not come close, and the gaps *among* the transformer variants tried so far sit at or below it — and no amount of decimal places changes that. `INCONCLUSIVE` is therefore a first-class, publishable outcome here, and a higher accuracy number is not by itself evidence of a better model.
 
 ## Research motivation
 
@@ -58,7 +61,11 @@ extremism_sentiment_analysis/
 │   ├── 04_CHAR-TF-IDF_LIN-SVM.ipynb
 │   ├── 05_WORD-CHAR-TF-IDF_LIN-SVM.ipynb
 │   ├── 06_FASTTEXT-EMB_LOG-REG.ipynb
-│   └── 07_TWITTER-ROBERTA_FINE-TUNE.ipynb
+│   ├── 07_TWITTER-ROBERTA_FINE-TUNE.ipynb
+│   ├── 08_BEST-ROBERTA_SEED-ENSEMBLE.ipynb          # ran; unregistered
+│   ├── 09_MULTI-CHECKPOINT_LOGIT-STACK.ipynb        # built; superseded by 11
+│   ├── 10_TWITTER-ROBERTA_LOGIT-POOL-STABLE.ipynb   # ran; unregistered
+│   └── 11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb         # ran; artifacts pending
 ├── results_summary/
 │   ├── foundation/
 │   ├── 01_LOG-REG_TF-IDF/
@@ -68,22 +75,46 @@ extremism_sentiment_analysis/
 │   ├── 05_WORD-CHAR-TF-IDF_LIN-SVM/
 │   ├── 06_FASTTEXT-EMB_LOG-REG/
 │   └── 07_TWITTER-ROBERTA_FINE-TUNE/
+├── research_loop/
+│   ├── STATE.md                  # current cycle, stage, and blockers
+│   ├── registry.json             # current champion
+│   ├── prereg/                   # per-cycle preregistrations
+│   ├── probs/                    # sanitized probability artifacts
+│   ├── decisions/                # adjudicated cycle verdicts
+│   ├── cycles/                   # per-cycle working notes
+│   ├── val_log.jsonl             # declared validation looks
+│   └── test_ledger.jsonl         # hash-chained test-unlock record
+├── tools/
+│   ├── eval_from_probs.py        # derives a result folder from probabilities
+│   ├── compare_techniques.py     # the only thing that issues a verdict
+│   ├── render_tables.py          # regenerates every doc results table
+│   ├── protocol_check.py         # invariant checks
+│   ├── validate_results_folder.py
+│   ├── scan_text_leakage.py
+│   ├── ledger.py
+│   ├── repair_split_mirror.py
+│   └── tests/                    # the toolkit's own pytest suite
 ├── splits/
-│   └── split_assignments.csv
+│   ├── split_assignments.csv
+│   └── split_assignments.PRE-REPAIR.csv
 ├── docs/
+│   ├── README.md
 │   ├── DATA_CARD.md
 │   ├── EXPERIMENTS.md
 │   ├── MODEL_CARD.md
+│   ├── RESEARCH_LOOP.md
 │   ├── RESPONSIBLE_USE.md
 │   ├── RESULTS_SCHEMA.md
 │   ├── REPLICATION_GUIDE.md
 │   ├── COMPETITION.md
 │   └── RELEASE_CHECKLIST.md
+├── CHANGELOG.md
 ├── CITATION.cff
 ├── LICENSE
 ├── README.md
 ├── requirements.txt
-└── requirements-lock.txt
+├── requirements-lock.txt
+└── requirements-dev.txt
 ```
 
 The `docs/` files support research transparency and replication:
@@ -93,11 +124,42 @@ The `docs/` files support research transparency and replication:
 | `docs/DATA_CARD.md` | Dataset construction, labels, intended use, and caveats. |
 | `docs/EXPERIMENTS.md` | Standard experiment protocol and comparison rules. |
 | `docs/MODEL_CARD.md` | Model families, metrics, risks, and evaluation notes. |
+| `docs/RESEARCH_LOOP.md` | How a candidate technique moves from hypothesis to registered result, and what `research_loop/` stores. |
 | `docs/RESPONSIBLE_USE.md` | Safety, misuse, and deployment limitations. |
 | `docs/RESULTS_SCHEMA.md` | Expected result files and metric fields for each experiment folder. |
 | `docs/REPLICATION_GUIDE.md` | Step-by-step workflow for reproducing the experiments. |
 | `docs/COMPETITION.md` | Kaggle competition context and how competition results relate to this repository. |
 | `docs/RELEASE_CHECKLIST.md` | Pre-release checklist before public result updates or manuscript-aligned releases. |
+
+## The verification layer
+
+Results in this repository are derived and checked by tooling rather than
+transcribed by hand. Two rules follow from that, and they are enforced:
+
+* **Results are derived, not transcribed.** `tools/eval_from_probs.py` builds a
+  whole `results_summary/<TECHNIQUE>/` folder from a committed probability
+  artifact. No number should be hand-copied out of a notebook into a JSON file.
+* **Doc tables are rendered, not edited.** `tools/render_tables.py --write`
+  regenerates every results table in this README and in `docs/` from
+  `results_summary/`. The tables live inside paired HTML-comment markers and are
+  rewritten wholesale; hand edits inside a region are clobbered. The marker
+  syntax is documented in the tool's own docstring — it deliberately is not
+  reproduced in the documents it scans.
+
+```bash
+python3 tools/protocol_check.py --all           # protocol invariants
+python3 tools/validate_results_folder.py --all  # schema + internal consistency
+python3 tools/render_tables.py --check          # documentation drift
+python3 tools/scan_text_leakage.py              # dataset text in committed files
+python3 tools/ledger.py verify                  # test-evaluation chain
+python3 -m pytest tools/tests/ -q               # the toolkit's own tests
+```
+
+`protocol_check.py` and `scan_text_leakage.py` currently report pre-existing
+failures on notebooks `00`–`08` and `10`: those notebooks carry saved cell
+outputs containing dataset text, and most declare an abbreviated
+`split_version` string. This is a known cleanup backlog, tracked in
+`research_loop/STATE.md`, not a defect in the checks.
 
 ## Dataset and fixed splits
 
@@ -129,6 +191,8 @@ All model notebooks should reuse `splits/split_assignments.csv`. Do not regenera
 ## Current controlled results
 
 The table below reports held-out test metrics from `results_summary/`. The positive class is `EXTREMIST`.
+
+It is rendered from the committed result artifacts by `tools/render_tables.py`. A technique appears here only once it has a complete, schema-valid result folder — which is why notebooks `08`–`11` are absent.
 
 <!-- RENDERED-TABLE:BEGIN id=main-comparison -->
 | Technique | Validation accuracy | Test accuracy | Test balanced accuracy | Test macro F1 | Test ROC-AUC |
@@ -174,6 +238,37 @@ Current ranking by held-out test PR-AUC:
 
 These are baseline research metrics. They should not be interpreted as deployment readiness.
 
+## Transformer ensemble work in progress
+
+Notebooks `08`–`11` explore whether ensembling contextual transformers beats the single fine-tuned Twitter-RoBERTa run. None of them is currently part of the controlled comparison, and none of their numbers appears in the tables above.
+
+| Notebook | State | Why it is not registered |
+|---|---|---|
+| `08_BEST-ROBERTA_SEED-ENSEMBLE` | ran on Kaggle | No result folder and no probability export; its test metrics exist only in saved cell outputs. Its own reported test accuracy (0.8778) is *below* the registered champion, so the `BEST` in its filename is a claim its numbers contradict — the file should be renamed `08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb`. |
+| `09_MULTI-CHECKPOINT_LOGIT-STACK` | built, never run | Superseded by notebook `11`, which keeps the multi-checkpoint idea but replaces the learned logit stacker with notebook `10`'s equal-weight mean-log-odds pool. |
+| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | ran on Kaggle | Evaluated the test split — so it spent a test unlock — but has no preregistration, no ledger entry, no result folder, and no probability-export cell, so the folder cannot be derived without a rerun. |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | ran on Kaggle | Its probability artifacts have not been retrieved from the Kaggle output, so `research_loop/probs/` is empty and the result folder cannot yet be derived. This is the closest of the four to registration — the artifacts exist, they just have not landed. |
+
+### About the accuracy figures in the 89–91% range
+
+Two notebooks report held-out test accuracies above the registered champion. Neither is an established improvement, and both are absent from the tables above for the same reason: no committed probability artifact, so no derivable result folder and no verdict.
+
+| Technique | Correct / 450 | Accuracy | Status |
+|---|---:|---:|---|
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 409 | 0.9089 | ran; artifacts not retrieved |
+| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | 403 | 0.8956 | ran; no probability export |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | 400 | 0.8889 | **registered champion** |
+
+Notebook `11` pools mean log-odds across four admitted checkpoints — a fifth, `microsoft/deberta-v3-base`, was excluded by the prespecified 0.84 validation floor — at a fixed 0.50 cutoff. Its validation gate passed at 393/450, and the prespecified primary rule was retained because the strongest challenger gained only 2 validation rows against a required 3. The run followed its own prespecification, which is the part that matters most.
+
+Read the numbers with three caveats:
+
+1. **They are transcribed, not derived.** Both come from saved notebook cell outputs, not from artifacts that `tools/eval_from_probs.py` can rebuild and `tools/validate_results_folder.py` can check.
+2. **The margins are below the detection floor.** Notebook `11` leads the champion by 9 test rows and notebook `10` by 3. Roughly 14 rows are needed for a McNemar-detectable difference on a 450-row split, so both may well come back `INCONCLUSIVE` under Holm correction.
+3. **No verdict has been issued.** Only `tools/compare_techniques.py` may adjudicate a candidate against the champion, and it has been run for neither. `07_TWITTER-ROBERTA_FINE-TUNE` remains the champion in `research_loop/registry.json`.
+
+So notebook `11` is the most promising candidate this project has produced, and it is not yet a result. The path to registering it is described in `docs/RESEARCH_LOOP.md`; `research_loop/STATE.md` lists the exact remaining steps.
+
 ## Reproducibility workflow
 
 Run notebooks in numeric order:
@@ -188,6 +283,15 @@ Run notebooks in numeric order:
 | `05_WORD-CHAR-TF-IDF_LIN-SVM.ipynb` | Combines word-level semantic lexical cues with character-level robustness. |
 | `06_FASTTEXT-EMB_LOG-REG.ipynb` | Tests dense FastText document embeddings with logistic regression. |
 | `07_TWITTER-ROBERTA_FINE-TUNE.ipynb` | Fine-tunes a contextual Twitter-RoBERTa transformer and saves token-attribution interpretability outputs. |
+
+The remaining notebooks are candidate experiments rather than part of the controlled comparison:
+
+| Notebook | Purpose |
+|---|---|
+| `08_BEST-ROBERTA_SEED-ENSEMBLE.ipynb` | Averages seed restarts of the fine-tuned transformer. Ran; regressed against `07`. |
+| `09_MULTI-CHECKPOINT_LOGIT-STACK.ipynb` | Learned stacker over several transformer checkpoints. Built but never run; superseded by `11`. |
+| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE.ipynb` | Replaces probability averaging with mean log-odds pooling across seeds, and threshold grids with exact probability-change intervals. Ran; unregistered. |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb` | Pools mean log-odds across five checkpoints spanning fine-tuning lineage, pretraining corpus, architecture/tokenizer, and scale, anchored on `10`'s recipe. Awaiting GPU run. |
 
 Expected compact output structure for most classical and embedding model families:
 
@@ -280,6 +384,8 @@ To keep the model comparison research-grade:
 * Report accuracy, positive-class precision, positive-class recall, positive-class F1, ROC-AUC, PR-AUC, and confusion-matrix counts.
 * Save the best configuration, validation metrics, test metrics, and confusion matrix for each technique.
 * Treat preprocessing changes, external pretraining, and task-specific transfer learning as part of the experimental condition.
+* Unlock the test split once per technique, ever, and record it in `research_loop/test_ledger.jsonl`. Each unlock raises the Holm correction every later candidate must clear.
+* Let `tools/compare_techniques.py` issue the verdict. Do not describe a technique as better than another without one.
 
 ## Interpretability
 
@@ -304,10 +410,13 @@ Interpretability artifacts should be used to inspect model behavior and guide er
 
 When adding or rerunning a model notebook:
 
-1. Keep the fixed split protocol unchanged unless a new split version is explicitly introduced.
-2. Save only compact result artifacts to `results_summary/`.
-3. Avoid committing large model artifacts, raw-text predictions, or local explanation files containing raw text.
-4. Update `README.md`, `docs/EXPERIMENTS.md`, `docs/MODEL_CARD.md`, `docs/RESULTS_SCHEMA.md`, `docs/REPLICATION_GUIDE.md`, `notebooks/README.md`, and `results_summary/README.md` when a new technique becomes part of the controlled comparison.
+1. Keep the fixed split protocol unchanged unless a new split version is explicitly introduced. Never regenerate the split *assignment*.
+2. Export a sanitized probability artifact (`row_id`, `split`, `y_true`, `y_prob`) and derive the result folder with `tools/eval_from_probs.py`. Do not hand-copy metrics into JSON.
+3. Save only compact result artifacts to `results_summary/`.
+4. Avoid committing large model artifacts, raw-text predictions, local explanation files containing raw text, or notebooks with saved cell outputs.
+5. Regenerate the documentation tables with `tools/render_tables.py --write` rather than editing them, then confirm `--check` exits 0.
+6. Update the prose in `README.md`, `docs/EXPERIMENTS.md`, `docs/MODEL_CARD.md`, `docs/RESULTS_SCHEMA.md`, `docs/REPLICATION_GUIDE.md`, `notebooks/README.md`, and `results_summary/README.md` when a new technique becomes part of the controlled comparison.
+7. Record the outcome in `research_loop/` — see `docs/RESEARCH_LOOP.md`. The test split is unlocked once per technique, ever, and every unlock raises the Holm correction that future candidates must clear.
 
 ## Citation
 
