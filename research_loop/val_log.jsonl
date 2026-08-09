@@ -1,0 +1,1 @@
+{"technique": "11_MULTI-CHECKPOINT_LOGIT-POOL", "threshold": 0.5, "threshold_metric": "accuracy", "validation_accuracy": 0.8733333333333333, "validation_positive_f1": 0.8235294117647058, "validation_pr_auc": 0.9208652565960521}

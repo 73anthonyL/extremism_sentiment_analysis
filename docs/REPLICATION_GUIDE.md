@@ -71,9 +71,11 @@ notebooks/04_CHAR-TF-IDF_LIN-SVM.ipynb
 notebooks/05_WORD-CHAR-TF-IDF_LIN-SVM.ipynb
 notebooks/06_FASTTEXT-EMB_LOG-REG.ipynb
 notebooks/07_TWITTER-ROBERTA_FINE-TUNE.ipynb
+notebooks/11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb
 ```
 
-Notebooks `08`–`11` are candidate experiments outside the controlled comparison
+Notebook `11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb` is also part of the controlled
+comparison. Notebooks `08`, `09`, and `10` are candidate experiments outside it
 and are not required to reproduce the reported results.
 
 ## 2a. Verify the split mirror before anything else
@@ -159,7 +161,9 @@ cannot derive and must be supplied from the run's configuration comparison.
 
 This means a replication can be checked without rerunning anything: given the
 same probability artifact, `eval_from_probs.py` must produce byte-comparable
-metrics. Where a technique has no committed probability artifact — notebooks
+metrics. `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/` was produced exactly
+this way, and its derived metrics match the run's own reported numbers to four
+decimals. Where a technique has no committed probability artifact — notebooks
 `08` and `10` — this check is unavailable, which is precisely why those runs are
 not registered.
 
@@ -177,19 +181,22 @@ A replicated result is comparable only if:
 
 ## 6. Current ranking by held-out test PR-AUC
 
-1. `07_TWITTER-ROBERTA_FINE-TUNE`
-2. `01_LOG-REG_TF-IDF`
-3. `02_LIN-SVM_TF-IDF`
-4. `05_WORD-CHAR-TF-IDF_LIN-SVM`
-5. `03_SLP_TF-IDF`
-6. `06_FASTTEXT-EMB_LOG-REG`
-7. `04_CHAR-TF-IDF_LIN-SVM`
+1. `11_MULTI-CHECKPOINT_LOGIT-POOL`
+2. `07_TWITTER-ROBERTA_FINE-TUNE`
+3. `01_LOG-REG_TF-IDF`
+4. `02_LIN-SVM_TF-IDF`
+5. `05_WORD-CHAR-TF-IDF_LIN-SVM`
+6. `03_SLP_TF-IDF`
+7. `06_FASTTEXT-EMB_LOG-REG`
+8. `04_CHAR-TF-IDF_LIN-SVM`
 
 Small numeric differences may occur across environments, especially for neural or transformer models. Any material difference should be documented.
 
 Treat this ranking as an ordering of measurements, not of models. On a 450-row
-test split, positions 2 through 7 are separated by a few rows each and are not
-statistically distinguishable. See `docs/EXPERIMENTS.md` for the power analysis.
+test split, positions 3 through 8 are separated by a few rows each and are not
+statistically distinguishable, and the gap between positions 1 and 2 is 9 rows —
+below the detection floor, and not yet adjudicated. See `docs/EXPERIMENTS.md`
+for the power analysis.
 
 ## 7. Verify the replication mechanically
 
