@@ -15,7 +15,8 @@ The research goal is to study violent-extremism detection as a distinct NLP task
 |---|---|
 | `data/dataset.csv` | Source dataset used by the repository notebooks. |
 | `data/extremism_lexicon.txt` | Supporting lexicon file used for inspection or exploratory analysis, not a replacement for model evaluation. |
-| `splits/split_assignments.csv` | Fixed row-level train/validation/test split assignments. |
+| `splits/split_assignments.csv` | Fixed row-level train/validation/test split assignments (a mirror of the frozen assignment — see below). |
+| `splits/split_assignments.PRE-REPAIR.csv` | The stale pre-2026-07-29 mirror, kept for provenance. Not for use. |
 | `results_summary/foundation/dataset_manifest.json` | Dataset manifest produced by the foundation notebook. |
 | `results_summary/foundation/label_distribution.csv` | Label counts and proportions. |
 | `results_summary/foundation/split_label_distribution.csv` | Label counts by split. |
@@ -45,6 +46,35 @@ The research goal is to study violent-extremism detection as a distinct NLP task
 | Train | 2099 | 1309 | 790 |
 | Validation | 450 | 281 | 169 |
 | Test | 450 | 280 | 170 |
+
+## Split-mirror integrity
+
+`splits/split_assignments.csv` is a *mirror* of the frozen split assignment, and
+it has been wrong. Until 2026-07-29 the committed file was a stale
+pre-correction artifact that disagreed with the frozen assignment on **728
+labels and 1420 split assignments**. Results produced against it could not match
+the reported ones, and nothing in the file itself announced the problem.
+
+The mirror was repaired on 2026-07-29 with `tools/repair_split_mirror.py`, which
+refuses to write unless its reconstruction reproduces
+`results_summary/foundation/` exactly, and it currently verifies clean. Confirm
+that before relying on it:
+
+```bash
+python3 tools/protocol_check.py --all   # first invariant: split mirror
+```
+
+Repairing the mirror is not the same as regenerating the split. The assignment
+itself is frozen at `split_v1_stratified_70_15_15_seed30` and must never be
+regenerated; every committed result depends on it.
+
+## A note on committed dataset text
+
+Notebooks `00`–`08` and `10` carry saved cell outputs containing dataset text
+and row ids. `tools/scan_text_leakage.py` reports this, and it is a known
+cleanup backlog rather than an intended release of the text in that form.
+Anyone redistributing this repository should be aware the text is present in
+those notebooks, not only in `data/`.
 
 ## Label interpretation
 

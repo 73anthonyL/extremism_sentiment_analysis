@@ -4,6 +4,108 @@ This changelog summarizes the major research, data, modeling, reproducibility, a
 
 The repository is maintained as a research and replication artifact. This changelog is intentionally written as a human-readable project history rather than a raw list of commits.
 
+## [Unreleased]
+
+### Added
+
+* Added a verification toolkit under `tools/` that enforces the repository's
+  research protocol mechanically rather than by convention:
+  * `eval_from_probs.py` — derives a whole `results_summary/<TECHNIQUE>/` folder
+    from a committed probability artifact, and hard-errors on any attempt to
+    select a threshold using test-split data.
+  * `compare_techniques.py` — the only component permitted to issue a verdict on
+    whether one technique beats another.
+  * `render_tables.py` — regenerates every results table in the documentation
+    from `results_summary/`, so a published digit can only change when an
+    artifact changes.
+  * `protocol_check.py`, `validate_results_folder.py`, `scan_text_leakage.py`,
+    `ledger.py`, `repair_split_mirror.py`, and a pytest suite under
+    `tools/tests/`.
+* Added `research_loop/` — preregistrations, a hash-chained test-unlock ledger,
+  a champion registry, declared validation looks, and `STATE.md` recording the
+  live cycle and its blockers.
+* Added `docs/RESEARCH_LOOP.md` documenting how a candidate technique moves from
+  hypothesis to registered result, and how test unlocks are rationed and priced.
+* Added four candidate transformer-ensemble notebooks, none of which is part of
+  the controlled comparison:
+  * `08_BEST-ROBERTA_SEED-ENSEMBLE` — ran; regressed against `07`.
+  * `09_MULTI-CHECKPOINT_LOGIT-STACK` — built, never run; superseded by `11`.
+  * `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` — ran; mean-log-odds seed pooling.
+  * `11_MULTI-CHECKPOINT_LOGIT-POOL` — ran; pools checkpoints spanning
+    fine-tuning lineage, pretraining corpus, architecture/tokenizer, and scale.
+    Reported 409/450 on test, unregistered pending artifact retrieval.
+
+### Changed
+
+* Converted the results tables in `README.md`, `docs/EXPERIMENTS.md`,
+  `docs/MODEL_CARD.md`, and `results_summary/README.md` into rendered regions
+  owned by `tools/render_tables.py`. Results tables are no longer edited by hand.
+* Replaced the unsourced "NEW ACCURACY 89.55% ACHIEVED" line in `README.md` with
+  a documented account of where that figure comes from, what backs it, and why
+  it is not an established improvement. See the result note below.
+* Documented throughout that the 450-row test split cannot resolve differences
+  smaller than roughly 14 rows, and that `INCONCLUSIVE` is a first-class outcome.
+* Documented that the notebooks are Kaggle-targeted and do not run against a
+  clone as-is, including the uncommitted `processed_dataset.csv` and the
+  `overwrite_existing_split: True` hazard in notebook `00`.
+
+### Fixed
+
+* Repaired `splits/split_assignments.csv`. The committed mirror was a stale
+  pre-correction artifact disagreeing with the frozen assignment on 728 labels
+  and 1420 split assignments, so replication against it could not match the
+  reported results. The repair is verified by reproducing
+  `results_summary/foundation/` exactly; the stale file is preserved at
+  `splits/split_assignments.PRE-REPAIR.csv`. The split *assignment* itself is
+  unchanged and remains frozen at `split_v1_stratified_70_15_15_seed30`.
+
+### Result note
+
+Two notebooks report held-out test accuracies above the registered champion's
+400 of 450:
+
+| Technique | Correct / 450 | Accuracy |
+|---|---:|---:|
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 409 | 0.9089 |
+| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | 403 | 0.8956 |
+
+Neither is a new headline result:
+
+* both are transcribed from notebook cell outputs rather than derived from a
+  committed probability artifact, so neither has a result folder and neither can
+  be rebuilt — notebook `11` did export artifacts, but they were not retrieved
+  from the Kaggle output;
+* the margins over the champion are 9 and 3 test rows, against a detection floor
+  of roughly 14 on a 450-row split, before Holm correction over ten consumed
+  unlocks;
+* no verdict has been issued by `tools/compare_techniques.py` for either.
+
+`07_TWITTER-ROBERTA_FINE-TUNE` accordingly remains the champion and the
+comparison tables are unchanged. Registering notebook `11` requires only
+retrieving its probability artifacts; registering notebook `10` requires adding
+the probability-export cell and rerunning.
+
+Notebook `11`'s run is worth recording for its process as much as its number: it
+passed its prespecified validation gate at 393/450, excluded a component that
+fell below the prespecified 0.84 admission floor, and **retained its
+prespecified primary decision rule** because the strongest challenger gained
+only 2 validation rows against a required 3. The result was not tuned into
+existence after the fact.
+
+### Known issues
+
+* `tools/protocol_check.py --all` and `tools/scan_text_leakage.py` both fail on
+  notebooks `00`–`08` and `10`: saved cell outputs containing dataset text, and
+  abbreviated `split_version` strings. Notebook `09` is clean; notebook `11`
+  carries saved outputs after its run but leaks no dataset text or row hashes.
+* `research_loop/test_ledger.jsonl` is empty — the original was lost before the
+  toolkit was reconstructed — while 10 test unlocks have in fact been spent. Every
+  comparison must therefore pass `--family-size` explicitly until the ledger
+  catches up. Backdated entries must not be fabricated.
+* `08_BEST-ROBERTA_SEED-ENSEMBLE.ipynb` should be renamed
+  `08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb`; its filename asserts a superiority
+  its own numbers contradict.
+
 ## [0.2.0] - 2026-07-08
 
 ### Added

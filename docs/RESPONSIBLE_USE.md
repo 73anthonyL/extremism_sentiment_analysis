@@ -41,6 +41,27 @@ Any applied system in this domain would require, at minimum:
 
 This repository does not provide those safeguards.
 
+## Claims discipline
+
+Overclaiming is a responsible-use failure in this domain, not merely a
+scientific one: an inflated accuracy figure is exactly what makes a research
+model look deployable to someone who should not deploy it.
+
+The test split is 450 rows, which is small enough that most comparisons this
+repository can run are statistically inconclusive. Rules that follow:
+
+- A higher accuracy number is not evidence of a better model. Roughly 14 test
+  rows of difference are needed before a gap is detectable at all.
+- `INCONCLUSIVE` is a first-class, publishable outcome and should be reported as
+  such rather than quietly dropped.
+- Only `tools/compare_techniques.py` may issue a verdict. Prose reads the
+  verdict; it does not reach its own.
+- Do not write "best", "beats", "improves on", or "state of the art" without a
+  verdict that supports it, and never encode such a claim in a file or technique
+  name.
+- A number that has no committed artifact behind it must be labelled as
+  unregistered wherever it appears.
+
 ## Interpretation cautions
 
 Model outputs are sensitive to:

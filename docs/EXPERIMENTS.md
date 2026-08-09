@@ -22,8 +22,64 @@ splits/split_assignments.csv
 4. Train only on the training split.
 5. Tune hyperparameters only using the training and validation splits.
 6. Select any probability or decision threshold using validation data only.
-7. Evaluate on the test split once the model configuration and threshold are locked.
-8. Save compact output artifacts under `results_summary/<TECHNIQUE>/`.
+7. Evaluate on the test split once the model configuration and threshold are locked — once per technique, ever.
+8. Export a sanitized probability artifact and derive compact output artifacts under `results_summary/<TECHNIQUE>/` from it.
+
+## Test-split policy
+
+The test split is not a metric you can recompute at will. It is a consumable
+resource, and the protocol rations it:
+
+* **Once per technique, ever.** Every unlock is recorded in the hash-chained
+  `research_loop/test_ledger.jsonl`.
+* **Every unlock raises the bar.** Each recorded evaluation increases the
+  multiple-comparison family size that future candidates must clear under Holm
+  correction.
+* **A validation gate comes first.** A candidate that cannot clear a
+  prespecified validation bar does not get to look at the test split at all.
+* **Threshold selection on test data is refused mechanically.**
+  `tools/eval_from_probs.py` hard-errors rather than trusting anyone to
+  remember.
+
+`docs/RESEARCH_LOOP.md` describes the surrounding cycle in full.
+
+## Statistical power, and what may be claimed
+
+The test split is 450 rows. Detecting a difference at McNemar exact
+significance needs roughly +3 accuracy points, about 14 rows. For scale: a 5-row
+gap has a best attainable p-value of 0.0625, so two techniques five rows apart
+are **not** distinguishable no matter how the comparison is dressed up.
+
+The transformer variants run so far span 395 to 409 correct test rows. Only the
+widest pair in that span reaches the detection floor at all, and every
+comparison is further penalised by Holm correction over a family that has now
+consumed ten test unlocks. Treat none of them as separated without a verdict.
+
+Three rules follow, and they are not negotiable:
+
+1. `INCONCLUSIVE` is a first-class, publishable outcome. Most comparisons this
+   project can run will return it.
+2. `tools/compare_techniques.py` is the only thing permitted to issue a verdict.
+   Everything else reads the verdict string.
+3. A higher accuracy number is not, on its own, evidence of a better model. Do
+   not write "improves on", "beats", or "best" without a verdict that supports
+   it, and do not encode such a claim in a filename.
+
+## Deriving results
+
+Results are derived, not transcribed. A run exports probabilities; the metrics
+come from them:
+
+```bash
+python3 tools/eval_from_probs.py --technique <TECHNIQUE> --threshold <selected>
+```
+
+The artifact contract is exactly `row_id`, `split`, `y_true`, `y_prob`, with no
+text-bearing columns. See `docs/RESULTS_SCHEMA.md` for the full contract.
+
+Hand-copying a number from a notebook cell output into a JSON file breaks the
+guarantee that every published figure traces to a committed artifact, and the
+result is not eligible for the comparison tables.
 
 ## Required metrics
 
@@ -75,9 +131,20 @@ Examples:
 05_WORD-CHAR-TF-IDF_LIN-SVM
 06_FASTTEXT-EMB_LOG-REG
 07_TWITTER-ROBERTA_FINE-TUNE
+11_MULTI-CHECKPOINT_LOGIT-POOL
 ```
 
 For transformer fine-tuning, the representation and classifier are integrated into the same pretrained model, so the technique is named by the transformer family and fine-tuning method.
+
+Three further naming rules are checked by `tools/protocol_check.py`:
+
+* The notebook filename, the `technique_name` in its `CONFIG`, and the
+  `results_summary/` folder name must all agree, including the numeric prefix.
+* The `split_version` string must be the full frozen value
+  `split_v1_stratified_70_15_15_seed30`, not an abbreviation.
+* **A name must not encode a claim.** `08_BEST-ROBERTA_SEED-ENSEMBLE` asserts a
+  superiority its own numbers contradict, and is the standing example of what
+  not to do. Name a technique for what it is, not for how it did.
 
 ## Required output folder
 
@@ -91,6 +158,9 @@ Required and optional files are defined in `docs/RESULTS_SCHEMA.md`.
 
 ## Current controlled techniques
 
+These have complete, schema-valid result folders and appear in the comparison
+tables.
+
 | Technique | Model family | Feature / representation family | Status |
 |---|---|---|---|
 | `01_LOG-REG_TF-IDF` | Logistic Regression | word-level TF-IDF | completed |
@@ -99,7 +169,23 @@ Required and optional files are defined in `docs/RESULTS_SCHEMA.md`.
 | `04_CHAR-TF-IDF_LIN-SVM` | calibrated Linear SVM | character-level TF-IDF | completed |
 | `05_WORD-CHAR-TF-IDF_LIN-SVM` | calibrated Linear SVM | combined word + character TF-IDF | completed |
 | `06_FASTTEXT-EMB_LOG-REG` | Logistic Regression | FastText document embeddings | completed |
-| `07_TWITTER-ROBERTA_FINE-TUNE` | fine-tuned transformer classifier | Twitter-RoBERTa contextual representations | completed |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | fine-tuned transformer classifier | Twitter-RoBERTa contextual representations | completed, current champion |
+
+## Candidate techniques not in the comparison
+
+These exist as notebooks but have no registered result. They are listed so the
+absence is documented rather than silent; their numbers, where any exist, must
+not be mixed into the tables below.
+
+| Technique | Model family | Status | Blocker |
+|---|---|---|---|
+| `08_BEST-ROBERTA_SEED-ENSEMBLE` | seed ensemble of the fine-tuned transformer | ran; test unlock spent | No result folder and no probability export; test metrics live only in cell outputs. Reported test accuracy is below `07`, and the claim-bearing `BEST` should be dropped from the name. |
+| `09_MULTI-CHECKPOINT_LOGIT-STACK` | learned stacker over transformer checkpoints | built; never run | Superseded by `11`, which replaces the learned stacker with an equal-weight mean-log-odds pool. |
+| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | mean-log-odds seed pool | ran; test unlock spent | No preregistration, no ledger entry, no probability export, no result folder. Registering it requires a rerun. |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | heterogeneous checkpoint pool | ran; test unlock spent | Probability artifacts exist but have not been retrieved from the Kaggle output, so the result folder cannot yet be derived. Closest of the four to registration. |
+
+`research_loop/STATE.md` holds the live status; `docs/RESEARCH_LOOP.md`
+describes what registering one of these would take.
 
 ## Current held-out test results
 
@@ -117,6 +203,10 @@ Required and optional files are defined in `docs/RESULTS_SCHEMA.md`.
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
 <!-- RENDERED-TABLE:END id=test-detail -->
 
+
+The table above is rendered from `results_summary/` by `tools/render_tables.py`
+and must not be edited by hand. `tools/render_tables.py --check` exits 1 if any
+document drifts from the artifacts.
 
 ## Reporting rule
 
