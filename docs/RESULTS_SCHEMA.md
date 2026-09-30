@@ -11,16 +11,13 @@ eligible for the comparison tables.
 ## Results are derived, not transcribed
 
 The primary artifact of a run is not a metrics file. It is a probability file,
-and the metrics are computed from it:
-
-```bash
-python3 tools/eval_from_probs.py --technique <TECHNIQUE> --threshold <selected>
-```
-
-This builds the entire `results_summary/<TECHNIQUE>/` folder. Hand-copying a
-number from a notebook cell output into a JSON file is not an acceptable
-substitute: it breaks the guarantee that a published figure can only change when
-a committed artifact changes, and it leaves nothing for a replicator to check.
+and every metric is computed from it with `tools/metrics_core.py`'s
+`compute_binary_metrics`, the same function the notebooks use. Hand-copying a
+number from a notebook cell output into a JSON file is not acceptable: it
+breaks the guarantee that a published figure can only change when a committed
+artifact changes, and it leaves nothing for a replicator to check.
+`tools/validate_results_folder.py --all` recomputes every threshold-dependent
+metric from the stored confusion counts and fails on any disagreement.
 
 ### Probability artifact contract
 
@@ -36,25 +33,63 @@ and asserted at export time by the notebook:
 | `y_prob` | Predicted probability of the positive class, finite and in `[0, 1]`. |
 
 Exactly these four columns, and no others. Any text-bearing column is a leakage
-failure, not a formatting problem — the artifact is committed, and the dataset
-text is not meant to travel with it.
+failure, not a formatting problem. An accompanying `<TECHNIQUE>__meta.json`
+records the run's selected threshold and provenance.
 
-An accompanying `<TECHNIQUE>__meta.json` records the run's selected threshold
-and provenance. The threshold is read from there rather than re-derived, because
-`eval_from_probs.py` deliberately will not select one.
+`tools/identity_fpr.py` (RQ4) reads these artifacts; a technique without one
+cannot appear in the identity false-positive table.
+
+### Attribution artifact contract
+
+The explainability research questions run on a second committed artifact: the
+word-level aggregate of a SHAP run. It lives at
+`results_summary/<TECHNIQUE>/attributions/<run_id>.csv` with a sidecar
+`<run_id>.json`, enforced by `tools/attributions.py`:
+
+| Column | Meaning |
+|---|---|
+| `word` | A single word (no whitespace). Subword pieces are aggregated to words in the notebook before export. |
+| `mean_abs_attribution` | Mean absolute SHAP value over the explained posts that contain the word. |
+| `mean_attribution` | Mean signed SHAP value toward `EXTREMIST` over those same posts. |
+| `support` | Number of explained posts containing the word. |
+
+Exactly these four columns. Means are over posts *containing* the word, never
+over all posts: for a linear model the attribution of an absent feature has
+the opposite sign to its coefficient, so an all-post mean would cancel. Any
+per-post column (`row_id`, `text`, `position`, ...) is refused.
+
+The sidecar must declare `technique`, `run_id`, `split`, `explainer`,
+`background_size`, `seed`, `aggregation` (always `word`), `n_posts_explained`,
+and `member` (`null` for a whole model or whole ensemble; the member id for one
+ensemble member). A technique may have several runs: different seeds or
+background sets feed the stability check, and per-member runs feed the
+ensemble comparison.
+
+Logistic-regression techniques also commit `attributions/coefficients.csv`
+(`word, coefficient`) so `tools/validate_shap.py` can confirm the pipeline
+recovers the coefficients before any cross-model claim is made.
+
+### Derived RQ files
+
+| File | Written by | Contents |
+|---|---|---|
+| `attributions/<run_id>__categorized.csv` | `categorize_attributions.py` | Top-K words with `category` (`slur`, `extremist_framing`, `identity_term`, `topical`) and every matched category. |
+| `attributions/<run_id>__category_shares.csv` | `categorize_attributions.py` | Share of words, absolute mass, and positive mass per category. |
+| `attributions/<run_id>__coefficient_check.json` | `validate_shap.py` | Spearman and sign-agreement statistics against the coefficients. |
+| `identity_fpr_<split>.json`, `identity_fpr_terms_<split>.csv` | `identity_fpr.py` | False-positive rate on non-extremist posts with vs without identity terms; per-term counts. No text. |
+| `run_manifest.json` | `run_manifest.py` | Kaggle notebook version, git commit, hashes of committed files, and the location and hash of every external asset. |
+
+Cross-technique tables live in `results_summary/rq/`, one per research
+question, and are the inputs to the rendered documentation tables.
 
 ### Provenance fields
 
-Where a result folder cannot be derived — for example because the notebook
-predates the probability-export cell — it must say so explicitly:
+Where a result folder cannot be derived, it must say so explicitly:
 
 | Field | Meaning |
 |---|---|
 | `provenance` | How the numbers were obtained, e.g. `derived_from_probs` or `notebook_cell_outputs`. |
-| `recomputable` | `true` only if `eval_from_probs.py` can rebuild the folder from a committed artifact. |
-
-A folder marked `recomputable: false` is a documented exception, not a normal
-state, and should carry a note about what it would take to fix.
+| `recomputable` | `true` only if the folder can be rebuilt from a committed artifact. |
 
 ## Folder layout
 
@@ -88,7 +123,7 @@ results_summary/07_TWITTER-ROBERTA_FINE-TUNE/
 └── threshold_sweep_validation.csv
 ```
 
-Some model families may include additional metadata files, plots, or interpretability summaries when useful. Raw predictions, local attribution files containing raw text, and large model artifacts should not be committed to normal Git unless intentionally sanitized or stored with Git LFS/releases/external storage.
+Some model families may include additional metadata files or plots when useful. Raw predictions, per-post attribution files, and model weights are never committed; they go to external storage and are recorded in `run_manifest.json`.
 
 ## Required compact files
 
@@ -139,14 +174,9 @@ Required or recommended fields:
 
 Stores final locked metrics on the held-out test split. This file should not be generated until the model configuration and threshold have been selected.
 
-Its presence means a test unlock was spent. That unlock is once-per-technique,
-is recorded in `research_loop/test_ledger.jsonl`, and raises the
-multiple-comparison bar for every later candidate. See `docs/RESEARCH_LOOP.md`.
-
 `tools/render_tables.py` skips any technique folder lacking this file, so a
-technique whose test split has not been unlocked simply does not appear in the
-comparison tables — which is the correct behaviour, not an omission to work
-around.
+technique that has not been evaluated on test simply does not appear in the
+comparison tables.
 
 ### `confusion_matrix_test.csv` or `confusion_matrix_test.png`
 
@@ -170,8 +200,8 @@ Stores class-level precision, recall, F1, and support from the final test evalua
 
 Stores the validation results of compared configurations.
 
-This is the one required file `eval_from_probs.py` cannot derive — the
-probability artifact records the selected configuration's outputs, not the
+This is the one required file that cannot be derived from the probability
+artifact, which records the selected configuration's outputs, not the
 alternatives it beat. It must be supplied from the run's own configuration
 comparison.
 
@@ -195,27 +225,21 @@ Stores validation-set threshold comparisons. This file is optional for classical
 
 ## Interpretability artifacts
 
-Interpretability files are optional but encouraged for the XAI focus of this repository.
+Word-level attribution runs (above) are the committed interpretability
+artifact and are required for every technique that takes part in RQ2-RQ4.
 
-Safe-to-commit summary files include:
-
-```text
-interpretability/global_token_attribution_summary.csv
-interpretability/top_positive_tokens_by_gradient.csv
-interpretability/top_negative_tokens_by_gradient.csv
-```
-
-Use caution with local explanation files because they may contain raw text:
+Per-post files carry dataset text and are never committed:
 
 ```text
-interpretability/local_token_attribution_explanations.csv
-interpretability/local_token_attributions_long.csv
+local_token_attribution_explanations.csv
+local_token_attributions_long.csv
 error_analysis/manual_review_queue_test.csv
 predictions_test.csv
 predictions_validation.csv
 ```
 
-These should only be committed if sanitized or if the dataset text is intended to be public in that form.
+They go to external storage, recorded in `run_manifest.json` with
+`contains_text: true`.
 
 ## Foundation folder
 
@@ -236,8 +260,8 @@ Expected files:
 
 ## Rendered documentation tables
 
-Result tables in `README.md`, `docs/EXPERIMENTS.md`, `docs/MODEL_CARD.md`, and
-`results_summary/README.md` are generated from these files, not written by hand.
+Result tables in `README.md` and `results_summary/README.md` are generated from
+these files, not written by hand.
 Each lives inside a pair of HTML comments carrying a `BEGIN`/`END` marker and a
 table id, which survive Markdown rendering invisibly. The exact marker syntax is
 given in the docstring of `tools/render_tables.py`; it is not reproduced here
@@ -248,13 +272,15 @@ Everything between a region's markers is rewritten wholesale by
 clobbered. `--check` exits 1 if any document has drifted from the artifacts, and
 also if a document contains an unpaired marker.
 
-Three table ids are defined:
+Five table ids are defined:
 
 | Table id | Contents |
 |---|---|
-| `main-comparison` | Validation accuracy, test accuracy, balanced accuracy, macro F1, ROC-AUC. |
+| `main-comparison` | RQ1: validation accuracy, test accuracy, balanced accuracy, macro F1, ROC-AUC. |
 | `test-detail` | Test accuracy, positive-class F1 / precision / recall, ROC-AUC, PR-AUC, threshold. |
 | `confusion-test` | Test confusion-matrix counts and error rates. |
+| `rq2-category-shares` | RQ2: share of positive attribution mass per lexicon category, per technique. |
+| `rq4-identity-fpr` | RQ4: false-positive rate on non-extremist test posts with vs without identity terms. |
 
 Adding a technique to the documentation therefore means adding its result
 folder, not editing a table.

@@ -33,21 +33,12 @@ labels and 1420 split assignments**. Anyone replicating against it would have
 gotten results that could not match the reported ones, with nothing obviously
 wrong to point at.
 
-Verify the mirror before trusting anything downstream:
-
-```bash
-python3 tools/protocol_check.py --all
-```
-
-The first invariant reported is `Split mirror matches the frozen assignment`. If
-it fails:
-
-```bash
-python3 tools/repair_split_mirror.py
-```
-
-That tool refuses to write unless its reconstruction reproduces
-`results_summary/foundation/` exactly. **Repairing the mirror is not
+Verify the mirror before trusting anything downstream: the toolkit's test
+suite (`python3 -m pytest tools/tests/ -q`) reconstructs the assignment from
+`data/dataset.csv` and checks it against `results_summary/foundation/`. If the
+committed mirror ever drifts again, `legacy_tools/repair_split_mirror.py`
+rewrites it, and refuses to unless its reconstruction reproduces the
+foundation counts exactly. **Repairing the mirror is not
 regenerating the split** — the assignment itself is unchanged; only the
 committed copy of it is corrected. Regenerating the assignment would invalidate
 every result in the repository at once.
