@@ -24,18 +24,19 @@ be regenerated.
 
 ## Candidate notebooks
 
-These explore transformer ensembling. Only `11` has a registered result; see
-`research_loop/STATE.md` for live status.
+These explore transformer ensembling. Only `11` has a result folder.
 
 | Notebook | Purpose | State |
 |---|---|---|
 | `08_BEST-ROBERTA_SEED-ENSEMBLE.ipynb` | Probability-averaged seed ensemble of the fine-tuned transformer. | Ran; regressed against `07`. No result folder, no probability export. Should be renamed `08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb` — the `BEST` is a claim its own numbers contradict. |
 | `09_MULTI-CHECKPOINT_LOGIT-STACK.ipynb` | Learned stacker over several transformer checkpoints. | Built; never run. Superseded by `11`. |
-| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE.ipynb` | Mean-log-odds seed pooling with exact probability-change threshold intervals. | Ran; spent a test unlock but left no derivable artifact. |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb` | Mean-log-odds pooling over the admitted subset of five checkpoints spanning fine-tuning lineage, pretraining corpus, architecture/tokenizer, and scale. | Ran; 409/450 on test. **Registered** — its probability artifacts were derived into `results_summary/`, so it appears in the comparison tables. The reference implementation for the conventions below; its saved outputs contain no dataset text. |
+| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE.ipynb` | Mean-log-odds seed pooling with exact probability-change threshold intervals. | Ran; evaluated test but left no derivable artifact. |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb` | Mean-log-odds pooling over the admitted subset of five checkpoints spanning fine-tuning lineage, pretraining corpus, architecture/tokenizer, and scale. | Ran; 409/450 on test. Its probability artifacts are committed and its result folder is derived from them, so it appears in the comparison tables. Closest template for the conventions below. |
 
 ## Notebook conventions
 
+Notebooks are committed **with** their cell outputs so a reader can follow
+each one like a chapter. That makes what a cell prints a publication decision.
 Each model notebook should:
 
 * State the technique name near the top, and set `CONFIG["technique_name"]` to
@@ -44,21 +45,27 @@ Each model notebook should:
   `split_v1_stratified_70_15_15_seed30`, not an abbreviation.
 * Load the fixed split assignments from `splits/split_assignments.csv`, and hard-assert
   that the loaded split sizes and label counts match the frozen assignment.
-* Avoid using the test split for model or threshold selection.
-* Select thresholds using validation data only.
+* Select thresholds using validation data only; never use the test split for
+  model or threshold selection.
+* **Never print, display, or plot dataset text, row ids, or text hashes.**
+  Show counts, metrics, configs, and word-level tables instead. Keep
+  `include_text_preview` false. `tools/scan_text_leakage.py` fails on any
+  committed output that contains a post.
 * Export a sanitized probability artifact (`row_id`, `split`, `y_true`,
-  `y_prob`, and nothing else) so `tools/eval_from_probs.py` can derive the
-  result folder. Do not hand-copy metrics.
-* Save the best configuration used for the final test run.
+  `y_prob`, nothing else) per split.
+* Export a word-level attribution artifact (`word`, `mean_abs_attribution`,
+  `mean_attribution`, `support`) with its sidecar meta, using or mirroring
+  `tools/attributions.py::write_run`. Aggregate subwords to words first; take
+  means over posts containing the word. Logistic-regression notebooks also
+  export `coefficients.csv`.
+* Write the result folder files listed in `docs/RESULTS_SCHEMA.md`, computing
+  every metric with the shared `compute_binary_metrics`.
+* Record where weights, logs, and per-post files were stored, so the run
+  manifest can be filled in.
 * Include a short interpretation of false positives, false negatives, and limitations.
-* **Carry no saved cell outputs when committed.** Outputs in these notebooks
-  contain dataset text and row ids, which is why `tools/scan_text_leakage.py`
-  currently fails on notebooks `00`–`08` and `10`.
-* Avoid committing raw prediction files or large model artifacts unless they are intentionally tracked outside normal Git.
 
-`tools/protocol_check.py --all` checks the first three and the outputs rule.
-Notebook `11` is the only notebook that currently satisfies all of them, and is
-the best template to copy from.
+Notebook `11` is the closest existing template; it still prints row ids in
+places and should be brought in line with the text rule before it is rerun.
 
 Never encode a claim in a notebook name. Name the technique for what it is, not
 for how well it did.
@@ -83,8 +90,8 @@ Notebook numbering should reflect the intended execution order.
 ```
 
 Numbers `08` and above are candidate experiments. A number is never reused, even
-when a notebook is superseded, so that the ledger and the preregistrations keep
-pointing at the same thing they always did.
+when a notebook is superseded, so that result folders, artifacts, and the
+records in `research_loop/` keep pointing at the same thing they always did.
 
 Newer notebooks use the pattern:
 

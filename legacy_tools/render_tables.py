@@ -30,19 +30,11 @@ main-comparison   technique, validation accuracy, test accuracy, test
 test-detail       held-out test metrics: accuracy, positive-class F1 /
                   precision / recall, ROC-AUC, PR-AUC, threshold
 confusion-test    test confusion-matrix counts and error rates
-rq2-category-shares
-                  per technique, share of positive attribution mass carried
-                  by each lexicon category (slur, extremist framing, identity
-                  term, topical) for whole-model runs, averaged across runs;
-                  read from results_summary/<T>/attributions/*__category_shares.csv
-rq4-identity-fpr  per technique, false-positive rate on non-extremist test
-                  posts with vs without identity terms, from
-                  results_summary/<T>/identity_fpr_test.json
 
 Techniques come from repo_paths.technique_dirs(), sorted by id. A technique
-folder without metrics_test.json is skipped from the metric tables with a
-warning rather than rendered blank; a technique without attribution or
-identity-FPR outputs is simply absent from the RQ2/RQ4 tables.
+folder without metrics_test.json (test not yet unlocked) is skipped with a
+warning rather than rendered blank, so tables only ever show completed,
+comparable techniques.
 
 USAGE
 -----
@@ -55,12 +47,8 @@ import difflib
 import json
 import re
 import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import repo_paths
-from attributions import list_runs, read_meta
 
 METRIC_DECIMALS = 4
 
@@ -174,89 +162,10 @@ def render_confusion_test(rows):
     return "\n".join(lines)
 
 
-def load_category_shares():
-    """Per technique, mean share of positive mass per category over whole-model runs."""
-    rows = []
-    for tech_dir in repo_paths.technique_dirs():
-        shares = []
-        for run_id in list_runs(tech_dir.name):
-            meta = read_meta(tech_dir.name, run_id)
-            if meta.get("member") not in (None, ""):
-                continue
-            path = tech_dir / repo_paths.ATTRIBUTIONS_SUBDIR / f"{run_id}__category_shares.csv"
-            if not path.is_file():
-                continue
-            with open(path, encoding="utf-8") as f:
-                header = f.readline().strip().split(",")
-                for line in f:
-                    record = dict(zip(header, line.strip().split(",")))
-                    shares.append((record["category"], float(record["share_of_positive_mass"])))
-        if not shares:
-            continue
-        n_runs = len(shares) // len(repo_paths.CATEGORIES)
-        means = {}
-        for category in repo_paths.CATEGORIES:
-            values = [s for c, s in shares if c == category]
-            means[category] = sum(values) / len(values) if values else 0.0
-        rows.append((tech_dir.name, n_runs, means))
-    return rows
-
-
-def render_rq2_category_shares(_rows):
-    data = load_category_shares()
-    lines = [
-        "| Technique | Runs | Slur | Extremist framing | Identity term | Topical |",
-        "|---|---:|---:|---:|---:|---:|",
-    ]
-    for tech, n_runs, means in data:
-        lines.append(
-            f"| `{tech}` | {n_runs} | {fmt(means['slur'])} | {fmt(means['extremist_framing'])} "
-            f"| {fmt(means['identity_term'])} | {fmt(means['topical'])} |"
-        )
-    if not data:
-        lines.append("| _no attribution runs categorized yet_ | | | | | |")
-    return "\n".join(lines)
-
-
-def load_identity_fpr():
-    rows = []
-    for tech_dir in repo_paths.technique_dirs():
-        path = tech_dir / repo_paths.IDENTITY_FPR_FILENAME.format(split="test")
-        if path.is_file():
-            with open(path, encoding="utf-8") as f:
-                rows.append((tech_dir.name, json.load(f)))
-    return rows
-
-
-def _fmt_or_dash(value):
-    return "—" if value is None else fmt(value)
-
-
-def render_rq4_identity_fpr(_rows):
-    data = load_identity_fpr()
-    lines = [
-        "| Technique | Non-extremist posts with identity terms | FPR with identity terms "
-        "| FPR without | Ratio | Fisher p |",
-        "|---|---:|---:|---:|---:|---:|",
-    ]
-    for tech, s in data:
-        lines.append(
-            f"| `{tech}` | {s['n_negative_with_identity_terms']} "
-            f"| {_fmt_or_dash(s['fpr_with_identity_terms'])} "
-            f"| {_fmt_or_dash(s['fpr_without_identity_terms'])} "
-            f"| {_fmt_or_dash(s['fpr_ratio'])} | {_fmt_or_dash(s['fisher_p_value'])} |"
-        )
-    if not data:
-        lines.append("| _identity_fpr.py has not been run_ | | | | | |")
-    return "\n".join(lines)
-
-
 TABLE_RENDERERS = {
     "main-comparison": render_main_comparison,
     "test-detail": render_test_detail,
     "confusion-test": render_confusion_test,
-    "rq2-category-shares": render_rq2_category_shares,
-    "rq4-identity-fpr": render_rq4_identity_fpr,
 }
 
 

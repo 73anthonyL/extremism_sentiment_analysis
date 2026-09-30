@@ -19,7 +19,7 @@ This is an active research repository maintained by the project authors. The cur
 * Twitter-RoBERTa transformer fine-tuning.
 * Heterogeneous multi-checkpoint logit-pooled transformer ensemble.
 
-Three further transformer-ensemble notebooks (`08`, `09`, `10`) exist but are **not** part of the controlled comparison. Two ran and reported test numbers without leaving a derivable result folder; one was never run. The section [Transformer ensemble work in progress](#transformer-ensemble-work-in-progress) records where each one stands and why its numbers appear in no results table.
+Three further transformer-ensemble notebooks (`08`, `09`, `10`) exist but are **not** part of the controlled comparison. Two ran and reported test numbers without leaving a derivable result folder; one was never run. The section [Transformer ensemble work in progress](#transformer-ensemble-work-in-progress) records where each one stands.
 
 The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster around a similar performance range, while contextual transformer models provide the strongest registered held-out test results — the single fine-tuned Twitter-RoBERTa run, and above it a logit-pooled ensemble of heterogeneous checkpoints. This supports the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
 
@@ -77,40 +77,26 @@ extremism_sentiment_analysis/
 │   ├── 06_FASTTEXT-EMB_LOG-REG/
 │   ├── 07_TWITTER-ROBERTA_FINE-TUNE/
 │   └── 11_MULTI-CHECKPOINT_LOGIT-POOL/
-├── research_loop/
-│   ├── STATE.md                  # current cycle, stage, and blockers
-│   ├── registry.json             # current champion
-│   ├── prereg/                   # per-cycle preregistrations
-│   ├── probs/                    # sanitized probability artifacts
-│   ├── decisions/                # adjudicated cycle verdicts
-│   ├── cycles/                   # per-cycle working notes
-│   ├── val_log.jsonl             # declared validation looks
-│   └── test_ledger.jsonl         # hash-chained test-unlock record
+├── research_loop/            # experiment records: probability artifacts, registry, preregistrations
+│   └── probs/                # sanitized probability artifacts (row_id, split, y_true, y_prob)
 ├── tools/
-│   ├── eval_from_probs.py        # derives a result folder from probabilities
-│   ├── compare_techniques.py     # the only thing that issues a verdict
-│   ├── render_tables.py          # regenerates every doc results table
-│   ├── protocol_check.py         # invariant checks
+│   ├── attributions.py           # word-level SHAP artifact contract
+│   ├── validate_shap.py          # pipeline check against logistic-regression coefficients
+│   ├── categorize_attributions.py  # RQ2: slur / framing / identity / topical shares
+│   ├── compare_reliance.py       # RQ3: pretraining and ensembling vs reliance; stability
+│   ├── identity_fpr.py           # RQ4: false positives on posts with identity terms
+│   ├── run_manifest.py           # reconciles committed files with external assets
 │   ├── validate_results_folder.py
-│   ├── scan_text_leakage.py
-│   ├── ledger.py
-│   ├── repair_split_mirror.py
+│   ├── render_tables.py          # regenerates every doc results table
+│   ├── scan_text_leakage.py      # dataset text in committed files
 │   └── tests/                    # the toolkit's own pytest suite
+├── legacy_tools/             # archived adjudication toolkit (ledger, judge); reference only
 ├── splits/
 │   ├── split_assignments.csv
 │   └── split_assignments.PRE-REPAIR.csv
 ├── docs/
-│   ├── README.md
-│   ├── DATA_CARD.md
-│   ├── EXPERIMENTS.md
-│   ├── MODEL_CARD.md
-│   ├── RESEARCH_LOOP.md
-│   ├── RESPONSIBLE_USE.md
-│   ├── RESULTS_SCHEMA.md
-│   ├── REPLICATION_GUIDE.md
-│   ├── COMPETITION.md
-│   └── RELEASE_CHECKLIST.md
-├── CHANGELOG.md
+│   └── RESULTS_SCHEMA.md
+├── CLAUDE.md
 ├── CITATION.cff
 ├── LICENSE
 ├── README.md
@@ -119,49 +105,51 @@ extremism_sentiment_analysis/
 └── requirements-dev.txt
 ```
 
-The `docs/` files support research transparency and replication:
-
-| File | Purpose |
-|---|---|
-| `docs/DATA_CARD.md` | Dataset construction, labels, intended use, and caveats. |
-| `docs/EXPERIMENTS.md` | Standard experiment protocol and comparison rules. |
-| `docs/MODEL_CARD.md` | Model families, metrics, risks, and evaluation notes. |
-| `docs/RESEARCH_LOOP.md` | How a candidate technique moves from hypothesis to registered result, and what `research_loop/` stores. |
-| `docs/RESPONSIBLE_USE.md` | Safety, misuse, and deployment limitations. |
-| `docs/RESULTS_SCHEMA.md` | Expected result files and metric fields for each experiment folder. |
-| `docs/REPLICATION_GUIDE.md` | Step-by-step workflow for reproducing the experiments. |
-| `docs/COMPETITION.md` | Kaggle competition context and how competition results relate to this repository. |
-| `docs/RELEASE_CHECKLIST.md` | Pre-release checklist before public result updates or manuscript-aligned releases. |
+`docs/RESULTS_SCHEMA.md` defines every committed artifact: result folders,
+probability artifacts, word-level attribution artifacts, the RQ outputs, and
+the run manifest. `data/lexicons/README.md` describes the word lists the RQ2
+and RQ4 tools use.
 
 ## The verification layer
 
 Results in this repository are derived and checked by tooling rather than
 transcribed by hand. Two rules follow from that, and they are enforced:
 
-* **Results are derived, not transcribed.** `tools/eval_from_probs.py` builds a
-  whole `results_summary/<TECHNIQUE>/` folder from a committed probability
-  artifact. No number should be hand-copied out of a notebook into a JSON file.
+* **Results are derived, not transcribed.** Every metric is computed from a
+  committed probability artifact with the same function the notebooks use.
+  `tools/validate_results_folder.py` recomputes each threshold-dependent
+  metric from the stored confusion counts and fails on any disagreement.
 * **Doc tables are rendered, not edited.** `tools/render_tables.py --write`
-  regenerates every results table in this README and in `docs/` from
-  `results_summary/`. The tables live inside paired HTML-comment markers and are
-  rewritten wholesale; hand edits inside a region are clobbered. The marker
-  syntax is documented in the tool's own docstring — it deliberately is not
-  reproduced in the documents it scans.
+  regenerates every results table in this README and in
+  `results_summary/README.md` from the committed artifacts. The tables live
+  inside paired HTML-comment markers and are rewritten wholesale; hand edits
+  inside a region are clobbered.
 
 ```bash
-python3 tools/protocol_check.py --all           # protocol invariants
 python3 tools/validate_results_folder.py --all  # schema + internal consistency
 python3 tools/render_tables.py --check          # documentation drift
 python3 tools/scan_text_leakage.py              # dataset text in committed files
-python3 tools/ledger.py verify                  # test-evaluation chain
+python3 tools/run_manifest.py check --all       # committed vs external assets
 python3 -m pytest tools/tests/ -q               # the toolkit's own tests
 ```
 
-`protocol_check.py` and `scan_text_leakage.py` currently report pre-existing
-failures on notebooks `00`–`08` and `10`: those notebooks carry saved cell
-outputs containing dataset text, and most declare an abbreviated
-`split_version` string. This is a known cleanup backlog, tracked in
-`research_loop/STATE.md`, not a defect in the checks.
+The explainability tools run on committed word-level attribution artifacts
+(see `docs/RESULTS_SCHEMA.md`):
+
+```bash
+python3 tools/validate_shap.py --technique 01_LOG-REG_TF-IDF   # pipeline check first
+python3 tools/categorize_attributions.py --all                  # RQ2
+python3 tools/compare_reliance.py                               # RQ3
+python3 tools/identity_fpr.py --all                              # RQ4
+```
+
+`scan_text_leakage.py` currently fails on notebooks `00`-`08` and `10`: their
+saved cell outputs contain dataset text. Notebooks are committed with outputs
+on purpose, so each of these must be re-run with text printing disabled.
+
+The earlier champion-promotion toolkit (hash-chained test ledger, McNemar
+judge, protocol audit) is archived in `legacy_tools/` for reference. Its
+records in `research_loop/` are kept as data.
 
 ## Dataset and fixed splits
 
@@ -241,9 +229,41 @@ Current ranking by held-out test PR-AUC:
 7. `06_FASTTEXT-EMB_LOG-REG` — PR-AUC 0.8763, ROC-AUC 0.9033, positive F1 0.7722.
 8. `04_CHAR-TF-IDF_LIN-SVM` — PR-AUC 0.8745, ROC-AUC 0.9028, positive F1 0.7875.
 
-A ranking is not a significance test. `11_MULTI-CHECKPOINT_LOGIT-POOL` leads on every column, but no verdict has been issued for it — see below.
+A ranking is not a significance test. On a 450-row test split, roughly 14 rows of difference are needed for McNemar significance, and most gaps above are smaller. Accuracy is RQ1 and is kept brief; the contribution is the attribution comparison below.
 
 These are baseline research metrics. They should not be interpreted as deployment readiness.
+
+## Explainability results
+
+The paper's contribution is an attribution comparison across the model
+spectrum. The tables below are rendered from committed artifacts by
+`tools/render_tables.py`; a technique appears once it has the corresponding
+artifact.
+
+RQ2, share of positive attribution mass by lexicon category (top-50 words,
+whole-model runs averaged):
+
+<!-- RENDERED-TABLE:BEGIN id=rq2-category-shares -->
+| Technique | Runs | Slur | Extremist framing | Identity term | Topical |
+|---|---:|---:|---:|---:|---:|
+| _no attribution runs categorized yet_ | | | | | |
+
+Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
+<!-- RENDERED-TABLE:END id=rq2-category-shares -->
+
+RQ4, false-positive rate on non-extremist test posts with vs without identity
+terms:
+
+<!-- RENDERED-TABLE:BEGIN id=rq4-identity-fpr -->
+| Technique | Non-extremist posts with identity terms | FPR with identity terms | FPR without | Ratio | Fisher p |
+|---|---:|---:|---:|---:|---:|
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 67 | 0.1194 | 0.0282 | 4.2388 | 0.0064 |
+
+Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
+<!-- RENDERED-TABLE:END id=rq4-identity-fpr -->
+
+RQ3 comparisons live in `results_summary/rq/rq3_reliance_comparison.csv` and
+`rq3_stability.csv` once at least two attribution runs per technique exist.
 
 ## Transformer ensemble work in progress
 
@@ -253,8 +273,8 @@ Notebooks `08`–`11` explore whether ensembling contextual transformers improve
 |---|---|---|
 | `08_BEST-ROBERTA_SEED-ENSEMBLE` | ran on Kaggle | Not registered. No result folder and no probability export; its test metrics exist only in saved cell outputs. Its own reported test accuracy (0.8778) is *below* the champion, so the `BEST` in its filename is a claim its numbers contradict — the file should be renamed `08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb`. |
 | `09_MULTI-CHECKPOINT_LOGIT-STACK` | built, never run | Superseded by notebook `11`, which keeps the multi-checkpoint idea but replaces the learned logit stacker with notebook `10`'s equal-weight mean-log-odds pool. |
-| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | ran on Kaggle | Not registered. Evaluated the test split — so it spent a test unlock — but has no preregistration, no ledger entry, and no probability-export cell, so its folder cannot be derived without a rerun. |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | ran on Kaggle | **Registered.** Its probability artifacts were derived through `tools/eval_from_probs.py` into `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/`, so it appears in the tables above. Not yet adjudicated — see below. |
+| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | ran on Kaggle | No result folder. Evaluated the test split but has no probability-export cell, so its folder cannot be derived without a rerun. |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | ran on Kaggle | **Has a result folder**, derived from its committed probability artifacts, so it appears in the tables above. |
 
 ### About the highest accuracy figures
 
@@ -271,9 +291,9 @@ The way it got there is worth as much as the number. Its validation gate passed 
 Two caveats still apply, and they are the difference between a strong measurement and an established improvement:
 
 1. **The margin is below the detection floor.** Notebook `11` leads the champion by 9 test rows. Roughly 14 are needed for a McNemar-detectable difference on a 450-row split, before Holm correction over a family that has now consumed ten test unlocks. It may well come back `INCONCLUSIVE`.
-2. **No verdict has been issued.** Only `tools/compare_techniques.py` may adjudicate a candidate against the champion, and it has not been run. `07_TWITTER-ROBERTA_FINE-TUNE` therefore remains the champion in `research_loop/registry.json`, and notebook `11` has no preregistration or ledger entry yet.
+2. **No adjudication was run.** The champion pointer in `research_loop/registry.json` still names `07_TWITTER-ROBERTA_FINE-TUNE`; the judge that would move it is archived in `legacy_tools/`.
 
-So notebook `11` is a real, derived, schema-valid result that leads on every metric — and it is not yet a promotion. `research_loop/STATE.md` lists the remaining steps.
+So notebook `11` is a real, derived, schema-valid result that leads on every metric. What matters for the paper is what it relies on, which the explainability tools measure.
 
 ## Reproducibility workflow
 
@@ -390,8 +410,8 @@ To keep the model comparison research-grade:
 * Report accuracy, positive-class precision, positive-class recall, positive-class F1, ROC-AUC, PR-AUC, and confusion-matrix counts.
 * Save the best configuration, validation metrics, test metrics, and confusion matrix for each technique.
 * Treat preprocessing changes, external pretraining, and task-specific transfer learning as part of the experimental condition.
-* Unlock the test split once per technique, ever, and record it in `research_loop/test_ledger.jsonl`. Each unlock raises the Holm correction every later candidate must clear.
-* Let `tools/compare_techniques.py` issue the verdict. Do not describe a technique as better than another without one.
+* Evaluate the test split once per technique. Do not describe a technique as better than another on a gap below the McNemar detection floor.
+* Export a word-level attribution artifact for every technique so it can take part in RQ2-RQ4.
 
 ## Interpretability
 
@@ -417,12 +437,11 @@ Interpretability artifacts should be used to inspect model behavior and guide er
 When adding or rerunning a model notebook:
 
 1. Keep the fixed split protocol unchanged unless a new split version is explicitly introduced. Never regenerate the split *assignment*.
-2. Export a sanitized probability artifact (`row_id`, `split`, `y_true`, `y_prob`) and derive the result folder with `tools/eval_from_probs.py`. Do not hand-copy metrics into JSON.
-3. Save only compact result artifacts to `results_summary/`.
-4. Avoid committing large model artifacts, raw-text predictions, local explanation files containing raw text, or notebooks with saved cell outputs.
+2. Export a sanitized probability artifact (`row_id`, `split`, `y_true`, `y_prob`) and a word-level attribution artifact (`word`, `mean_abs_attribution`, `mean_attribution`, `support`). Do not hand-copy metrics into JSON.
+3. Save only compact result artifacts to `results_summary/`. Weights, logs, and per-post files go to external storage and are recorded with `tools/run_manifest.py`.
+4. Never print dataset text, row ids, or text hashes in a notebook cell: outputs are committed so readers can follow the notebook, and `tools/scan_text_leakage.py` fails the commit otherwise.
 5. Regenerate the documentation tables with `tools/render_tables.py --write` rather than editing them, then confirm `--check` exits 0.
-6. Update the prose in `README.md`, `docs/EXPERIMENTS.md`, `docs/MODEL_CARD.md`, `docs/RESULTS_SCHEMA.md`, `docs/REPLICATION_GUIDE.md`, `notebooks/README.md`, and `results_summary/README.md` when a new technique becomes part of the controlled comparison.
-7. Record the outcome in `research_loop/` — see `docs/RESEARCH_LOOP.md`. The test split is unlocked once per technique, ever, and every unlock raises the Holm correction that future candidates must clear.
+6. Update the prose in `README.md`, `docs/RESULTS_SCHEMA.md`, `notebooks/README.md`, and `results_summary/README.md` when a new technique joins the comparison.
 
 ## Citation
 

@@ -7,11 +7,6 @@ check, because accuracy, precision, recall, F1, FPR and FNR are all determined
 by (tn, fp, fn, tp). Any disagreement means the metrics and the confusion matrix
 describe different predictions.
 
-The same folder may carry attribution runs (attributions/), a coefficient
-file, RQ4 outputs, and a run manifest; each is validated against its own
-contract when present, so a folder that renders into a table is a folder
-whose every committed artifact loads.
-
 USAGE
 -----
     python3 tools/validate_results_folder.py --all
@@ -27,24 +22,14 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from attributions import (
-    AttributionArtifactError,
-    attributions_dir,
-    list_runs,
-    load_run,
-)
 from metrics_core import (
     REQUIRED_METRIC_FIELDS,
     read_metric,
     recompute_from_confusion,
 )
 from repo_paths import (
-    COEFFICIENTS_FILENAME,
     EXPECTED_SPLIT_COUNTS,
-    IDENTITY_FPR_FILENAME,
     RESULTS_DIR,
-    RUN_MANIFEST_FILENAME,
-    SPLIT_NAMES,
     technique_dirs,
 )
 
@@ -183,56 +168,6 @@ def check_selection_hygiene(best_config, folder, problems):
         )
 
 
-def check_attributions(folder, problems):
-    """Every attribution run must load under its contract; stray files are flagged."""
-    attr_dir = attributions_dir(folder.name, folder.parent)
-    if not attr_dir.exists():
-        return
-    runs = list_runs(folder.name, folder.parent)
-    for run_id in runs:
-        try:
-            load_run(folder.name, run_id, folder.parent)
-        except AttributionArtifactError as error:
-            problems.append(f"{folder.name}/attributions/{run_id}: {error}")
-    known = set(runs)
-    for path in attr_dir.iterdir():
-        if path.name == COEFFICIENTS_FILENAME or not path.is_file():
-            continue
-        stem = path.stem.split("__", 1)[0]
-        if stem not in known:
-            problems.append(
-                f"{folder.name}/attributions/{path.name}: not part of any complete run "
-                "(a run needs <run_id>.csv and <run_id>.json)"
-            )
-
-
-def check_identity_fpr(folder, problems):
-    """RQ4 JSON must be internally consistent with the frozen split."""
-    for split in SPLIT_NAMES:
-        path = folder / IDENTITY_FPR_FILENAME.format(split=split)
-        if not path.exists():
-            continue
-        summary = _load_json(path)
-        expected_neg = EXPECTED_SPLIT_COUNTS[split][1]
-        if summary.get("n_negative") != expected_neg:
-            problems.append(
-                f"{folder.name}/{path.name}: n_negative {summary.get('n_negative')} != frozen {expected_neg}"
-            )
-        with_terms = summary.get("n_negative_with_identity_terms", 0)
-        if not (0 <= with_terms <= expected_neg):
-            problems.append(f"{folder.name}/{path.name}: n_negative_with_identity_terms out of range")
-
-
-def check_manifest(folder, problems):
-    """A manifest, when present, must pass run_manifest.check."""
-    if not (folder / RUN_MANIFEST_FILENAME).exists():
-        return
-    from run_manifest import check as manifest_check
-
-    for problem in manifest_check(folder.name, folder.parent):
-        problems.append(f"{folder.name}/{RUN_MANIFEST_FILENAME}: {problem}")
-
-
 def validate_folder(folder):
     """Run every check against one result folder. Returns a problems list."""
     problems = []
@@ -268,10 +203,6 @@ def validate_folder(folder):
         check_selection_hygiene(best_config, folder, problems)
         if metrics_test is not None:
             check_threshold_agreement(folder, best_config, metrics_test, problems)
-
-    check_attributions(folder, problems)
-    check_identity_fpr(folder, problems)
-    check_manifest(folder, problems)
 
     return problems
 

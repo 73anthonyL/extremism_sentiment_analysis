@@ -9,6 +9,7 @@ The goal is to make the repository reviewable without requiring readers to re-ru
 ```text
 results_summary/
 ├── foundation/
+├── rq/                       # cross-technique tables, one per research question
 ├── 01_LOG-REG_TF-IDF/
 ├── 02_LIN-SVM_TF-IDF/
 ├── 03_SLP_TF-IDF/
@@ -23,26 +24,33 @@ Notebooks `08`, `09`, and `10` have no folder here. For `09` that is correct —
 it was never run. For `08` and `10` it is a gap: both evaluated the test split,
 but neither exported a probability artifact, so neither folder can be derived
 without a rerun. Their numbers therefore appear nowhere in this repository's
-result tables. See `research_loop/STATE.md`.
+result tables.
 
 ## How these folders are produced
 
-Results are derived, not transcribed:
+Results are derived, not transcribed. The notebook computes every metric from
+its own probabilities with the shared `compute_binary_metrics` and writes the
+files listed in `docs/RESULTS_SCHEMA.md`; it also exports the probability
+artifact those numbers came from. Never hand-copy a number out of a notebook
+into one of these files.
 
-```bash
-python3 tools/eval_from_probs.py --technique <TECHNIQUE> --threshold <selected>
-```
-
-`eval_from_probs.py` builds the whole folder from a committed probability
-artifact in `research_loop/probs/`. Never hand-copy a number out of a notebook
-into one of these files — a metric that cannot be rebuilt from an artifact
-cannot be checked by anyone, including the person who wrote it.
-
-Validate a folder against `docs/RESULTS_SCHEMA.md` with:
+Validate every folder, including its attribution runs and manifest, with:
 
 ```bash
 python3 tools/validate_results_folder.py --all
 ```
+
+## Explainability artifacts
+
+A technique takes part in RQ2-RQ4 once its folder carries:
+
+```text
+attributions/<run_id>.csv, <run_id>.json   word-level SHAP aggregate (+ coefficients.csv for LR)
+identity_fpr_test.json                     written by tools/identity_fpr.py from the probability artifact
+run_manifest.json                          where weights, logs, and per-post files live
+```
+
+The `rq/` folder holds the cross-technique tables the documentation renders.
 
 ## Foundation artifacts
 
@@ -72,7 +80,7 @@ metrics_test.json
 threshold_sweep_validation.csv
 ```
 
-Additional transformer artifacts, raw predictions, local attribution files, and trained model weights should not be committed to normal Git unless they are intentionally sanitized or stored through Git LFS/releases/external storage.
+Raw predictions, per-post attribution files, and trained model weights are never committed; they go to external storage and are recorded in the technique's `run_manifest.json`.
 
 ## Current held-out test results
 
@@ -107,20 +115,19 @@ Results in this folder are baseline research metrics. They should not be interpr
 The test split is 450 rows. Distinguishing two techniques at McNemar exact
 significance needs roughly 14 rows of difference, and most gaps in the table
 above are far smaller. The ordering of the classical baselines carries no
-statistical weight, and `INCONCLUSIVE` is the expected verdict for most
-comparisons this project can run.
-
-Only `tools/compare_techniques.py` may issue a verdict. A higher number in this
-table is not, by itself, a better model.
+statistical weight. A higher number in this table is not, by itself, a better
+model; RQ1 is kept brief for that reason.
 
 ## Update rule
 
 When a notebook is rerun and results change:
 
-1. Re-derive the folder with `tools/eval_from_probs.py` from the new
-   probability artifact.
-2. Re-validate with `tools/validate_results_folder.py --all`.
-3. Regenerate every documentation table with `tools/render_tables.py --write`,
+1. Replace the probability artifact, the result folder files, and the
+   attribution runs together, from the same run.
+2. Re-run `tools/identity_fpr.py` and `tools/categorize_attributions.py` for
+   the technique, then `tools/compare_reliance.py`.
+3. Re-validate with `tools/validate_results_folder.py --all`.
+4. Regenerate every documentation table with `tools/render_tables.py --write`,
    then confirm `--check` exits 0.
 
 Do not update a table by editing it.

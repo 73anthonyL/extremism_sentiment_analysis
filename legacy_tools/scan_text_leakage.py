@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Scan every git-tracked file for dataset text that should never be committed.
 
-The policy (docs/RESULTS_SCHEMA.md, CLAUDE.md) is that raw dataset text lives
-in exactly one committed place: data/dataset.csv. Everything else — result
-folders, notebooks with their saved outputs, probability and attribution
-artifacts — must refer to rows only by row_id / text_hash. Notebooks are
-committed WITH cell outputs so readers can follow them, which makes this
-scanner the enforcement point: a notebook cell that prints a post re-publishes
-it, and this tool is what catches that before it reaches main.
+The release policy (docs/RELEASE_CHECKLIST.md, docs/RESULTS_SCHEMA.md) is that
+raw dataset text lives in exactly one committed place: data/dataset.csv.
+Everything else — result folders, notebooks, probability artifacts — must refer
+to rows only by row_id / text_hash. That policy is what makes the repository
+publishable at all for a dataset of extremist text: a single pasted cell output
+quietly re-publishes source messages and defeats the sanitization that
+eval_from_probs and probs_artifact enforce downstream. This scanner makes the
+policy checkable instead of aspirational.
 
 Two separate leak classes are reported, because they are differently severe:
 
@@ -24,8 +25,9 @@ Two separate leak classes are reported, because they are differently severe:
   escaped its designated artifacts.
 
 Exit status is nonzero if any leak is found outside the allowlist. As of
-2026-09 notebooks 00-08 and 10 still carry dataset text in saved cell outputs;
-each must be re-run with text printing disabled before this gate passes.
+2026-07 the nine committed notebooks are KNOWN to carry dataset text in saved
+cell outputs (a documented open item), so this tool is expected to FAIL until
+those outputs are stripped.
 
 USAGE
 -----
@@ -40,9 +42,6 @@ import json
 import re
 import subprocess
 import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import repo_paths
 
@@ -75,7 +74,8 @@ HEX_RUN_RE = re.compile(r"[0-9a-f]{%d,}" % TEXT_HASH_LENGTH)
 HASH_ALLOWED_PATTERNS = (
     # The canonical frozen split assignment: text_hash IS its join key.
     "splits/split_assignments.csv",
-    # Forensic snapshot of the stale pre-repair mirror, kept for provenance.
+    # Forensic snapshot of the stale pre-repair mirror (untracked today, kept
+    # on disk per CLAUDE.md; allowlisted in case it is ever committed).
     "splits/split_assignments.PRE-REPAIR.csv",
     # Committed probability artifacts are keyed by row_id/text_hash by design;
     # probs_artifact.load_probs already rejects any text column in them.

@@ -1,0 +1,2 @@
+technique,split,threshold,n_negative,n_negative_with_identity_terms,fpr_with_identity_terms,fpr_without_identity_terms,fpr_overall,fpr_ratio,fisher_odds_ratio,fisher_p_value,n_positive_with_identity_terms,recall_with_identity_terms,recall_without_identity_terms
+11_MULTI-CHECKPOINT_LOGIT-POOL,test,0.5,280,67,0.119403,0.028169,0.05,4.23881,4.67797,0.00639517,83,0.891566,0.793103
