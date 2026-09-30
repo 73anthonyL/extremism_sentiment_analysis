@@ -95,6 +95,7 @@ extremism_sentiment_analysis/
 │   ├── split_assignments.csv
 │   └── split_assignments.PRE-REPAIR.csv
 ├── docs/
+│   ├── RESEARCH_PLAN.md
 │   └── RESULTS_SCHEMA.md
 ├── CLAUDE.md
 ├── CITATION.cff
@@ -105,6 +106,9 @@ extremism_sentiment_analysis/
 └── requirements-dev.txt
 ```
 
+`docs/RESEARCH_PLAN.md` is the working plan for the paper: the four research
+questions, what each technique has and lacks today, the work packages in
+dependency order, and the decision rules that fix what the prose may claim.
 `docs/RESULTS_SCHEMA.md` defines every committed artifact: result folders,
 probability artifacts, word-level attribution artifacts, the RQ outputs, and
 the run manifest. `data/lexicons/README.md` describes the word lists the RQ2
