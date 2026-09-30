@@ -1,0 +1,8 @@
+term,n_negative_posts,n_false_positives,fpr
+men,8,2,0.25
+woman,10,2,0.2
+man,5,1,0.2
+white,5,1,0.2
+women,23,2,0.0869565
+girl,6,0,0
+american,5,0,0

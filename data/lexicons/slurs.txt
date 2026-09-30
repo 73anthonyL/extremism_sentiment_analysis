@@ -1,0 +1,4 @@
+# Slur lexicon. Intentionally empty: populate from a published, citable slur
+# list (and record the source here) so the RQ2 'slur' category and the RQ4
+# analysis rest on a documented lexicon rather than an ad-hoc one.
+# One entry per line, case-insensitive.

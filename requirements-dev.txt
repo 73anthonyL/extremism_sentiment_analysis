@@ -1,4 +1,3 @@
 # Dev-only additions on top of requirements-lock.txt (see CLAUDE.md).
-# Pin matches the interpreter evidence: tools/tests/__pycache__ tag
-# 'cpython-312-pytest-9.1.1'.
+# Runs the toolkit's tests: python3 -m pytest tools/tests/ -q
 pytest==9.1.1
