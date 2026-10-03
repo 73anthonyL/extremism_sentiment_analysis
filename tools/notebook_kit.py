@@ -31,6 +31,7 @@ repository, or from tools/ alone). The bootstrap cell finds it under
 """
 
 import hashlib
+import importlib.util
 import json
 import os
 import platform
@@ -462,6 +463,13 @@ def bootstrap(config, working_root=None, input_roots=None):
     else:
         ctx.probs_dir.mkdir(parents=True, exist_ok=True)
         ctx.external_dir.mkdir(parents=True, exist_ok=True)
+
+    if role != "foundation" and importlib.util.find_spec("shap") is None:
+        raise KitError(
+            "the shap package is not installed in this kernel. Every model notebook ends "
+            "with SHAP attribution runs, so this is checked before any training starts. "
+            "Enable internet and add a `%pip install shap` line to the bootstrap cell."
+        )
 
     seed_everything(config["random_seed"])
 
