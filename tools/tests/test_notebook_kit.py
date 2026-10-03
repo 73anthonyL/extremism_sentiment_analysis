@@ -581,6 +581,29 @@ class TestResultsFolder:
         assert int(table["count"].sum()) == 450
 
 
+class TestExternalFiles:
+    def test_predictions_with_text_go_to_external_only(self, ctx, frames):
+        _, val_df, test_df = frames
+        paths = nk.export_external_predictions(
+            ctx, val_df, separable_probabilities(val_df), test_df,
+            separable_probabilities(test_df), 0.5,
+        )
+        for path in paths.values():
+            assert ctx.external_dir in path.parents
+            assert "text" in pd.read_csv(path).columns
+        assert not list(ctx.results_dir.rglob("predictions_*.csv"))
+
+    def test_diagnostic_figure_is_written_to_external(self, ctx, frames):
+        matplotlib = pytest.importorskip("matplotlib")
+        matplotlib.use("Agg")
+        _, _, test_df = frames
+        prob = separable_probabilities(test_df)
+        metrics = nk.evaluate(ctx, test_df, prob, 0.5, "test")
+        path = nk.plot_diagnostics(ctx, test_df, prob, metrics, show=False)
+        assert path == ctx.external_dir / "plots" / "diagnostics_test.png"
+        assert path.stat().st_size > 10_000
+
+
 class TestFinalize:
     def test_inventory_flags_text_and_zip_mirrors_the_repository(self, ctx, frames):
         nk.export_results_folder(ctx, *TestResultsFolder().build(ctx, frames))

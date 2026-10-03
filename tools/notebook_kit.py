@@ -1560,6 +1560,169 @@ def error_counts(frame, y_prob, threshold):
     return table
 
 
+def export_external_predictions(ctx, val_df, val_prob, test_df, test_prob, threshold):
+    """Write per-post predictions, with text, to external/predictions/. Never committed.
+
+    These are the files a human reviewer reads when studying errors. They hold
+    dataset text, so they go to external storage and are recorded in the run
+    manifest with contains_text set. The committed record of the same
+    predictions is the probability artifact, which has no text.
+    """
+    folder = ctx.external("predictions")
+    paths = {}
+    for split, frame, prob in (("validation", val_df, val_prob), ("test", test_df, test_prob)):
+        prob = _checked_probabilities(frame, prob, f"predictions[{split}]")
+        y_true = frame["label"].to_numpy().astype(int)
+        y_pred = (prob >= threshold).astype(int)
+        outcome = np.where(
+            y_true == 1,
+            np.where(y_pred == 1, "true_positive", "false_negative"),
+            np.where(y_pred == 1, "false_positive", "true_negative"),
+        )
+        out = frame[["row_id", "split", "text", "label"]].copy()
+        out["y_prob"] = prob
+        out["threshold"] = float(threshold)
+        out["y_pred"] = y_pred
+        out["outcome"] = outcome
+        path = folder / f"predictions_{split}.csv"
+        out.to_csv(path, index=False)
+        paths[split] = path
+    print("Per-post predictions written to external/ (hold dataset text; not committed).")
+    return paths
+
+
+# Chart colours: one series hue, a recessive reference line, ink for all text.
+_PLOT_SERIES = "#2a78d6"
+_PLOT_REFERENCE = "#8a8983"
+_PLOT_INK = "#0b0b0b"
+_PLOT_INK_SECONDARY = "#52514e"
+_PLOT_SURFACE = "#fcfcfb"
+_PLOT_GRID = "#e4e3de"
+_PLOT_SEQUENTIAL = ("#eaf2fc", "#2a78d6", "#143f73")
+
+
+def plot_diagnostics(ctx, frame, y_prob, metrics, show=True):
+    """The four standard diagnostic plots for one split, identical in every notebook.
+
+    Confusion matrix, ROC curve, precision-recall curve and calibration curve,
+    in one figure saved to external/plots/diagnostics_<split>.png. Each panel
+    has one series and one reference; the summary value is in the panel title.
+    Nothing here shows a post.
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import LinearSegmentedColormap
+    from sklearn.calibration import calibration_curve
+    from sklearn.metrics import precision_recall_curve, roc_curve
+
+    split = _single_split(frame, "plot_diagnostics")
+    y_prob = _checked_probabilities(frame, y_prob, f"plot_diagnostics[{split}]")
+    y_true = frame["label"].to_numpy().astype(int)
+
+    figure, axes = plt.subplots(2, 2, figsize=(11, 9.5), facecolor=_PLOT_SURFACE)
+    for axis in axes.ravel():
+        axis.set_facecolor(_PLOT_SURFACE)
+        axis.tick_params(colors=_PLOT_INK_SECONDARY, labelsize=9)
+        for side in ("top", "right"):
+            axis.spines[side].set_visible(False)
+        for side in ("left", "bottom"):
+            axis.spines[side].set_color(_PLOT_GRID)
+
+    def style(axis, title, x_label, y_label, grid=True):
+        axis.set_title(title, color=_PLOT_INK, fontsize=11, loc="left", pad=10)
+        axis.set_xlabel(x_label, color=_PLOT_INK_SECONDARY, fontsize=9)
+        axis.set_ylabel(y_label, color=_PLOT_INK_SECONDARY, fontsize=9)
+        if grid:
+            axis.grid(True, color=_PLOT_GRID, linewidth=0.8)
+            axis.set_axisbelow(True)
+
+    # Confusion matrix: magnitude, so one hue from light to dark.
+    axis = axes[0, 0]
+    matrix = np.array([[metrics["tn"], metrics["fp"]], [metrics["fn"], metrics["tp"]]])
+    colormap = LinearSegmentedColormap.from_list("kit_sequential", _PLOT_SEQUENTIAL)
+    axis.imshow(matrix, cmap=colormap, vmin=0, vmax=max(int(matrix.max()), 1))
+    class_names = [NEGATIVE_CLASS_NAME.replace("_", " ").title(), POSITIVE_CLASS_NAME.title()]
+    axis.set_xticks([0, 1], labels=class_names)
+    axis.set_yticks([0, 1], labels=class_names, rotation=90, va="center")
+    for row in range(2):
+        for column in range(2):
+            dark = matrix[row, column] > matrix.max() * 0.55
+            axis.text(
+                column,
+                row,
+                f"{int(matrix[row, column])}",
+                ha="center",
+                va="center",
+                fontsize=15,
+                color="#ffffff" if dark else _PLOT_INK,
+            )
+    for side in ("left", "bottom"):
+        axis.spines[side].set_visible(False)
+    axis.tick_params(length=0)
+    style(
+        axis,
+        f"Confusion matrix (accuracy {metrics['accuracy']:.3f})",
+        "Predicted",
+        "Actual",
+        grid=False,
+    )
+
+    # ROC curve against the chance diagonal.
+    axis = axes[0, 1]
+    false_positive_rate, true_positive_rate, _ = roc_curve(y_true, y_prob)
+    axis.plot([0, 1], [0, 1], color=_PLOT_REFERENCE, linewidth=1.2, linestyle=(0, (4, 3)))
+    axis.plot(false_positive_rate, true_positive_rate, color=_PLOT_SERIES, linewidth=2)
+    axis.annotate("chance", (0.62, 0.56), color=_PLOT_INK_SECONDARY, fontsize=8, rotation=38)
+    axis.set_xlim(0, 1)
+    axis.set_ylim(0, 1.02)
+    style(axis, f"ROC curve (AUC {metrics['roc_auc']:.3f})", "False positive rate", "True positive rate")
+
+    # Precision-recall curve against the positive rate.
+    axis = axes[1, 0]
+    precision, recall, _ = precision_recall_curve(y_true, y_prob)
+    positive_rate = float(y_true.mean())
+    axis.axhline(positive_rate, color=_PLOT_REFERENCE, linewidth=1.2, linestyle=(0, (4, 3)))
+    axis.plot(recall, precision, color=_PLOT_SERIES, linewidth=2)
+    axis.annotate(
+        f"positive rate {positive_rate:.2f}",
+        (0.02, positive_rate + 0.02),
+        color=_PLOT_INK_SECONDARY,
+        fontsize=8,
+    )
+    axis.set_xlim(0, 1)
+    axis.set_ylim(0, 1.02)
+    style(axis, f"Precision-recall curve (AP {metrics['pr_auc']:.3f})", "Recall", "Precision")
+
+    # Calibration against the diagonal.
+    axis = axes[1, 1]
+    observed, predicted = calibration_curve(y_true, y_prob, n_bins=10, strategy="uniform")
+    axis.plot([0, 1], [0, 1], color=_PLOT_REFERENCE, linewidth=1.2, linestyle=(0, (4, 3)))
+    axis.plot(predicted, observed, color=_PLOT_SERIES, linewidth=2, marker="o", markersize=6)
+    axis.annotate("perfectly calibrated", (0.52, 0.45), color=_PLOT_INK_SECONDARY, fontsize=8, rotation=38)
+    axis.set_xlim(0, 1)
+    axis.set_ylim(0, 1.02)
+    style(
+        axis,
+        f"Calibration (Brier score {metrics['brier_score']:.3f})",
+        "Mean predicted probability",
+        "Observed fraction positive",
+    )
+
+    figure.suptitle(
+        f"{ctx.technique}: {split} split, {len(frame)} posts, threshold {metrics['threshold']:.3f}",
+        color=_PLOT_INK,
+        fontsize=12,
+        x=0.02,
+        ha="left",
+    )
+    figure.tight_layout(rect=(0, 0, 1, 0.96))
+    path = ctx.external("plots") / f"diagnostics_{split}.png"
+    figure.savefig(path, dpi=150, facecolor=_PLOT_SURFACE)
+    if show:
+        plt.show()
+    plt.close(figure)
+    return path
+
+
 # ---------------------------------------------------------------------------
 # Packaging
 # ---------------------------------------------------------------------------
