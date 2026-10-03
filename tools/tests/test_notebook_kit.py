@@ -601,6 +601,29 @@ class TestFinalize:
         assert not any(name.startswith("external/") for name in names)
 
     def test_text_column_in_the_result_folder_is_refused(self, ctx):
-        (ctx.results_dir / "leak.csv").write_text("row_id,text\nex_000001,something\n")
+        (ctx.results_dir / "leak.csv").write_text("word,text\nbad,something\n")
         with pytest.raises(nk.ArtifactContractError, match="text-bearing"):
             nk.finalize(ctx)
+
+    def test_per_post_rows_in_the_result_folder_are_refused(self, ctx):
+        (ctx.results_dir / "local_explanations.csv").write_text("row_id,token\nex_000001,bad\n")
+        with pytest.raises(nk.ArtifactContractError, match="row_id"):
+            nk.finalize(ctx)
+
+    def test_foundation_duplicate_report_may_be_keyed_by_row(self, tmp_path):
+        config = {
+            "project_name": "p",
+            "technique_name": nk.FOUNDATION_TECHNIQUE,
+            "role": "foundation",
+            "dataset_version": nk.DATASET_VERSION,
+            "split_version": nk.SPLIT_VERSION,
+            "random_seed": 30,
+            "overwrite_existing_split": False,
+        }
+        foundation = nk.bootstrap(config, working_root=tmp_path / "w", input_roots=[tmp_path])
+        report = foundation.results_dir / "duplicate_text_report.csv"
+        report.write_text("row_id,label,text_hash,char_len,word_len\n")
+        nk.finalize(foundation)
+        report.write_text("row_id,label,text_hash,char_len,word_len,text\n")
+        with pytest.raises(nk.ArtifactContractError, match="text"):
+            nk.finalize(foundation)

@@ -100,6 +100,22 @@ PROBS_FORBIDDEN_COLUMNS = (
     "model_input_text",
 )
 
+# Columns that hold dataset text. Nothing under results_summary/ or
+# research_loop/ may carry one, in any notebook.
+TEXT_BEARING_COLUMNS = (
+    "text",
+    "Original_Message",
+    "text_preview",
+    "message",
+    "content",
+    "raw_text",
+    "model_input_text",
+)
+# Row-level identity. A technique's result folder carries neither; the
+# probability artifact is keyed by row_id by contract, and the foundation's
+# duplicate report is keyed by both.
+ROW_IDENTITY_COLUMNS = ("row_id", "text_hash")
+
 ATTR_REQUIRED_COLUMNS = ("word", "mean_abs_attribution", "mean_attribution", "support")
 # Same tuple as tools/attributions.py::FORBIDDEN_COLUMNS.
 ATTR_FORBIDDEN_COLUMNS = (
@@ -1547,13 +1563,12 @@ def error_counts(frame, y_prob, threshold):
 # ---------------------------------------------------------------------------
 # Packaging
 # ---------------------------------------------------------------------------
-def _forbidden_columns_in(path):
+def _forbidden_columns_in(path, forbidden):
     try:
         header = pd.read_csv(path, nrows=0)
     except Exception:
         return []
-    forbidden = set(PROBS_FORBIDDEN_COLUMNS)
-    return sorted(c for c in header.columns if c in forbidden)
+    return sorted(c for c in header.columns if c in set(forbidden))
 
 
 def finalize(ctx, zip_external=False):
@@ -1564,17 +1579,21 @@ def finalize(ctx, zip_external=False):
     <TECHNIQUE>_repo_files.zip, whose contents unpack at the repository root.
     Returns the zip path.
     """
-    committed_roots = [ctx.results_dir]
-    if ctx.role != "foundation":
-        committed_roots.append(ctx.probs_dir)
-    for root in committed_roots:
+    if ctx.role == "foundation":
+        committed_roots = [(ctx.results_dir, TEXT_BEARING_COLUMNS)]
+    else:
+        committed_roots = [
+            (ctx.results_dir, TEXT_BEARING_COLUMNS + ROW_IDENTITY_COLUMNS),
+            (ctx.probs_dir, PROBS_FORBIDDEN_COLUMNS),
+        ]
+    for root, forbidden in committed_roots:
         for path in root.rglob("*.csv"):
-            leaked = _forbidden_columns_in(path)
+            leaked = _forbidden_columns_in(path, forbidden)
             if leaked:
                 raise ArtifactContractError(
-                    f"{path.relative_to(ctx.working_root)} carries text-bearing column(s) "
-                    f"{leaked}; nothing under results_summary/ or research_loop/ may hold "
-                    "dataset text"
+                    f"{path.relative_to(ctx.working_root)} carries text-bearing or row-level "
+                    f"column(s) {leaked}; nothing under results_summary/ or research_loop/ may "
+                    "hold dataset text, and a result folder holds no per-post rows"
                 )
 
     assets = []
