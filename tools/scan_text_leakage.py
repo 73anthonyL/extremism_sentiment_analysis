@@ -23,9 +23,14 @@ Two separate leak classes are reported, because they are differently severe:
   HASH_ALLOWED_PATTERNS); anywhere else, a hash means row-level information
   escaped its designated artifacts.
 
-Exit status is nonzero if any leak is found outside the allowlist. As of
-2026-09 notebooks 00-08 and 10 still carry dataset text in saved cell outputs;
-each must be re-run with text printing disabled before this gate passes.
+* ROW-ID leak — a canonical row id (`ex_NNNNNN`) appears in a notebook cell
+  OUTPUT or in a results_summary/ file. Row ids are fine in notebook source
+  and in the row-keyed artifacts on the same allowlist as hashes; in a
+  committed output or result table they mean a cell printed rows. Sources,
+  tools, tests and docs are not scanned for row ids, because they
+  legitimately use synthetic ones.
+
+Exit status is nonzero if any leak is found outside the allowlist.
 
 USAGE
 -----
@@ -69,6 +74,10 @@ SIGNATURE_TOKEN_MIN_LENGTH = 4
 WHITESPACE_RE = re.compile(r"\s+")
 SIGNATURE_TOKEN_RE = re.compile(r"[a-z0-9]{%d,}" % SIGNATURE_TOKEN_MIN_LENGTH)
 HEX_RUN_RE = re.compile(r"[0-9a-f]{%d,}" % TEXT_HASH_LENGTH)
+# The canonical row id minted by notebook 00: ex_ followed by six digits.
+ROW_ID_RE = re.compile(r"\bex_\d{6}\b")
+# Row ids are searched for in notebook outputs and under this folder only.
+ROW_ID_SCANNED_PREFIX = "results_summary/"
 
 # Files that legitimately carry row_id / text_hash values. Each entry must
 # justify itself; anything not listed here fails the hash check.
@@ -178,6 +187,34 @@ def notebook_string_content(raw):
     return "\n".join(parts)
 
 
+def notebook_output_text(raw):
+    """All text a notebook's saved cell OUTPUTS would show a reader.
+
+    Sources are deliberately excluded: code may name a row-id column or build
+    ids, and that publishes nothing. Only what a cell printed, displayed or
+    raised is committed evidence of rows being shown.
+    """
+    parts = []
+    for cell in json.loads(raw).get("cells", []):
+        for output in cell.get("outputs", []) or []:
+            text = output.get("text")
+            if text:
+                parts.append("".join(text) if isinstance(text, list) else str(text))
+            for value in (output.get("data") or {}).values():
+                if isinstance(value, list):
+                    parts.append("".join(str(item) for item in value))
+                elif isinstance(value, str):
+                    parts.append(value)
+            for line in output.get("traceback", []) or []:
+                parts.append(str(line))
+    return "\n".join(parts)
+
+
+def count_row_ids(text):
+    """Number of distinct canonical row ids in a piece of text."""
+    return len(set(ROW_ID_RE.findall(text)))
+
+
 def find_leaked_texts(scan_text, candidates):
     """Return (count, example_row_id) for dataset texts present in scan_text.
 
@@ -219,10 +256,11 @@ def hash_allowed(rel_path):
 
 
 def scan_repository():
-    """Scan all tracked files; returns (text_leaks, hash_leaks, stats).
+    """Scan all tracked files; returns (text_leaks, hash_leaks, row_id_leaks, stats).
 
-    text_leaks: {rel_path: (count, example_row_id)}
-    hash_leaks: {rel_path: hash_count}   (allowlisted files excluded)
+    text_leaks:   {rel_path: (count, example_row_id)}
+    hash_leaks:   {rel_path: hash_count}     (allowlisted files excluded)
+    row_id_leaks: {rel_path: row_id_count}   (notebook outputs, results_summary/)
     """
     candidates, hash_to_row, n_skipped_short = load_candidates()
     hash_set = set(hash_to_row)
@@ -230,6 +268,7 @@ def scan_repository():
 
     text_leaks = {}
     hash_leaks = {}
+    row_id_leaks = {}
     n_scanned = 0
     n_binary = 0
 
@@ -243,14 +282,23 @@ def scan_repository():
         raw = raw_bytes.decode("utf-8", errors="replace")
         n_scanned += 1
 
+        row_id_text = ""
         if rel.endswith(".ipynb"):
             try:
                 scan_text = normalize_text(notebook_string_content(raw))
+                row_id_text = notebook_output_text(raw)
             except json.JSONDecodeError:
                 # A notebook that is not valid JSON still gets the plain scan.
                 scan_text = normalize_text(raw)
+                row_id_text = raw
         else:
             scan_text = normalize_text(raw)
+            if rel.startswith(ROW_ID_SCANNED_PREFIX):
+                row_id_text = raw
+
+        n_row_ids = count_row_ids(row_id_text) if row_id_text else 0
+        if n_row_ids and not hash_allowed(rel):
+            row_id_leaks[rel] = n_row_ids
 
         count, example_row_id = find_leaked_texts(scan_text, candidates)
         if count:
@@ -266,15 +314,16 @@ def scan_repository():
         "texts_searched": len(candidates),
         "texts_skipped_short": n_skipped_short,
     }
-    return text_leaks, hash_leaks, stats
+    return text_leaks, hash_leaks, row_id_leaks, stats
 
 
-def report(text_leaks, hash_leaks, stats):
+def report(text_leaks, hash_leaks, row_id_leaks, stats):
     """Print the protocol_check-style table plus per-file leak counts;
     return the number of blocking failures."""
     checks = [
         ("Dataset text confined to data/dataset.csv", not text_leaks),
         ("Row hashes confined to allowlisted artifacts", not hash_leaks),
+        ("Row ids absent from outputs and result files", not row_id_leaks),
     ]
     print(f"{'CHECK':<{STATUS_COLUMN}} STATUS")
     print("-" * RULE_WIDTH)
@@ -301,6 +350,11 @@ def report(text_leaks, hash_leaks, stats):
         print("Row hashes confined to allowlisted artifacts:")
         for rel in sorted(hash_leaks):
             print(f"  - {rel}: {hash_leaks[rel]} known text_hash values")
+    if row_id_leaks:
+        print()
+        print("Row ids absent from outputs and result files:")
+        for rel in sorted(row_id_leaks):
+            print(f"  - {rel}: {row_id_leaks[rel]} row ids in saved outputs or result content")
 
     return sum(1 for _, passed in checks if not passed)
 
@@ -309,8 +363,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.parse_args()
 
-    text_leaks, hash_leaks, stats = scan_repository()
-    n_failed = report(text_leaks, hash_leaks, stats)
+    text_leaks, hash_leaks, row_id_leaks, stats = scan_repository()
+    n_failed = report(text_leaks, hash_leaks, row_id_leaks, stats)
     print()
     if n_failed:
         print(f"GATE: FAIL ({n_failed} blocking)")

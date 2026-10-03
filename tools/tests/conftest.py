@@ -17,6 +17,7 @@ import pytest
 TOOLS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(TOOLS_DIR))
 
+from notebook_kit import EXPLAINER_ID
 from repo_paths import EXPECTED_SPLIT_COUNTS
 
 SEED = 30
@@ -96,8 +97,8 @@ def base_meta(technique, run_id, split="test", seed=SEED, member=None, n_posts=2
         "technique": technique,
         "run_id": run_id,
         "split": split,
-        "explainer": "shap.Explainer(partition)",
-        "background_size": 100,
+        "explainer": EXPLAINER_ID,
+        "background_size": 0,
         "seed": seed,
         "aggregation": "word",
         "n_posts_explained": n_posts,

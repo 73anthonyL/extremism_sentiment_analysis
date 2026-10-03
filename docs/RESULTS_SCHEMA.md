@@ -19,6 +19,13 @@ artifact changes, and it leaves nothing for a replicator to check.
 `tools/validate_results_folder.py --all` recomputes every threshold-dependent
 metric from the stored confusion counts and fails on any disagreement.
 
+Every artifact below is written by `tools/notebook_kit.py`, the helper each
+notebook loads, and refused at export time if it breaks its contract. The kit
+runs on Kaggle with no repository on the import path, so it carries its own
+copy of each contract; `tools/tests/test_notebook_kit.py` pins those copies to
+the tools named here and loads every artifact the kit writes back through the
+real loaders.
+
 ### Probability artifact contract
 
 Sanitized probability files live in `research_loop/probs/` and are named
@@ -48,8 +55,8 @@ word-level aggregate of a SHAP run. It lives at
 
 | Column | Meaning |
 |---|---|
-| `word` | A single word (no whitespace). Subword pieces are aggregated to words in the notebook before export. |
-| `mean_abs_attribution` | Mean absolute SHAP value over the explained posts that contain the word. |
+| `word` | A single word (no whitespace), lowercased. Words are the units of the explainer's word-level text masker, so a model's own subword tokenizer plays no part. |
+| `mean_abs_attribution` | Mean absolute SHAP value over the explained posts that contain the word. A word that occurs several times in a post contributes the sum of its occurrences for that post. |
 | `mean_attribution` | Mean signed SHAP value toward `EXTREMIST` over those same posts. |
 | `support` | Number of explained posts containing the word. |
 
@@ -61,9 +68,26 @@ per-post column (`row_id`, `text`, `position`, ...) is refused.
 The sidecar must declare `technique`, `run_id`, `split`, `explainer`,
 `background_size`, `seed`, `aggregation` (always `word`), `n_posts_explained`,
 and `member` (`null` for a whole model or whole ensemble; the member id for one
-ensemble member). A technique may have several runs: different seeds or
-background sets feed the stability check, and per-member runs feed the
-ensemble comparison.
+ensemble member).
+
+Every notebook uses one explainer: SHAP's partition explainer over a
+word-level text masker (`shap.maskers.Text(r"\W+")`), applied to the model as
+a function from text to P(EXTREMIST). The text masker replaces words with a
+mask token and uses no background sample, so `background_size` is `0`; the
+sidecar also records the evaluation budget per post in `explainer_settings`.
+
+A technique has these runs, named by convention:
+
+| Run id | What it explains |
+|---|---|
+| `shap-partition_test_seed30` | The whole model (or whole ensemble) on the test split. |
+| `shap-partition_validation_seed30` | The same model on the validation split. The two whole-model runs feed the stability check. |
+| `shap-partition_test_seed30_member-<id>` | One ensemble member, on the same test posts. These feed the member-versus-whole comparison. |
+
+Classical notebooks explain every post of a split; transformer and ensemble
+notebooks explain a label-stratified sample (200 posts by default), and
+`n_posts_explained` says which. A run id never contains `__`: that separator
+marks files derived from a run, and such stems are not listed as runs.
 
 Logistic-regression techniques also commit `attributions/coefficients.csv`
 (`word, coefficient`) so `tools/validate_shap.py` can confirm the pipeline
@@ -84,12 +108,17 @@ question, and are the inputs to the rendered documentation tables.
 
 ### Provenance fields
 
-Where a result folder cannot be derived, it must say so explicitly:
+`best_config.json`, `metrics_validation.json` and `metrics_test.json` say how
+their numbers were obtained:
 
 | Field | Meaning |
 |---|---|
 | `provenance` | How the numbers were obtained, e.g. `derived_from_probs` or `notebook_cell_outputs`. |
 | `recomputable` | `true` only if the folder can be rebuilt from a committed artifact. |
+
+A folder written by the kit carries `derived_from_probs` and `true`. Folders
+committed before the notebooks were primed carry neither field; each is
+replaced when its notebook is rerun.
 
 ## Folder layout
 
@@ -99,31 +128,24 @@ Each model family should write results to:
 results_summary/<TECHNIQUE>/
 ```
 
-Example classical or embedding folder:
+Every primed notebook writes the same folder, whatever the model family:
 
 ```text
-results_summary/05_WORD-CHAR-TF-IDF_LIN-SVM/
+results_summary/<TECHNIQUE>/
 ├── ablation_results.csv
 ├── best_config.json
 ├── classification_report_test.json
 ├── confusion_matrix_test.csv
 ├── metrics_validation.json
-└── metrics_test.json
-```
-
-Example transformer folder:
-
-```text
-results_summary/07_TWITTER-ROBERTA_FINE-TUNE/
-├── ablation_results.csv
-├── best_config.json
-├── confusion_matrix_test.png
-├── metrics_validation.json
 ├── metrics_test.json
-└── threshold_sweep_validation.csv
+├── threshold_sweep_validation.csv
+└── attributions/
 ```
 
-Some model families may include additional metadata files or plots when useful. Raw predictions, per-post attribution files, and model weights are never committed; they go to external storage and are recorded in `run_manifest.json`.
+Folders committed before priming use older layouts (the transformer folder
+has a confusion-matrix image instead of the CSV). Raw predictions, per-post
+attribution files, and model weights are never committed; they go to external
+storage and are recorded in `run_manifest.json`.
 
 ## Required compact files
 
@@ -131,7 +153,7 @@ Some model families may include additional metadata files or plots when useful. 
 
 Stores the selected model configuration.
 
-Recommended fields:
+Fields:
 
 | Field | Description |
 |---|---|
@@ -139,10 +161,18 @@ Recommended fields:
 | `model_family` | General model type. |
 | `feature_family` | Feature representation. |
 | `random_seed` | Random seed used where applicable. |
-| `split_version` | Split version used for the run. |
+| `dataset_version`, `split_version` | The frozen dataset and split the run used. |
 | `hyperparameters` | Selected hyperparameters. |
-| `threshold_strategy` | Method used to choose the decision threshold. |
+| `threshold_strategy`, `threshold_metric` | Method and metric used to choose the decision threshold. |
 | `selected_threshold` | Final threshold used for test evaluation. |
+| `threshold_selected_on_split` | Always `validation`. |
+| `test_set_used_for_selection` | Always `false`. |
+| `n_validation_candidates` | How many configurations were compared on validation. |
+| `validation_uses` | Every use of the validation split: `config_selection`, `threshold`, and where they apply `early_stopping`, admission and strategy selection. |
+| `in_comparison` | Whether the technique takes part in the controlled comparison. |
+
+Ensembles also record their members, the combination rule, and any
+prespecified gate with its verdict.
 
 ### `metrics_validation.json`
 
@@ -228,18 +258,23 @@ Stores validation-set threshold comparisons. This file is optional for classical
 Word-level attribution runs (above) are the committed interpretability
 artifact and are required for every technique that takes part in RQ2-RQ4.
 
-Per-post files carry dataset text and are never committed:
+Per-post files carry dataset text and are never committed. A notebook writes
+them under `external/<TECHNIQUE>/`, with an inventory:
 
 ```text
-local_token_attribution_explanations.csv
-local_token_attributions_long.csv
-error_analysis/manual_review_queue_test.csv
-predictions_test.csv
-predictions_validation.csv
+external/<TECHNIQUE>/
+├── weights/                 model weights (and tokenizer/ for transformers)
+├── training_logs/
+├── predictions/             predictions_validation.csv, predictions_test.csv (with text)
+├── attributions_local/      one per-post token table per attribution run
+├── probs_members/           per-member probabilities for ensembles (no text)
+├── plots/                   the diagnostic figure
+└── external_assets.json     kind, path, sha256, size and text flag of every file
 ```
 
-They go to external storage, recorded in `run_manifest.json` with
-`contains_text: true`.
+The folder is uploaded to external storage, and
+`tools/run_manifest.py add-assets-from --file external_assets.json` records
+every file in `run_manifest.json`, text-bearing ones with `contains_text: true`.
 
 ## Foundation folder
 

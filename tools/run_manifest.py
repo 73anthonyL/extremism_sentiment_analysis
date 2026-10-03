@@ -20,6 +20,8 @@ USAGE
     python3 tools/run_manifest.py add-asset --technique T --kind weights \
         --location kaggle://datasets/<user>/<slug>/v3/model.safetensors \
         --sha256 <hex> --size-bytes 498000000
+    python3 tools/run_manifest.py add-assets-from --technique T \
+        --file external_assets.json --location-prefix kaggle://datasets/<user>/<slug>/v1
     python3 tools/run_manifest.py refresh --technique T     # re-hash committed files
     python3 tools/run_manifest.py check --all               # drift and policy check
     python3 tools/run_manifest.py show --technique T
@@ -152,6 +154,50 @@ def add_asset(technique, kind, location, sha256, size_bytes, contains_text=False
     return write_manifest(technique, manifest, results_dir)
 
 
+def add_assets_from(technique, inventory_path, location_prefix, results_dir=None):
+    """Record every asset listed in a notebook's external_assets.json.
+
+    `tools/notebook_kit.py::finalize` writes that inventory with each file's
+    kind, relative path, sha256, size and text flag, so the hashes are never
+    retyped. The location of each asset is `location_prefix` joined with its
+    relative path. Every entry is validated before any is written: one bad
+    entry records nothing. Returns the number of assets added.
+    """
+    with open(inventory_path) as handle:
+        inventory = json.load(handle)
+    if inventory.get("technique") != technique:
+        raise ManifestError(
+            f"inventory is for '{inventory.get('technique')}', not '{technique}'"
+        )
+    prefix = location_prefix.rstrip("/")
+    manifest = read_manifest(technique, results_dir)
+    recorded = {a["location"] for a in manifest["external_assets"]}
+    pending = []
+    for entry in inventory.get("assets", []):
+        location = f"{prefix}/{entry['relative_path']}"
+        if entry["kind"] not in ASSET_KINDS:
+            raise ManifestError(f"{entry['relative_path']}: kind '{entry['kind']}' not in {ASSET_KINDS}")
+        problems = asset_problems({"location": location, "sha256": entry["sha256"]})
+        if problems:
+            raise ManifestError(f"{entry['relative_path']}: " + "; ".join(problems))
+        if location in recorded or any(location == p["location"] for p in pending):
+            raise ManifestError(f"an asset at {location} is already recorded")
+        pending.append(
+            {
+                "kind": entry["kind"],
+                "location": location,
+                "sha256": entry["sha256"],
+                "size_bytes": int(entry["size_bytes"]),
+                "contains_text": bool(entry["contains_text"]),
+                "description": entry.get("description"),
+                "added_utc": _now(),
+            }
+        )
+    manifest["external_assets"].extend(pending)
+    write_manifest(technique, manifest, results_dir)
+    return len(pending)
+
+
 def refresh(technique, results_dir=None):
     manifest = read_manifest(technique, results_dir)
     manifest["committed_artifacts"] = hash_committed(technique, results_dir)
@@ -222,6 +268,11 @@ def main():
     p.add_argument("--contains-text", action="store_true")
     p.add_argument("--description", default=None)
 
+    p = sub.add_parser("add-assets-from")
+    p.add_argument("--technique", required=True)
+    p.add_argument("--file", required=True, help="external_assets.json written by the notebook")
+    p.add_argument("--location-prefix", required=True)
+
     p = sub.add_parser("refresh")
     p.add_argument("--technique", required=True)
 
@@ -239,6 +290,9 @@ def main():
             print(f"wrote {init_manifest(args.technique, args.run_id, args.kaggle_notebook, args.kaggle_version, args.git_commit, args.notes)}")
         elif args.command == "add-asset":
             print(f"wrote {add_asset(args.technique, args.kind, args.location, args.sha256, args.size_bytes, args.contains_text, args.description)}")
+        elif args.command == "add-assets-from":
+            added = add_assets_from(args.technique, args.file, args.location_prefix)
+            print(f"recorded {added} external asset(s) for {args.technique}")
         elif args.command == "refresh":
             print(f"wrote {refresh(args.technique)}")
         elif args.command == "show":

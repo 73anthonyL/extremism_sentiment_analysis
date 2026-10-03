@@ -19,7 +19,9 @@ This is an active research repository maintained by the project authors. The cur
 * Twitter-RoBERTa transformer fine-tuning.
 * Heterogeneous multi-checkpoint logit-pooled transformer ensemble.
 
-Three further transformer-ensemble notebooks (`08`, `09`, `10`) exist but are **not** part of the controlled comparison. Two ran and reported test numbers without leaving a derivable result folder; one was never run. The section [Transformer ensemble work in progress](#transformer-ensemble-work-in-progress) records where each one stands.
+Three further transformer-ensemble notebooks (`08`, `09`, `10`) exist but are **not** part of the controlled comparison. Two ran and reported test numbers without leaving a derivable result folder; one was never run. The section [Transformer ensemble notebooks](#transformer-ensemble-notebooks) records where each one stands.
+
+**All twelve notebooks are now primed for rerun.** Each has been rewritten on one template, loads one shared helper (`tools/notebook_kit.py`), selects its threshold by one rule, explains its model with one attribution method, and writes its outputs in one layout. Their cell outputs are empty until each is rerun on Kaggle. The numbers in this README come from the runs made before priming and will be replaced, technique by technique, as the reruns land; a rerun's numbers will differ somewhat because the threshold rule and the early-stopping monitors were unified. `notebooks/README.md` describes the template and how to run a notebook.
 
 The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster around a similar performance range, while contextual transformer models provide the strongest registered held-out test results — the single fine-tuned Twitter-RoBERTa run, and above it a logit-pooled ensemble of heterogeneous checkpoints. This supports the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
 
@@ -63,10 +65,10 @@ extremism_sentiment_analysis/
 │   ├── 05_WORD-CHAR-TF-IDF_LIN-SVM.ipynb
 │   ├── 06_FASTTEXT-EMB_LOG-REG.ipynb
 │   ├── 07_TWITTER-ROBERTA_FINE-TUNE.ipynb
-│   ├── 08_BEST-ROBERTA_SEED-ENSEMBLE.ipynb          # ran; unregistered
-│   ├── 09_MULTI-CHECKPOINT_LOGIT-STACK.ipynb        # built; superseded by 11
-│   ├── 10_TWITTER-ROBERTA_LOGIT-POOL-STABLE.ipynb   # ran; unregistered
-│   └── 11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb         # ran; result registered
+│   ├── 08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb       # closed line
+│   ├── 09_MULTI-CHECKPOINT_LOGIT-STACK.ipynb        # closed line; superseded by 11
+│   ├── 10_TWITTER-ROBERTA_LOGIT-POOL-STABLE.ipynb   # closed line
+│   └── 11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb         # result registered
 ├── results_summary/
 │   ├── foundation/
 │   ├── 01_LOG-REG_TF-IDF/
@@ -80,6 +82,8 @@ extremism_sentiment_analysis/
 ├── research_loop/            # experiment records: probability artifacts, registry, preregistrations
 │   └── probs/                # sanitized probability artifacts (row_id, split, y_true, y_prob)
 ├── tools/
+│   ├── notebook_kit.py           # the helper every notebook loads: split, metrics, exports
+│   ├── check_notebook.py         # static check of a notebook against the template
 │   ├── attributions.py           # word-level SHAP artifact contract
 │   ├── validate_shap.py          # pipeline check against logistic-regression coefficients
 │   ├── categorize_attributions.py  # RQ2: slur / framing / identity / topical shares
@@ -130,12 +134,22 @@ transcribed by hand. Two rules follow from that, and they are enforced:
   inside a region are clobbered.
 
 ```bash
+python3 tools/check_notebook.py --all           # notebooks against the template (--primed before a run)
 python3 tools/validate_results_folder.py --all  # schema + internal consistency
 python3 tools/render_tables.py --check          # documentation drift
-python3 tools/scan_text_leakage.py              # dataset text in committed files
+python3 tools/scan_text_leakage.py              # dataset text, hashes, row ids in committed files
 python3 tools/run_manifest.py check --all       # committed vs external assets
 python3 -m pytest tools/tests/ -q               # the toolkit's own tests
 ```
+
+Notebooks run on Kaggle and are never executed locally, so
+`tools/check_notebook.py` verifies them statically: the section structure,
+the `CONFIG` literals, that the threshold is selected once on validation and
+the test split evaluated once, that the probability artifact and the
+attribution runs are exported, that no cell would print a post or a row id,
+that every cell parses, and that every name it uses is defined.
+`tools/tests/test_notebook_pipeline.py` runs the kit end to end on synthetic
+text and hands the outputs to the real tools, including the coefficient check.
 
 The explainability tools run on committed word-level attribution artifacts
 (see `docs/RESULTS_SCHEMA.md`):
@@ -147,9 +161,11 @@ python3 tools/compare_reliance.py                               # RQ3
 python3 tools/identity_fpr.py --all                              # RQ4
 ```
 
-`scan_text_leakage.py` currently fails on notebooks `00`-`08` and `10`: their
-saved cell outputs contain dataset text. Notebooks are committed with outputs
-on purpose, so each of these must be re-run with text printing disabled.
+Notebooks are committed with their cell outputs on purpose, so a reader can
+follow them. `scan_text_leakage.py` is what keeps a post, a text hash, or a
+row id out of those outputs. The primed notebooks have no outputs yet and no
+cell that would print one; the earlier runs' outputs, which did contain
+dataset text, are kept in git history at tag `notebooks-pre-priming`.
 
 The earlier champion-promotion toolkit (hash-chained test ledger, McNemar
 judge, protocol audit) is archived in `legacy_tools/` for reference. Its
@@ -269,16 +285,16 @@ Rendered by tools/render_tables.py from results_summary/ — do not edit by hand
 RQ3 comparisons live in `results_summary/rq/rq3_reliance_comparison.csv` and
 `rq3_stability.csv` once at least two attribution runs per technique exist.
 
-## Transformer ensemble work in progress
+## Transformer ensemble notebooks
 
-Notebooks `08`–`11` explore whether ensembling contextual transformers improves on the single fine-tuned Twitter-RoBERTa run. Only `11` has a registered result; the other three do not appear in the tables above.
+Notebooks `08`–`11` ensemble contextual transformers. Only `11` has a registered result and takes part in the controlled comparison; `08`, `09` and `10` are closed lines (`docs/RESEARCH_PLAN.md`, section 6) and do not appear in the tables above. All four are primed to the same template.
 
-| Notebook | State | Status |
+| Notebook | Earlier run | Status |
 |---|---|---|
-| `08_BEST-ROBERTA_SEED-ENSEMBLE` | ran on Kaggle | Not registered. No result folder and no probability export; its test metrics exist only in saved cell outputs. Its own reported test accuracy (0.8778) is *below* the champion, so the `BEST` in its filename is a claim its numbers contradict — the file should be renamed `08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb`. |
-| `09_MULTI-CHECKPOINT_LOGIT-STACK` | built, never run | Superseded by notebook `11`, which keeps the multi-checkpoint idea but replaces the learned logit stacker with notebook `10`'s equal-weight mean-log-odds pool. |
-| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | ran on Kaggle | No result folder. Evaluated the test split but has no probability-export cell, so its folder cannot be derived without a rerun. |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | ran on Kaggle | **Has a result folder**, derived from its committed probability artifacts, so it appears in the tables above. |
+| `08_TWITTER-ROBERTA_SEED-ENSEMBLE` | ran on Kaggle | Closed line. Not registered: the earlier run left no result folder and no probability export. Renamed from `08_BEST-ROBERTA_SEED-ENSEMBLE`; a notebook name never encodes a claim, and its own earlier test accuracy (0.8778) sat below notebook `07`'s. The primed notebook exports the probability artifact and per-member attribution runs. |
+| `09_MULTI-CHECKPOINT_LOGIT-STACK` | built, never run | Closed line. Superseded by notebook `11`, which keeps the multi-checkpoint idea but replaces the learned logit stacker with notebook `10`'s equal-weight mean-log-odds pool. |
+| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE` | ran on Kaggle | Closed line. The earlier run evaluated the test split but exported no probabilities, so no folder could be derived. The primed notebook exports them. |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | ran on Kaggle | **Has a result folder**, derived from its committed probability artifacts, so it appears in the tables above. The primed notebook adds whole-ensemble and per-component attribution runs. |
 
 ### About the highest accuracy figures
 
@@ -312,18 +328,18 @@ Run notebooks in numeric order:
 | `04_CHAR-TF-IDF_LIN-SVM.ipynb` | Tests whether character n-grams improve robustness to misspellings, obfuscation, hashtags, and noisy social-media phrasing. |
 | `05_WORD-CHAR-TF-IDF_LIN-SVM.ipynb` | Combines word-level semantic lexical cues with character-level robustness. |
 | `06_FASTTEXT-EMB_LOG-REG.ipynb` | Tests dense FastText document embeddings with logistic regression. |
-| `07_TWITTER-ROBERTA_FINE-TUNE.ipynb` | Fine-tunes a contextual Twitter-RoBERTa transformer and saves token-attribution interpretability outputs. |
+| `07_TWITTER-ROBERTA_FINE-TUNE.ipynb` | Fine-tunes a contextual Twitter-RoBERTa transformer. |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb` | Pools mean log-odds across fine-tuned checkpoints spanning pretraining corpus, architecture and scale, three seeds each. |
 
-The remaining notebooks are candidate experiments rather than part of the controlled comparison:
+The remaining notebooks are closed lines, not part of the controlled comparison:
 
 | Notebook | Purpose |
 |---|---|
-| `08_BEST-ROBERTA_SEED-ENSEMBLE.ipynb` | Averages seed restarts of the fine-tuned transformer. Ran; regressed against `07`. |
-| `09_MULTI-CHECKPOINT_LOGIT-STACK.ipynb` | Learned stacker over several transformer checkpoints. Built but never run; superseded by `11`. |
-| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE.ipynb` | Replaces probability averaging with mean log-odds pooling across seeds, and threshold grids with exact probability-change intervals. Ran; unregistered. |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb` | Pools mean log-odds across five checkpoints spanning fine-tuning lineage, pretraining corpus, architecture/tokenizer, and scale, anchored on `10`'s recipe. Awaiting GPU run. |
+| `08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb` | Averages the probabilities of three seeds of the fine-tuned transformer. |
+| `09_MULTI-CHECKPOINT_LOGIT-STACK.ipynb` | Learned stacker over several transformer checkpoints with train-side cross-validation. Never run; superseded by `11`. |
+| `10_TWITTER-ROBERTA_LOGIT-POOL-STABLE.ipynb` | Mean log-odds pooling across seeds. A guarded auxiliary blend is implemented and switched off. |
 
-Expected compact output structure for most classical and embedding model families:
+Every primed model notebook writes the same output structure:
 
 ```text
 results_summary/<TECHNIQUE>/
@@ -332,20 +348,19 @@ results_summary/<TECHNIQUE>/
 ├── classification_report_test.json
 ├── confusion_matrix_test.csv
 ├── metrics_validation.json
-└── metrics_test.json
-```
-
-The RoBERTa folder may instead save a compact image confusion matrix and threshold sweep:
-
-```text
-results_summary/07_TWITTER-ROBERTA_FINE-TUNE/
-├── ablation_results.csv
-├── best_config.json
-├── confusion_matrix_test.png
-├── metrics_validation.json
 ├── metrics_test.json
-└── threshold_sweep_validation.csv
+├── threshold_sweep_validation.csv
+└── attributions/
+    ├── shap-partition_test_seed30.csv, .json
+    ├── shap-partition_validation_seed30.csv, .json
+    ├── shap-partition_test_seed30_member-<id>.csv, .json   (ensembles)
+    └── coefficients.csv                                    (01, 06)
+research_loop/probs/<TECHNIQUE>__validation.csv, __test.csv, __meta.json
 ```
+
+Folders committed before priming use older layouts (the transformer folder,
+for example, has a confusion-matrix image instead of the CSV); each is
+replaced when its notebook is rerun.
 
 ## Installation and environment
 
@@ -386,21 +401,25 @@ python -m ipykernel install --user --name extremism-research --display-name "Pyt
 
 ## Running the experiments
 
-### Option A: Kaggle
+The notebooks are written for Kaggle. `notebooks/README.md` has the full
+procedure; in short:
 
-1. Attach the Kaggle dataset to the notebook environment.
-2. Run `00_create_dataset_and_splits.ipynb` first.
-3. Save the generated processed dataset, split assignments, and dataset manifest.
-4. Run each model notebook using the fixed split assignments.
-5. Commit only compact, reviewable result summaries. Avoid committing raw prediction files or large model artifacts.
+1. Attach this repository to the kernel as an input dataset. It provides
+   `tools/notebook_kit.py` and the committed split to verify against.
+2. Run `00_create_dataset_and_splits.ipynb` first, with the Kaggle dataset
+   attached, and save the version. It reproduces the frozen split and stops if
+   the result differs from the committed assignment.
+3. Attach the output of notebook 00 to each model notebook and run it. Use a
+   GPU with internet on for notebooks `07` to `11`.
+4. Each notebook writes `<TECHNIQUE>_repo_files.zip`, which unpacks at the
+   repository root, and an `external/` folder (weights and per-post files)
+   that is uploaded to a Kaggle Dataset and recorded with
+   `tools/run_manifest.py`. Per-post files and weights are never committed.
+5. Run the tools on the copied artifacts, regenerate the tables, and check
+   the notebook and the repository for leaked text before committing.
 
-### Option B: Local environment
-
-1. Place `dataset.csv` under `data/`.
-2. Run `00_create_dataset_and_splits.ipynb`.
-3. Confirm that the generated split files match the expected split version.
-4. Run model notebooks in numeric order.
-5. Compare results using the JSON and CSV artifacts in `results_summary/`.
+The tools (`tools/*.py`) run locally on committed files and need only the
+packages in `requirements.txt`.
 
 ## Experiment protocol
 
@@ -419,14 +438,27 @@ To keep the model comparison research-grade:
 
 ## Interpretability
 
-The project emphasizes explainable AI and model auditing. Interpretability methods differ by model family:
+The paper's contribution is an attribution comparison, so every technique is
+explained by one method: SHAP's partition explainer over a word-level text
+masker, applied to the model as a function from text to P(EXTREMIST). The
+explainer masks words and measures how the probability moves. It needs
+nothing from inside the model, so a TF-IDF pipeline, an embedding model, a
+fine-tuned transformer and a pooled ensemble are explained by the same call,
+and a word's attribution means the same thing in every row of a table.
 
-* Linear TF-IDF models: coefficient- or margin-based feature analysis.
-* SLP over TF-IDF: linear logit contribution analysis.
-* FastText embeddings: embedding-direction and token-contribution approximations.
-* Twitter-RoBERTa: token-level gradient attribution and local error review.
+Earlier versions of the notebooks used a different method per family
+(coefficients, margin contributions, embedding-direction scores, gradient
+times embedding). Those quantities are not comparable with one another and
+are no longer committed artifacts. Two survive in supporting roles:
+logistic-regression coefficients (notebook 01, and a word-level projection in
+notebook 06) are what the SHAP pipeline is validated against, and
+gradient-times-embedding is kept in notebook 07 as an appendix comparison.
 
-Interpretability artifacts should be used to inspect model behavior and guide error analysis. They should not be treated as proof that a model understands ideology, intent, or real-world risk.
+Each run is reduced to the committed word-level table defined in
+`docs/RESULTS_SCHEMA.md`. Per-post attributions carry dataset text and go to
+external storage.
+
+Interpretability artifacts should be used to inspect model behavior and guide error analysis. They should not be treated as proof that a model understands ideology, intent, or real-world risk. Masked text is unlike real posts, and an attribution is not a causal claim about language.
 
 ## Limitations
 
@@ -441,11 +473,12 @@ Interpretability artifacts should be used to inspect model behavior and guide er
 When adding or rerunning a model notebook:
 
 1. Keep the fixed split protocol unchanged unless a new split version is explicitly introduced. Never regenerate the split *assignment*.
-2. Export a sanitized probability artifact (`row_id`, `split`, `y_true`, `y_prob`) and a word-level attribution artifact (`word`, `mean_abs_attribution`, `mean_attribution`, `support`). Do not hand-copy metrics into JSON.
-3. Save only compact result artifacts to `results_summary/`. Weights, logs, and per-post files go to external storage and are recorded with `tools/run_manifest.py`.
-4. Never print dataset text, row ids, or text hashes in a notebook cell: outputs are committed so readers can follow the notebook, and `tools/scan_text_leakage.py` fails the commit otherwise.
-5. Regenerate the documentation tables with `tools/render_tables.py --write` rather than editing them, then confirm `--check` exits 0.
-6. Update the prose in `README.md`, `docs/RESULTS_SCHEMA.md`, `notebooks/README.md`, and `results_summary/README.md` when a new technique joins the comparison.
+2. Start from the template (`python3 tools/check_notebook.py --print-template <role>`) and use `tools/notebook_kit.py` for loading, metrics, thresholding and every export. Check the notebook with `tools/check_notebook.py --primed` before uploading it, and without `--primed` before committing its outputs.
+3. Export a sanitized probability artifact (`row_id`, `split`, `y_true`, `y_prob`) and a word-level attribution artifact (`word`, `mean_abs_attribution`, `mean_attribution`, `support`). Do not hand-copy metrics into JSON.
+4. Save only compact result artifacts to `results_summary/`. Weights, logs, and per-post files go to external storage and are recorded with `tools/run_manifest.py`.
+5. Never print dataset text, row ids, or text hashes in a notebook cell: outputs are committed so readers can follow the notebook, and `tools/scan_text_leakage.py` fails the commit otherwise.
+6. Regenerate the documentation tables with `tools/render_tables.py --write` rather than editing them, then confirm `--check` exits 0.
+7. Update the prose in `README.md`, `docs/RESULTS_SCHEMA.md`, `notebooks/README.md`, and `results_summary/README.md` when a new technique joins the comparison.
 
 ## Citation
 
