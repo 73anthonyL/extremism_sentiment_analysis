@@ -34,6 +34,12 @@ files listed in `docs/RESULTS_SCHEMA.md`; it also exports the probability
 artifact those numbers came from. Never hand-copy a number out of a notebook
 into one of these files.
 
+The primed notebooks write these files through `tools/notebook_kit.py`, in
+one layout for every model family, and stamp them `provenance:
+derived_from_probs`. The folders here were committed before priming, so some
+use older layouts and none carries that stamp yet; each is replaced when its
+notebook is rerun.
+
 Validate every folder, including its attribution runs and manifest, with:
 
 ```bash

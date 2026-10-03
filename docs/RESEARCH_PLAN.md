@@ -1,6 +1,6 @@
 # Research plan
 
-Status as of 2026-09-30. This is the working plan for the paper. It says what
+Status as of 2026-10-02 (WP0 closed). This is the working plan for the paper. It says what
 the paper claims, which research question each piece of work serves, what
 exists today, what is missing, in what order the gaps get closed, and what
 rule decides when each question is answered. Update it when a work package
@@ -113,9 +113,10 @@ ensemble's shares toward the member mean and reduces reliance variance, but
 does not remove identity-term reliance.
 
 *Artifact.* The same attribution runs as RQ2, with per-member runs for the
-ensemble (`member` set in the sidecar) and at least two whole-model runs per
-technique with different seeds or background sets. `tools/compare_reliance.py`
-writes `rq/rq3_reliance_comparison.csv` and `rq/rq3_stability.csv`.
+ensemble (`member` set in the sidecar) and two whole-model runs per
+technique over different posts: one explains the test split, one the
+validation split. `tools/compare_reliance.py` writes
+`rq/rq3_reliance_comparison.csv` and `rq/rq3_stability.csv`.
 
 *Rendered as.* A pretraining-lineage table (one row per transformer, shares
 of positive mass per category, with the across-run standard deviation), a
@@ -170,14 +171,18 @@ what `docs/RESULTS_SCHEMA.md` says is not acceptable.
 
 Other facts that shape the order of work:
 
-* **No attribution run exists for any technique.** RQ2 and RQ3 are empty.
-  Notebook 07 computes gradient-times-embedding token attributions, not SHAP,
-  and does not write the word-level artifact. Notebooks 02, 04, 06, 10 and 11
-  contain SHAP code, but none export the contract artifact. Notebooks 01 and
-  03 gained SHAP plots on 2026-09-14 but were saved under non-conforming
-  filenames (`01-LOG-REG_TF-IDF.ipynb`, `03-SLP_TF-IDF.ipynb`) with a
-  `technique_name` that drops the numeric prefix, and notebook 05 was replaced
-  by a one-cell stub named `05_LIN-SVM_WORD-CHAR-TF-IDF.ipynb`.
+* **No attribution run exists yet for any technique.** RQ2 and RQ3 are
+  empty until the notebooks are rerun. Before priming, no notebook exported
+  the contract artifact and no notebook used SHAP for one: 07, 08, 10 and 11
+  computed gradient-times-embedding at subword level, 01 and 03 had a
+  `LinearExplainer` plot cell added on 2026-09-14, and the others used
+  coefficient, margin or embedding-direction contributions. Every primed
+  notebook now exports two whole-model SHAP runs, and the ensembles one run
+  per member.
+* **All twelve notebooks are primed** (WP0). Each follows one template, loads
+  `tools/notebook_kit.py`, and passes `tools/check_notebook.py --primed`.
+  Their outputs are empty until rerun; the earlier outputs are at tag
+  `notebooks-pre-priming`.
 * **Notebook 11 already fine-tunes the lineages RQ3 needs.** Its admitted
   members are `cardiffnlp/twitter-roberta-base-hate-latest`,
   `cardiffnlp/twitter-roberta-large-hate-latest`,
@@ -189,11 +194,14 @@ Other facts that shape the order of work:
 * **The slur lexicon is empty** (`data/lexicons/slurs.txt`). Until it is
   populated, every slur is counted as topical or as extremist framing, which
   biases RQ2 and hides the slur-versus-identity distinction RQ3 turns on.
-* **`tools/scan_text_leakage.py` fails on notebooks 00 to 08 and 10.** Their
-  committed outputs contain dataset text. Notebook 11 prints row ids.
-* **Notebooks 08 and 10** evaluated the test split without exporting
-  probabilities. They stay out of the comparison; their test numbers are not
-  cited. Notebook 08's filename still carries `BEST`.
+* **`tools/scan_text_leakage.py` passes.** The outputs that contained dataset
+  text, hashes and row ids were cleared by priming, and the scanner now also
+  checks notebook outputs and result files for row ids.
+* **Notebooks 08, 09 and 10 are closed lines.** 08 and 10 evaluated the test
+  split earlier without exporting probabilities, and 09 was never run. They
+  stay out of the comparison and their earlier test numbers are not cited.
+  They are primed to the same standard as the rest (08 renamed without
+  `BEST`) so they can be rerun if their question is reopened.
 * The champion-promotion loop (ledger, judge, `research_loop/registry.json`)
   is archived. The registry still names notebook 07 as champion. That field
   is historical data and is not updated; the paper does not use the word
@@ -206,30 +214,38 @@ the four pre-commit checks pass. Kaggle runs are the expensive step, so each
 notebook is rerun once with every export cell in place rather than once per
 missing artifact.
 
-### WP0. Repository hygiene (local, no GPU)
+### WP0. Repository hygiene (local, no GPU). Closed 2026-10-02.
 
-Fixes that block everything downstream because they break the naming
-contract or the leakage rule.
+Fixes that blocked everything downstream because they broke the naming
+contract or the leakage rule. What was done:
 
-1. Restore `notebooks/01_LOG-REG_TF-IDF.ipynb`, `03_SLP_TF-IDF.ipynb`, and
-   `05_WORD-CHAR-TF-IDF_LIN-SVM.ipynb` as the canonical filenames. Fold the
-   SHAP work from the hyphenated copies into them, set
-   `CONFIG["technique_name"]` to the full stem, and remove the hyphenated
-   copies and the one-cell stub.
-2. Rename `08_BEST-ROBERTA_SEED-ENSEMBLE.ipynb` to
-   `08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb`. Update the three READMEs.
-3. Set `overwrite_existing_split` to `False` in notebook 00.
-4. Remove or disable every cell in notebooks 00 to 11 that prints, displays,
-   or plots dataset text, row ids, or text hashes, and set
-   `include_text_preview` false. Do this before the reruns in WP1 so the
-   committed outputs come back clean.
-5. Add an `explainer` and attribution-export cell to every model notebook,
-   mirroring `tools/attributions.py::write_run`, plus a `coefficients.csv`
-   export in notebooks 01 and 06.
+1. `tools/notebook_kit.py`: one helper every notebook loads, which owns the
+   frozen-split assertion, the metric function (pinned to
+   `tools/metrics_core.py` by a test), threshold selection on validation, the
+   single test evaluation, and the writers for the probability artifact, the
+   attribution runs, the coefficient file and the result folder.
+2. `tools/check_notebook.py`: a static check of a notebook against the
+   template, since notebooks are never executed locally.
+3. All twelve notebooks rewritten on the template. `technique_name` equals
+   the filename stem everywhere; `split_version` is the full frozen string;
+   notebook 00 verifies the split against the committed assignment instead of
+   being free to overwrite it; no cell prints dataset text, row ids or text
+   hashes; `include_text_preview` is false; every model notebook exports the
+   probability artifact and its attribution runs, and 01 and 06 export
+   `coefficients.csv`.
+4. `08_BEST-ROBERTA_SEED-ENSEMBLE.ipynb` renamed to
+   `08_TWITTER-ROBERTA_SEED-ENSEMBLE.ipynb`. Notebooks 01, 03 and 05 are back
+   under their canonical names.
+5. Two rules were unified across techniques, so reruns will not reproduce the
+   earlier numbers exactly: configurations are ranked by validation accuracy
+   at a screening threshold of 0.5, and the decision threshold is selected
+   once on validation, maximizing accuracy over one shared grid. Earlier
+   notebooks tuned a threshold per configuration (and some per epoch) for
+   positive F1.
 
-*Done when.* Every notebook's `technique_name` equals its filename stem,
-static inspection finds no text-printing cell, and each notebook has a
-probability-export cell and an attribution-export cell.
+*Done.* `tools/check_notebook.py --all --primed` reports no problems, and
+`tools/tests/test_notebook_pipeline.py` drives the kit end to end on
+synthetic text and passes the real coefficient check.
 
 ### WP1. Probability artifacts for 01 to 07 (Kaggle, CPU for 01 to 06, GPU for 07)
 
@@ -240,10 +256,13 @@ probabilities with `compute_binary_metrics`, and writes the attribution run
 and `run_manifest.json`. Weights, logs and per-post files go to a Kaggle
 Dataset and are recorded with `run_manifest.py add-asset`.
 
-The rerun will not reproduce the old numbers exactly for 07 (non-deterministic
-GPU training). That is fine: the old folder is replaced, the change is stated
-in the commit, and the rendered tables are regenerated. Thresholds are
-re-selected on validation only. Test is evaluated once per rerun.
+The reruns will not reproduce the old numbers exactly: the threshold and
+ranking rules were unified in WP0, early-stopping monitors changed in 03, 07
+and 08, and GPU training was not deterministic before. That is fine: each old
+folder is replaced, the change is stated in the commit, and the rendered
+tables are regenerated. Thresholds are selected on validation only. Test is
+evaluated once per rerun. Run order: 00 first, then 01 and its coefficient
+check, then the rest.
 
 *Done when.* All eight techniques show `provenance: derived_from_probs` and
 `recomputable: true`, `validate_results_folder.py --all` passes, and the RQ1
@@ -283,29 +302,40 @@ and the lists are frozen.
 
 ### WP4. Attribution runs for RQ2 and RQ3 (Kaggle)
 
-Whole-model runs come from WP1. This package adds what RQ3 needs:
+The primed notebooks export every attribution run in the same Kaggle run
+that trains the model, so most of this package is delivered by the WP1
+reruns:
 
-1. **A second whole-model run per technique** with a different SHAP seed
-   and background set, so `rq3_stability.csv` has something to compute. For
-   the classical notebooks this is cheap and is done in the WP1 rerun. For
-   07 and 11 it is a second explanation pass over the saved weights, not a
-   second training run.
-2. **Per-member runs from notebook 11**, one per admitted checkpoint, with
-   `member` set in the sidecar, so `compare_reliance.py` can write the
-   `member_mean` row.
-3. **Notebook 12, `12_ROBERTA-BASE_FINE-TUNE`**: `roberta-base` fine-tuned
-   with notebook 07's exact recipe (batch 8, gradient accumulation 2,
-   max length 192, weighted cross-entropy, seed 30, threshold on validation).
-   This is the no-domain-pretraining control RQ3 lacks. It exports both
-   artifacts. Its accuracy is reported in RQ1 without comment unless it
-   clears the McNemar floor against 07.
+1. **Two whole-model runs per technique.** Run 1 explains the test split and
+   run 2 the validation split, with the same seed. The partition explainer
+   over a text masker has no background sample and almost no randomness, so
+   a second seed would show artificially small variance; a second set of
+   posts shows how stable the result is across posts, which is what
+   `rq3_stability.csv` should measure.
+2. **Per-member runs from notebook 11**, one per admitted component (its
+   three seeds pooled), with `member` set in the sidecar, so
+   `compare_reliance.py` can write the `member_mean` row. The excluded
+   components are not explained.
+3. **Notebook 12, `12_ROBERTA-BASE_FINE-TUNE`** (still to be written):
+   `roberta-base` fine-tuned with notebook 07's recipe. This is the
+   no-domain-pretraining control RQ3 lacks. It is built from the transformer
+   template and exports both artifacts. Its accuracy is reported in RQ1
+   without comment unless it clears the McNemar floor against 07.
 
-The explainer for transformers is SHAP's partition explainer over the
-tokenizer's masker, with subwords aggregated to words before export;
-notebook 11 already uses it. Notebook 07's gradient-times-embedding
-attributions are kept as a supplementary comparison in the appendix but are
-not the artifact RQ2 reads, because the paper's comparison must use one
-attribution method everywhere.
+The explainer for every family is SHAP's partition explainer over a
+word-level text masker (`shap.maskers.Text(r"\W+")`), applied to the model's
+`predict_proba_texts` function. The masker tokenizes at word level, so no
+subword aggregation is needed and every family lands in one vocabulary. No
+notebook used this method before WP0; an earlier version of this plan said
+notebook 11 did, which was wrong (it used gradient-times-embedding).
+Notebook 07 keeps gradient-times-embedding as a supplementary comparison,
+aggregated to words and written to external storage, because the paper's
+comparison must use one attribution method everywhere.
+
+Classical notebooks explain all 450 posts of each split. Transformer and
+ensemble notebooks explain a label-stratified sample of 200 posts per split
+(the same sample for the whole model and every member), with 500 model
+evaluations per post; both numbers are recorded in each sidecar.
 
 *Done when.* Every technique has at least two whole-model runs, notebook 11
 has one run per member, notebook 12 has a result folder and both artifacts,
@@ -374,7 +404,9 @@ descriptive.
 across-run standard deviation from `rq3_stability.csv`. A difference in
 share between two techniques is described as a difference only if it exceeds
 the pooled across-run standard deviation of the two. Top-K is 50 throughout;
-changing it re-runs everything and is stated. Multi-word lexicon entries
+changing it re-runs everything and is stated. Runs are compared only when
+they explain the same number of posts with the same evaluation budget; the
+sidecar records both. Multi-word lexicon entries
 cannot match word-level artifacts and the count of skipped entries is
 reported.
 
@@ -417,7 +449,7 @@ that depends on it closes.
 | Decision | Blocks | Default if not decided |
 |---|---|---|
 | Source lexicon for `slurs.txt` | WP3 | Not populated; RQ2 slur column reported as unavailable and the limitation stated. |
-| SHAP background size and seeds for the second runs | WP4 | 100 training posts, seeds 30 and 31. |
+| ~~SHAP background size and seeds for the second runs~~ | WP4 | Decided 2026-10-02: the text masker uses no background sample; run 2 explains the validation split with the same seed; transformer families explain 200 posts per split. |
 | Whether notebook 12 also gets a large-scale twin | WP4 | No. One control is enough for the lineage question. |
 | Whether per-member runs for 11 include the excluded DeBERTa member | WP4 | No. Excluded members are not part of the ensemble's reliance. |
 | Holm family for RQ1: all 36 pairs or only the 8 pairs against 07 | WP5 | All pairs reported; the 07 column highlighted. |
