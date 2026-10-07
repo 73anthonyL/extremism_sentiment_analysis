@@ -367,6 +367,24 @@ tools with adversarial tests:
 `render_tables.py --check` passes, and the two new tools have tests that
 refuse a malformed input.
 
+### WP5a. Curated examples (local, after the reruns)
+
+A hand-curated list of texts, one per line of a `.txt` file, classified and
+explained by every technique side by side, for the qualitative discussion of
+RQ2-RQ4. `tools/curated_examples.py explain` restores each technique's
+`predict_proba_texts` from its downloaded `external/<TECHNIQUE>/` folder
+(`tools/model_loaders.py`), verifies it against the committed test
+probability artifact, and runs `notebook_kit.explain` on the curated texts;
+`report` writes a text-free `summary.csv` and a `report.html` with every
+text under every model. Outputs stay under `external/curated_examples/`.
+
+The curated texts are not dataset rows and carry no label, so they support
+no accuracy claim and enter no rendered table. Notebooks 08, 09 and 10 have
+no loader, as closed lines.
+
+*Done when.* Every technique in the comparison passes verification and
+appears in `report.html` for every curated text.
+
 ### WP6. Write the paper
 
 Sections map one-to-one onto the research questions:

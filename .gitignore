@@ -55,3 +55,7 @@ logs/
 !splits/**/*.csv
 !data/**/*.csv
 !data/**/*.txt
+
+# Notebook output trees and downloaded external assets (weights, per-post files)
+external/
+kit_output/
