@@ -266,7 +266,14 @@ whole-model runs averaged):
 <!-- RENDERED-TABLE:BEGIN id=rq2-category-shares -->
 | Technique | Runs | Slur | Extremist framing | Identity term | Topical |
 |---|---:|---:|---:|---:|---:|
-| _no attribution runs categorized yet_ | | | | | |
+| `01_LOG-REG_TF-IDF` | 2 | 0.0000 | 0.0000 | 0.1003 | 0.8997 |
+| `02_LIN-SVM_TF-IDF` | 2 | 0.0000 | 0.0000 | 0.1018 | 0.8982 |
+| `03_SLP_TF-IDF` | 2 | 0.0000 | 0.0000 | 0.0227 | 0.9773 |
+| `04_CHAR-TF-IDF_LIN-SVM` | 2 | 0.0000 | 0.0000 | 0.1238 | 0.8762 |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | 2 | 0.0000 | 0.0000 | 0.1266 | 0.8734 |
+| `06_FASTTEXT-EMB_LOG-REG` | 2 | 0.0000 | 0.0012 | 0.1178 | 0.8810 |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | 2 | 0.0000 | 0.0150 | 0.0674 | 0.9175 |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 2 | 0.0000 | 0.0228 | 0.1764 | 0.8008 |
 
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
 <!-- RENDERED-TABLE:END id=rq2-category-shares -->
