@@ -197,6 +197,29 @@ class TestLoaders:
         assert model.family == "slp_tfidf"
         assert np.allclose(model.predict(texts), expected, atol=1e-6)
 
+    def test_numpy_random_shim_accepts_numpy2_pickle_conventions(self):
+        """numpy 2 pickles pass a BitGenerator class or instance and a newer state format."""
+        import numpy.random._pickle as np_pickle
+        from numpy.random import MT19937, RandomState
+
+        ml._install_numpy_random_unpickle_shim()
+        # Dunder names are mangled inside a class body, so fetch them by string.
+        bit_ctor = getattr(np_pickle, "__bit_generator_ctor")
+        state_ctor = getattr(np_pickle, "__randomstate_ctor")
+        by_class = bit_ctor(MT19937)
+        assert isinstance(by_class, MT19937)
+        assert isinstance(bit_ctor("MT19937"), MT19937)
+        state = state_ctor(MT19937())
+        assert isinstance(state, RandomState)
+        # A state in an unknown format is ignored instead of failing the load.
+        by_class.__setstate__({"bit_generator": "MT19937", "state": {"unknown": 1}})
+        state.__setstate__({"bit_generator": "MT19937", "state": {"unknown": 1}})
+        # A legacy state still round-trips.
+        state.set_state(RandomState(7).get_state())
+        assert state.randint(0, 1000) == RandomState(7).randint(0, 1000)
+        with pytest.raises(ValueError):
+            bit_ctor("NoSuchGenerator")
+
     def test_pooling_matches_notebook_11_arithmetic(self):
         log_odds = {"A": np.array([0.0, 2.0]), "B": np.array([2.0, -2.0])}
         pooled = ml.pool_component_log_odds(log_odds, ["A", "B"], [1.0, 1.0])
@@ -304,6 +327,25 @@ class TestExplainAndReport:
         attributions = pd.read_csv(folder / ce.ATTRIBUTIONS_FILENAME, keep_default_na=False)
         assert predictions["example_id"].tolist() == ["curated_01"]
         assert attributions["example_id"].eq("curated_01").all() and len(attributions) == 2
+
+    def test_notes_are_aligned_and_shown(self, world, tmp_path):
+        notes = tmp_path / "notes.txt"
+        notes.write_text("Test 1: probe alpha\n\nTest 3: probe gamma\n")
+        ce.run_explain(
+            world["texts"], world["external_root"], [TECHNIQUE], out_dir=world["out"],
+            notes_path=notes, results_dir=world["results_dir"], max_evals=60, verify_rows=40,
+            reference_loader=lambda n, seed: world["reference"],
+            committed_loader=lambda technique: world["committed"],
+        )
+        examples = pd.read_csv(world["out"] / ce.EXAMPLES_FILENAME, keep_default_na=False)
+        assert examples["note"].tolist() == ["Test 1: probe alpha", "", "Test 3: probe gamma"]
+        ce.run_report(world["out"])
+        page = (world["out"] / ce.REPORT_FILENAME).read_text(encoding="utf-8")
+        assert "probe gamma" in page
+        short = tmp_path / "short.txt"
+        short.write_text("only one note\n")
+        with pytest.raises(ce.CuratedExamplesError, match="exactly one line per text"):
+            ce.read_notes(short, 3)
 
     def test_disagreeing_committed_probabilities_are_refused(self, world):
         shifted = world["committed"].copy()

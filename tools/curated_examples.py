@@ -1,7 +1,9 @@
 """Classify and explain curated texts with every technique, side by side.
 
 Input: a plain-text file with one curated text per line (blank lines and
-lines starting with `#` are skipped). Each line becomes `curated_NN`.
+lines starting with `#` are skipped). Each line becomes `curated_NN`. An
+optional notes file (`--notes`) carries one note per text in the same order,
+shown under the text in the report.
 
 For every technique the tool
 
@@ -130,6 +132,22 @@ def read_examples(path):
             "sha256": [hashlib.sha256(t.encode("utf-8")).hexdigest()[:16] for t in texts],
         }
     )
+
+
+def read_notes(path, n_examples):
+    """One note per curated text, same order as the texts file; blank lines allowed."""
+    path = Path(path)
+    if not path.is_file():
+        raise CuratedExamplesError(f"notes file {path} does not exist")
+    notes = [line.strip() for line in path.read_text(encoding="utf-8").splitlines()]
+    while notes and not notes[-1]:
+        notes.pop()
+    if len(notes) != n_examples:
+        raise CuratedExamplesError(
+            f"{path}: {len(notes)} note line(s) for {n_examples} curated text(s); the notes "
+            "file needs exactly one line per text, in the same order (blank for none)"
+        )
+    return notes
 
 
 def examples_digest(examples):
@@ -325,6 +343,7 @@ def run_explain(
     external_root,
     techniques,
     out_dir=DEFAULT_OUT,
+    notes_path=None,
     results_dir=None,
     max_evals=DEFAULT_MAX_EVALS,
     seed=DEFAULT_SEED,
@@ -339,6 +358,7 @@ def run_explain(
 ):
     """The `explain` subcommand. Returns the list of technique folders written."""
     examples = read_examples(texts_path)
+    examples["note"] = read_notes(notes_path, len(examples)) if notes_path else ""
     digest = _write_examples(out_dir, examples, fresh)
     word_index, _ = build_word_index(load_lexicons())
     if committed_loader is None:
@@ -414,7 +434,9 @@ def load_outputs(out_dir):
     examples_path = out_dir / EXAMPLES_FILENAME
     if not examples_path.exists():
         raise CuratedExamplesError(f"{out_dir}: no {EXAMPLES_FILENAME}; run `explain` first")
-    examples = pd.read_csv(examples_path)
+    examples = pd.read_csv(examples_path, keep_default_na=False)
+    if "note" not in examples.columns:
+        examples["note"] = ""
     expected_ids = set(examples["example_id"].astype(str))
 
     predictions, attributions, records = [], [], {}
@@ -585,6 +607,9 @@ def build_report_html(examples, predictions, attributions, summary, records):
     for example in examples.itertuples():
         out.append(f"<h2>{html.escape(example.example_id)}</h2>")
         out.append(f"<blockquote>{html.escape(str(example.text))}</blockquote>")
+        note = str(getattr(example, "note", "") or "")
+        if note:
+            out.append(f"<p class='meta'>{html.escape(note)}</p>")
         rows = predictions[predictions["example_id"] == example.example_id]
         out.append("<table><tr><th>Model</th><th>P(EXTREMIST)</th><th>Threshold</th><th>Prediction</th>"
                    "<th>Positive mass: framing / identity / slur / topical</th></tr>")
@@ -665,6 +690,8 @@ def main(argv=None):
 
     p = sub.add_parser("explain", help="classify and explain the curated texts with each technique")
     p.add_argument("--texts", required=True, help="plain-text file, one curated text per line")
+    p.add_argument("--notes", default=None,
+                   help="optional file with one note per curated text, same order (blank for none)")
     p.add_argument("--external-root", default=str(DEFAULT_EXTERNAL_ROOT),
                    help="folder holding one downloaded external/<TECHNIQUE>/ per technique")
     p.add_argument("--techniques", nargs="*", default=[], help="technique names (folder stems)")
@@ -698,6 +725,7 @@ def main(argv=None):
                 args.external_root,
                 techniques,
                 out_dir=args.out,
+                notes_path=args.notes,
                 results_dir=args.results_dir,
                 max_evals=args.max_evals,
                 seed=args.seed,
