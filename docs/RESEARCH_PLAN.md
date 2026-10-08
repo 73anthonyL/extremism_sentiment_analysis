@@ -1,6 +1,6 @@
 # Research plan
 
-Status as of 2026-10-02 (WP0 closed). This is the working plan for the paper. It says what
+Status as of 2026-10-08 (WP0, WP1 and WP2 closed). This is the working plan for the paper. It says what
 the paper claims, which research question each piece of work serves, what
 exists today, what is missing, in what order the gaps get closed, and what
 rule decides when each question is answered. Update it when a work package
@@ -155,30 +155,42 @@ Techniques in the controlled comparison and what each one has today.
 
 | Technique | Result folder | Probability artifact | Attribution run | Coefficients | RQ2 | RQ3 | RQ4 |
 |---|---|---|---|---|---|---|---|
-| `01_LOG-REG_TF-IDF` | yes, not derivable | none | none | none | no | no | no |
-| `02_LIN-SVM_TF-IDF` | yes, not derivable | none | none | n/a | no | no | no |
-| `03_SLP_TF-IDF` | yes, not derivable | none | none | n/a | no | no | no |
-| `04_CHAR-TF-IDF_LIN-SVM` | yes, not derivable | none | none | n/a | no | no | no |
-| `05_WORD-CHAR-TF-IDF_LIN-SVM` | yes, not derivable | none | none | n/a | no | no | no |
-| `06_FASTTEXT-EMB_LOG-REG` | yes, not derivable | none | none | none | no | no | no |
-| `07_TWITTER-ROBERTA_FINE-TUNE` | yes, not derivable | none | none | n/a | no | no | no |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | yes, derived | yes | none | n/a | no | no | **yes** |
+| `01_LOG-REG_TF-IDF` | yes, derived | yes | 2 whole-model | yes, check PASS | no | no | **yes** |
+| `02_LIN-SVM_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
+| `03_SLP_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
+| `04_CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
+| `06_FASTTEXT-EMB_LOG-REG` | yes, derived | yes | 2 whole-model | yes, check FAIL (calibration point) | no | no | **yes** |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | yes, derived | yes | 2 whole-model + 4 member (test) | n/a | no | no | **yes** |
 
-"Not derivable" means the folder's numbers came from notebook cell outputs
-and no probability artifact exists to recompute them. The RQ1 tables are
-therefore still transcribed for seven of eight techniques, which is exactly
-what `docs/RESULTS_SCHEMA.md` says is not acceptable.
+Every result folder is now derived from a committed probability artifact
+(`provenance: derived_from_probs`, `recomputable: true`), from the Kaggle
+reruns of 2026-10-08. The notebook 00 rerun reproduced the frozen split and
+the committed mirror is byte-identical. RQ2 and RQ3 stay "no" until the
+lexicons are frozen (WP3) and the categorisation tools are run (WP5).
 
 Other facts that shape the order of work:
 
-* **No attribution run exists yet for any technique.** RQ2 and RQ3 are
-  empty until the notebooks are rerun. Before priming, no notebook exported
-  the contract artifact and no notebook used SHAP for one: 07, 08, 10 and 11
-  computed gradient-times-embedding at subword level, 01 and 03 had a
-  `LinearExplainer` plot cell added on 2026-09-14, and the others used
-  coefficient, margin or embedding-direction contributions. Every primed
-  notebook now exports two whole-model SHAP runs, and the ensembles one run
-  per member.
+* **Every technique has its attribution runs.** Two whole-model SHAP runs
+  per technique (test and validation samples), and one test run per
+  admitted member of 11 (`A_anchor`, `B_dynabench`, `C_hatebert`,
+  `E_twitter_large`; `D_deberta` again missed the 0.84 floor). The members
+  are explained on the test sample only, so member-level shares have no
+  across-run standard deviation; a validation-sample member loop is a
+  small notebook edit if RQ3 prose needs it. Before priming, no notebook
+  used SHAP for a committed artifact (07, 08, 10 and 11 computed
+  gradient-times-embedding at subword level).
+* **The SHAP pipeline is validated** (WP2). On notebook 01 the test run
+  reaches Spearman 0.873 and the validation run 0.865 against the
+  coefficients, with top-50 sign agreement 1.00 on both. Notebook 06 reaches
+  Spearman 0.745 and sign agreement 1.00, below the 0.80 bar as expected
+  for coefficients over embedding dimensions; it is recorded as the
+  calibration point, not a failure.
+* **External assets are not yet recorded.** The `external/<TECHNIQUE>/`
+  folders (weights, per-post predictions and attributions; 6.2 GB for 11)
+  are still in the Kaggle outputs and have not been uploaded to a Kaggle
+  Dataset, so no manifest lists them.
 * **All twelve notebooks are primed** (WP0). Each follows one template, loads
   `tools/notebook_kit.py`, and passes `tools/check_notebook.py --primed`.
   Their outputs are empty until rerun; the earlier outputs are at tag
@@ -247,7 +259,7 @@ contract or the leakage rule. What was done:
 `tools/tests/test_notebook_pipeline.py` drives the kit end to end on
 synthetic text and passes the real coefficient check.
 
-### WP1. Probability artifacts for 01 to 07 (Kaggle, CPU for 01 to 06, GPU for 07)
+### WP1. Probability artifacts for 01 to 07 (Kaggle, CPU for 01 to 06, GPU for 07). Closed 2026-10-08.
 
 Rerun each notebook once with the WP0 cells in place. Each run exports
 `<TECHNIQUE>__validation.csv`, `<TECHNIQUE>__test.csv`, and the meta sidecar
@@ -268,7 +280,7 @@ check, then the rest.
 `recomputable: true`, `validate_results_folder.py --all` passes, and the RQ1
 McNemar table is computed from the artifacts.
 
-### WP2. Validate the SHAP pipeline (local)
+### WP2. Validate the SHAP pipeline (local). Closed 2026-10-08.
 
 Run `tools/validate_shap.py --technique 01_LOG-REG_TF-IDF` against the
 coefficients and attribution run from WP1. If the sign-agreement or Spearman
