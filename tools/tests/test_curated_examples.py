@@ -305,6 +305,25 @@ class TestExplainAndReport:
         assert predictions["example_id"].tolist() == ["curated_01"]
         assert attributions["example_id"].eq("curated_01").all() and len(attributions) == 2
 
+    def test_notes_are_aligned_and_shown(self, world, tmp_path):
+        notes = tmp_path / "notes.txt"
+        notes.write_text("Test 1: probe alpha\n\nTest 3: probe gamma\n")
+        ce.run_explain(
+            world["texts"], world["external_root"], [TECHNIQUE], out_dir=world["out"],
+            notes_path=notes, results_dir=world["results_dir"], max_evals=60, verify_rows=40,
+            reference_loader=lambda n, seed: world["reference"],
+            committed_loader=lambda technique: world["committed"],
+        )
+        examples = pd.read_csv(world["out"] / ce.EXAMPLES_FILENAME, keep_default_na=False)
+        assert examples["note"].tolist() == ["Test 1: probe alpha", "", "Test 3: probe gamma"]
+        ce.run_report(world["out"])
+        page = (world["out"] / ce.REPORT_FILENAME).read_text(encoding="utf-8")
+        assert "probe gamma" in page
+        short = tmp_path / "short.txt"
+        short.write_text("only one note\n")
+        with pytest.raises(ce.CuratedExamplesError, match="exactly one line per text"):
+            ce.read_notes(short, 3)
+
     def test_disagreeing_committed_probabilities_are_refused(self, world):
         shifted = world["committed"].copy()
         shifted["y_prob"] = (shifted["y_prob"] + 0.2).clip(0, 1)
