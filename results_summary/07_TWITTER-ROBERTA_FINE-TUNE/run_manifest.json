@@ -1,0 +1,29 @@
+{
+  "committed_artifacts": {
+    "ablation_results.csv": "80a87efd220e958ea55113077a1317b23f252d92fc3ac146316c161a91a31b85",
+    "attributions/shap-partition_test_seed30.csv": "b3c4c3fa960db4501e3a059957084d713c33706e365145748a07fa3631b67c12",
+    "attributions/shap-partition_test_seed30.json": "1248c1e5492553e12212eebad24cd1ed9669d0086923d711ed51073f0ef0f410",
+    "attributions/shap-partition_validation_seed30.csv": "29a2b4ef7aa14a6c2e5a33d3aa77530f45a3cc8c25b0e1c38593281e6fadaba0",
+    "attributions/shap-partition_validation_seed30.json": "7ce07f24068e365c5b3608d0708812678bb91b1fb6c5d5d99966fa142838c2e5",
+    "best_config.json": "ec6be4f08f0aa17d9377b36f5f69fcbdbc11bd1e8608c493562caa65067bfe8d",
+    "classification_report_test.json": "a4658083ae0f228df3fa0adbf5f7a10ec3df8a17d8be3267f135e1deae0a45ed",
+    "confusion_matrix_test.csv": "e41addb948b6f1680ca48c2bd5cde12b26b7fe95945d5cfc5593754e5a1b3c42",
+    "confusion_matrix_test.png": "e695a49f2e4ad2d9987de89b45e4d724cfe653068e78ce275a0c634b55de4638",
+    "identity_fpr_terms_test.csv": "a85a7a8daf889ac926fc6b5cd500b894c40673ca9f15656a2b192aa3ac59412d",
+    "identity_fpr_test.json": "fcfc33b269ae61147b6a613e08a58e2520a592d76fe33ae8593624b4a774e3eb",
+    "metrics_test.json": "3b139885cb1b9f1e4e920815df1b4a66842a888d323b2569dde91e29cdb212ff",
+    "metrics_validation.json": "03ca251815c5edd375fe3e7003f5fe020716a7f18aa555f87167eec559fca9d4",
+    "threshold_sweep_validation.csv": "b9c8983a1ed5f2b92bc4337fde41c89c438d2dc9b8529a705e39309739f50797"
+  },
+  "committed_hashed_utc": "2026-10-08T16:39:55+00:00",
+  "created_utc": "2026-10-08T16:37:59+00:00",
+  "external_assets": [],
+  "run_id": "07_TWITTER-ROBERTA_FINE-TUNE_20261008T082627Z",
+  "source": {
+    "git_commit": "fc76ab03",
+    "kaggle_notebook": "https://www.kaggle.com/code/anthony73/07-twitter-roberta-fine-tune-ipynb",
+    "kaggle_version": 1,
+    "notes": "Primed rerun; artifacts fetched with the Kaggle CLI."
+  },
+  "technique": "07_TWITTER-ROBERTA_FINE-TUNE"
+}

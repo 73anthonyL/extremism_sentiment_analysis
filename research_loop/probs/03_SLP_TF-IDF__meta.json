@@ -1,0 +1,44 @@
+{
+  "artifact_sha256": {
+    "test": "d30f8954b9dceb25",
+    "validation": "a33c90d5c6e51e6e"
+  },
+  "contains_text": false,
+  "dataset_version": "extremism_dataset_clean_v1",
+  "feature_family": "tfidf_word",
+  "hyperparameters": {
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "max_df": 0.95,
+    "max_features": 20000,
+    "min_df": 1,
+    "ngram_range": [
+      1,
+      2
+    ],
+    "sublinear_tf": true,
+    "use_pos_weight": true,
+    "weight_decay": 0.0001
+  },
+  "kit_version": "1.0.0",
+  "model_family": "single_layer_perceptron",
+  "random_seed": 30,
+  "row_counts": {
+    "test": 450,
+    "validation": 450
+  },
+  "run_id": "03_SLP_TF-IDF_20261008T082623Z",
+  "schema": [
+    "row_id",
+    "split",
+    "y_true",
+    "y_prob"
+  ],
+  "selected_threshold": 0.52,
+  "split_version": "split_v1_stratified_70_15_15_seed30",
+  "technique": "03_SLP_TF-IDF",
+  "test_set_used_for_selection": false,
+  "threshold_metric": "accuracy",
+  "threshold_selected_on_split": "validation",
+  "threshold_strategy": "grid_search_on_validation"
+}

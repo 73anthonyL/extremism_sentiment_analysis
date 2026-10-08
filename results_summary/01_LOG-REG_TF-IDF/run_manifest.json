@@ -1,0 +1,31 @@
+{
+  "committed_artifacts": {
+    "ablation_results.csv": "e14c336c94a8095c1dbadf3840c16bd908239eefb2acfb3055b6f14d783c1ba9",
+    "attributions/coefficients.csv": "d7dcfa6a054c8d242f19200e95f3e45c1943ba1320ff67a691c732d93ea2fda7",
+    "attributions/shap-partition_test_seed30.csv": "fb78ae0c25f47483cf46da900de8f149ab1442680635ed2b7dd6e01541273027",
+    "attributions/shap-partition_test_seed30.json": "4757de843c5d5b33347a509a173d7e6de2742c4dc20926cc890776d760fcf634",
+    "attributions/shap-partition_test_seed30__coefficient_check.json": "621727c51b12c4fe9af83b209246cb05ae5ebcbe9869fb5771fde2097d91d7ee",
+    "attributions/shap-partition_validation_seed30.csv": "46890272ecde3f53c5899e9827a77c98e6b70a9dc3a51e5cc24e703388b83e79",
+    "attributions/shap-partition_validation_seed30.json": "a5f18d68df1b35a29c4f4a4455d2dcb9fcaa6f2ee911040d15ad62bc46d450ea",
+    "attributions/shap-partition_validation_seed30__coefficient_check.json": "2e341bedd5331a7bf3d4a51d23c9c719075dcb57a4f7e5e4ce6d0f5758608c76",
+    "best_config.json": "d94a65426f6b41e6c467c1c3e48e7b82caf0a4d25412f131185913c3024321a8",
+    "classification_report_test.json": "b85257cc137aa71485dbf058fd39f39b8b28abff0905dfd46d3eef32298f0618",
+    "confusion_matrix_test.csv": "756ad39b77f37206b7079fb1ff58c7098f66475efa8a1c57dc5878584ff3fb23",
+    "identity_fpr_terms_test.csv": "79d8c03f33c2e2f82a9f8062209ad82bc0c681464e13af3131d467017d3e5259",
+    "identity_fpr_test.json": "3fa8413da982f479024230574fd7437632508ad5f2a37920344da1a760435255",
+    "metrics_test.json": "d2d158caa4189b43775c67cde255c0486da8d432bd69b5b2f6cd70999a69c477",
+    "metrics_validation.json": "04baeeadd7cd8fd4f7bb2b287b3e4b71c8a01eff07a01b004f863517c9498009",
+    "threshold_sweep_validation.csv": "988daf822e3b0075682f785dc861b3ab178af1f5fd61c1549226725356903c13"
+  },
+  "committed_hashed_utc": "2026-10-08T16:39:55+00:00",
+  "created_utc": "2026-10-08T16:37:58+00:00",
+  "external_assets": [],
+  "run_id": "01_LOG-REG_TF-IDF_20261008T070400Z",
+  "source": {
+    "git_commit": "476405e4",
+    "kaggle_notebook": "https://www.kaggle.com/code/anthony73/01-log-reg-tf-idf-ipynb",
+    "kaggle_version": 1,
+    "notes": "Primed rerun; artifacts fetched with the Kaggle CLI."
+  },
+  "technique": "01_LOG-REG_TF-IDF"
+}

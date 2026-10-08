@@ -22,7 +22,7 @@
     "metrics_validation.json": "265c991f45c71ec4febd0d4448639de8743025e06c7fcfa1740979d375cf2906",
     "threshold_sweep_validation.csv": "c4c947f9de83790732a45d3ed243b5f9aa71e387a6a10e7815f43449578dcac1"
   },
-  "committed_hashed_utc": "2026-10-08T15:51:56+00:00",
+  "committed_hashed_utc": "2026-10-08T16:39:55+00:00",
   "created_utc": "2026-10-08T15:51:56+00:00",
   "external_assets": [],
   "run_id": "11_MULTI-CHECKPOINT_LOGIT-POOL_20261008T093502Z",

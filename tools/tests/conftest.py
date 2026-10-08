@@ -7,6 +7,7 @@ exercised end to end without any dataset text.
 """
 
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -126,10 +127,7 @@ def golden_results_folder(tmp_path):
     if not source.exists():
         pytest.skip("committed golden result folder not present")
     destination = tmp_path / "01_LOG-REG_TF-IDF"
-    destination.mkdir()
-    for item in source.iterdir():
-        if item.is_file():
-            destination.joinpath(item.name).write_bytes(item.read_bytes())
+    shutil.copytree(source, destination)
     return destination
 
 

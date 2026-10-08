@@ -1,29 +1,17 @@
 {
-  "project_name": "extremism_text_classification_comparison",
-  "dataset_version": "extremism_dataset_v1",
-  "split_version": "split_v1_stratified_70_15_15_seed30",
-  "created_at_utc": "2026-06-27T19:16:31Z",
-  "random_seed": 30,
-  "source_data_path": "/kaggle/input/datasets/adityasureshgithub/digital-extremism-detection-curated-dataset/dataset.csv",
-  "source_data_file_name": "dataset.csv",
-  "source_data_sha256_16": "ea585a13cbdf93c0",
-  "text_col_original": "Original_Message",
-  "label_col_original": "Extremism_Label",
-  "processed_text_col": "text",
-  "processed_label_col": "label",
-  "positive_class": 1,
-  "positive_class_name": "extremist",
-  "negative_class": 0,
-  "negative_class_name": "non_extremist",
-  "raw_rows": 3000,
-  "processed_rows": 2999,
-  "rows_removed_summary": {
-    "initial_rows": 3000,
-    "empty_or_missing_text_rows": 0,
-    "unmapped_or_missing_label_rows": 1,
-    "rows_removed_total": 1
+  "artifact_files": {
+    "duplicate_text_report": "duplicate_text_report.csv",
+    "label_distribution": "label_distribution.csv",
+    "processed_dataset_csv": "processed_dataset.csv",
+    "rows_removed_summary": "rows_removed_summary.json",
+    "split_assignments": "split_assignments.csv",
+    "split_label_distribution": "split_label_distribution.csv",
+    "text_length_summary": "text_length_summary.csv"
   },
-  "num_duplicates_by_text_hash": 0,
+  "committed_split_mirrors_compared": 1,
+  "created_at_utc": "2026-10-08T06:58:21+00:00",
+  "dataset_version": "extremism_dataset_clean_v1",
+  "label_col_original": "Extremism_Label",
   "label_counts": {
     "0": 1870,
     "1": 1129
@@ -32,33 +20,64 @@
     "0": 0.6235411803934645,
     "1": 0.3764588196065355
   },
-  "split_ratios_requested": {
-    "train": 0.7,
-    "validation": 0.15,
-    "test": 0.15
-  },
-  "split_counts_actual": {
-    "train": 2099,
-    "test": 450,
-    "validation": 450
-  },
-  "artifact_files": {
-    "processed_dataset_csv": "processed_dataset.csv",
-    "processed_dataset_parquet": "processed_dataset.parquet",
-    "split_assignments": "split_assignments.csv",
-    "label_distribution": "label_distribution.csv",
-    "split_label_distribution": "split_label_distribution.csv",
-    "duplicate_text_report": "duplicate_text_report.csv"
+  "negative_class": 0,
+  "negative_class_name": "non_extremist",
+  "notes": [
+    "All model notebooks reuse this processed dataset and split_assignments.csv.",
+    "Hyperparameters and thresholds are selected on train and validation only.",
+    "The test split is evaluated once per technique."
+  ],
+  "num_duplicates_by_text_hash": 0,
+  "positive_class": 1,
+  "positive_class_name": "extremist",
+  "processed_label_col": "label",
+  "processed_rows": 2999,
+  "processed_text_col": "text",
+  "project_name": "extremism_text_classification_comparison",
+  "random_seed": 30,
+  "raw_rows": 3000,
+  "rows_removed_summary": {
+    "empty_or_missing_text_rows": 0,
+    "initial_rows": 3000,
+    "rows_removed_total": 1,
+    "unmapped_or_missing_label_rows": 1
   },
   "software_environment": {
-    "python_version": "3.12.13",
-    "platform": "Linux-6.12.90+-x86_64-with-glibc2.35",
+    "notebook_kit_version": "1.0.0",
+    "numpy_version": "2.4.6",
     "pandas_version": "2.3.3",
-    "numpy_version": "2.4.6"
+    "platform": "Linux-6.18.48+-x86_64-with-glibc2.35",
+    "python_version": "3.12.13"
   },
-  "notes": [
-    "All downstream model notebooks must reuse this processed dataset and split_assignments.csv.",
-    "Hyperparameter tuning must use the train and validation splits only.",
-    "The test split must be used only for final locked evaluation."
-  ]
+  "source_data_file_name": "dataset.csv",
+  "source_data_sha256_16": "ea585a13cbdf93c0",
+  "split_counts_actual": {
+    "test": 450,
+    "train": 2099,
+    "validation": 450
+  },
+  "split_counts_total_negative_positive": {
+    "test": [
+      450,
+      280,
+      170
+    ],
+    "train": [
+      2099,
+      1309,
+      790
+    ],
+    "validation": [
+      450,
+      281,
+      169
+    ]
+  },
+  "split_ratios_requested": {
+    "test": 0.15,
+    "train": 0.7,
+    "validation": 0.15
+  },
+  "split_version": "split_v1_stratified_70_15_15_seed30",
+  "text_col_original": "Original_Message"
 }

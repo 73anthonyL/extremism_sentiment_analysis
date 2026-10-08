@@ -207,13 +207,13 @@ It is rendered from the committed result artifacts by `tools/render_tables.py`. 
 <!-- RENDERED-TABLE:BEGIN id=main-comparison -->
 | Technique | Validation accuracy | Test accuracy | Test balanced accuracy | Test macro F1 | Test ROC-AUC |
 |---|---:|---:|---:|---:|---:|
-| `01_LOG-REG_TF-IDF` | 0.8244 | 0.8533 | 0.8405 | 0.8429 | 0.9111 |
-| `02_LIN-SVM_TF-IDF` | 0.8267 | 0.8556 | 0.8342 | 0.8422 | 0.9037 |
-| `03_SLP_TF-IDF` | 0.8089 | 0.8378 | 0.8200 | 0.8247 | 0.9022 |
-| `04_CHAR-TF-IDF_LIN-SVM` | 0.8022 | 0.8333 | 0.8303 | 0.8252 | 0.9028 |
-| `05_WORD-CHAR-TF-IDF_LIN-SVM` | 0.8156 | 0.8356 | 0.8309 | 0.8270 | 0.9032 |
-| `06_FASTTEXT-EMB_LOG-REG` | 0.7889 | 0.8178 | 0.8178 | 0.8102 | 0.9033 |
-| `07_TWITTER-ROBERTA_FINE-TUNE` | 0.8578 | 0.8889 | 0.8853 | 0.8826 | 0.9496 |
+| `01_LOG-REG_TF-IDF` | 0.8267 | 0.8556 | 0.8423 | 0.8451 | 0.9137 |
+| `02_LIN-SVM_TF-IDF` | 0.8244 | 0.8533 | 0.8348 | 0.8409 | 0.9065 |
+| `03_SLP_TF-IDF` | 0.8222 | 0.8400 | 0.8067 | 0.8200 | 0.9042 |
+| `04_CHAR-TF-IDF_LIN-SVM` | 0.8267 | 0.8311 | 0.7996 | 0.8112 | 0.9147 |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | 0.8244 | 0.8556 | 0.8192 | 0.8355 | 0.9198 |
+| `06_FASTTEXT-EMB_LOG-REG` | 0.7956 | 0.8333 | 0.8002 | 0.8128 | 0.8986 |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | 0.8644 | 0.8889 | 0.8807 | 0.8816 | 0.9510 |
 | `11_MULTI-CHECKPOINT_LOGIT-POOL` | 0.8733 | 0.9089 | 0.8956 | 0.9015 | 0.9682 |
 
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
@@ -225,13 +225,13 @@ Confusion-matrix summary:
 <!-- RENDERED-TABLE:BEGIN id=confusion-test -->
 | Technique | TN | FP | FN | TP | FPR | FNR |
 |---|---:|---:|---:|---:|---:|---:|
-| `01_LOG-REG_TF-IDF` | 250 | 30 | 36 | 134 | 0.1071 | 0.2118 |
-| `02_LIN-SVM_TF-IDF` | 258 | 22 | 43 | 127 | 0.0786 | 0.2529 |
-| `03_SLP_TF-IDF` | 250 | 30 | 43 | 127 | 0.1071 | 0.2529 |
-| `04_CHAR-TF-IDF_LIN-SVM` | 236 | 44 | 31 | 139 | 0.1571 | 0.1824 |
-| `05_WORD-CHAR-TF-IDF_LIN-SVM` | 238 | 42 | 32 | 138 | 0.1500 | 0.1882 |
-| `06_FASTTEXT-EMB_LOG-REG` | 229 | 51 | 31 | 139 | 0.1821 | 0.1824 |
-| `07_TWITTER-ROBERTA_FINE-TUNE` | 252 | 28 | 22 | 148 | 0.1000 | 0.1294 |
+| `01_LOG-REG_TF-IDF` | 251 | 29 | 36 | 134 | 0.1036 | 0.2118 |
+| `02_LIN-SVM_TF-IDF` | 255 | 25 | 41 | 129 | 0.0893 | 0.2412 |
+| `03_SLP_TF-IDF` | 264 | 16 | 56 | 114 | 0.0571 | 0.3294 |
+| `04_CHAR-TF-IDF_LIN-SVM` | 260 | 20 | 56 | 114 | 0.0714 | 0.3294 |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | 271 | 9 | 56 | 114 | 0.0321 | 0.3294 |
+| `06_FASTTEXT-EMB_LOG-REG` | 262 | 18 | 57 | 113 | 0.0643 | 0.3353 |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | 256 | 24 | 26 | 144 | 0.0857 | 0.1529 |
 | `11_MULTI-CHECKPOINT_LOGIT-POOL` | 266 | 14 | 27 | 143 | 0.0500 | 0.1588 |
 
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
@@ -277,6 +277,13 @@ terms:
 <!-- RENDERED-TABLE:BEGIN id=rq4-identity-fpr -->
 | Technique | Non-extremist posts with identity terms | FPR with identity terms | FPR without | Ratio | Fisher p |
 |---|---:|---:|---:|---:|---:|
+| `01_LOG-REG_TF-IDF` | 67 | 0.1642 | 0.0845 | 1.9428 | 0.0691 |
+| `02_LIN-SVM_TF-IDF` | 67 | 0.1493 | 0.0704 | 2.1194 | 0.0817 |
+| `03_SLP_TF-IDF` | 67 | 0.0896 | 0.0469 | 1.9075 | 0.2260 |
+| `04_CHAR-TF-IDF_LIN-SVM` | 67 | 0.1343 | 0.0516 | 2.6011 | 0.0298 |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | 67 | 0.0746 | 0.0188 | 3.9739 | 0.0385 |
+| `06_FASTTEXT-EMB_LOG-REG` | 67 | 0.1045 | 0.0516 | 2.0231 | 0.1517 |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | 67 | 0.1343 | 0.0704 | 1.9075 | 0.1312 |
 | `11_MULTI-CHECKPOINT_LOGIT-POOL` | 67 | 0.1194 | 0.0282 | 4.2388 | 0.0064 |
 
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
