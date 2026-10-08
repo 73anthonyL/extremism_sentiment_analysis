@@ -1,0 +1,5 @@
+category,n_words,share_of_words,abs_mass,share_of_abs_mass,positive_mass,share_of_positive_mass
+slur,0,0,0,0,0,0
+extremist_framing,1,0.02,1.3674183,0.029221252,1.3674183,0.029893678
+identity_term,12,0.24,8.1604997,0.17438704,8.1604997,0.17839995
+topical,37,0.74,37.267417,0.79639171,36.214807,0.79170638
