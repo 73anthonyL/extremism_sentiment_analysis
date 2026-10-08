@@ -1,0 +1,18 @@
+{
+  "fisher_odds_ratio": 2.0482758620689654,
+  "fisher_p_value": 0.13118909458850794,
+  "fpr_overall": 0.08571428571428572,
+  "fpr_ratio": 1.907462686567164,
+  "fpr_with_identity_terms": 0.13432835820895522,
+  "fpr_without_identity_terms": 0.07042253521126761,
+  "min_term_support": 5,
+  "n_identity_terms_in_lexicon": 96,
+  "n_negative": 280,
+  "n_negative_with_identity_terms": 67,
+  "n_positive_with_identity_terms": 83,
+  "recall_with_identity_terms": 0.8554216867469879,
+  "recall_without_identity_terms": 0.8390804597701149,
+  "split": "test",
+  "technique": "07_TWITTER-ROBERTA_FINE-TUNE",
+  "threshold": 0.555
+}

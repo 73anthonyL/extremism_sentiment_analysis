@@ -1,0 +1,24 @@
+{
+  "aggregation": "word",
+  "background_size": 0,
+  "explainer": "shap.PartitionExplainer(maskers.Text(r'\\W+'))",
+  "explainer_settings": {
+    "algorithm": "partition",
+    "background": "mask token; the text masker uses no background sample",
+    "mask_token": "...",
+    "masker": "\\W+",
+    "max_evals": 500
+  },
+  "kit_version": "1.0.0",
+  "member": null,
+  "n_posts_explained": 450,
+  "n_words": 2334,
+  "run_id": "shap-partition_test_seed30",
+  "seed": 30,
+  "split": "test",
+  "technique": "03_SLP_TF-IDF",
+  "tokens_dropped": {
+    "tokens_dropped_empty": 0,
+    "tokens_dropped_long": 0
+  }
+}

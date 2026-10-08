@@ -1,57 +1,54 @@
 {
-  "technique_name": "FASTTEXT-EMB_LOG-REG",
-  "model_family": "logistic_regression",
+  "coefficients_file_is": "word-level projection of embedding-dimension coefficients",
+  "dataset_version": "extremism_dataset_clean_v1",
+  "derived_by": "tools/notebook_kit.py",
+  "fasttext_vocabulary_size": 6333,
   "feature_family": "fasttext_document_embeddings",
-  "selection_rule": {
-    "primary": "highest validation positive_f1",
-    "tie_breakers": [
-      "pr_auc",
-      "positive_recall",
-      "positive_precision"
-    ],
-    "test_set_used": false
-  },
-  "fasttext": {
-    "vector_size": 100,
-    "window": 5,
-    "min_count": 1,
-    "sg": 1,
-    "epochs": 15,
-    "min_n": 3,
-    "max_n": 6,
-    "negative": 10,
-    "sample": 0.001,
-    "workers": 1
-  },
-  "document_embedding": {
-    "pooling": "mean",
-    "normalize_embeddings": false,
-    "idf_lookup_fit_on": "train split only"
-  },
-  "classifier": {
-    "classifier_type": "StandardScaler + LogisticRegression",
-    "C": 3.0,
-    "class_weight": "balanced",
-    "solver": "lbfgs",
+  "fit_seconds": 0.20108485221862793,
+  "hyperparameters": {
+    "C": 1.0,
+    "class_weight": null,
+    "fasttext": {
+      "epochs": 15,
+      "max_n": 6,
+      "min_count": 1,
+      "min_n": 3,
+      "negative": 10,
+      "sample": 0.001,
+      "sg": 1,
+      "workers": 1
+    },
     "max_iter": 5000,
+    "normalize_embeddings": false,
+    "pooling": "mean",
+    "solver": "lbfgs",
+    "tokenization": {
+      "lowercase": true,
+      "pattern": "(?u)https?://\\S+|#\\w+|@\\w+|\\b\\w+\\b|[^\\w\\s]"
+    },
     "tol": 0.0001,
-    "random_state": 30
+    "vector_size": 100,
+    "window": 3
   },
-  "selected_validation_metrics": {
-    "threshold": 0.47000000000000003,
-    "accuracy": 0.7888888888888889,
-    "balanced_accuracy": 0.7885089178546612,
-    "positive_precision": 0.6927083333333334,
-    "positive_recall": 0.7869822485207101,
-    "positive_f1": 0.7368421052631579,
-    "macro_f1": 0.780294893076848,
-    "weighted_f1": 0.7911098091549219,
-    "roc_auc": 0.8464065362505001,
-    "pr_auc": 0.7955382968652195,
-    "brier_score": 0.15756434803945518,
-    "tn": 222,
-    "fp": 59,
-    "fn": 36,
-    "tp": 133
-  }
+  "in_comparison": true,
+  "kit_version": "1.0.0",
+  "model_family": "logistic_regression",
+  "n_validation_candidates": 96,
+  "provenance": "derived_from_probs",
+  "random_seed": 30,
+  "recomputable": true,
+  "run_id": "06_FASTTEXT-EMB_LOG-REG_20261008T074721Z",
+  "selected_config_id": "config_015",
+  "selected_threshold": 0.5,
+  "selection_rule": "highest validation accuracy at the screening threshold; ties on validation ROC-AUC, then configuration id",
+  "split_version": "split_v1_stratified_70_15_15_seed30",
+  "technique": "06_FASTTEXT-EMB_LOG-REG",
+  "test_set_used_for_selection": false,
+  "threshold_metric": "accuracy",
+  "threshold_selected_on_split": "validation",
+  "threshold_strategy": "grid_search_on_validation",
+  "validation_uses": [
+    "config_selection",
+    "threshold"
+  ]
 }

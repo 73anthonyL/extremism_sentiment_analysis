@@ -1,0 +1,38 @@
+{
+  "artifact_sha256": {
+    "test": "c85d62201f72a853",
+    "validation": "d347bf1c7c881625"
+  },
+  "contains_text": false,
+  "dataset_version": "extremism_dataset_clean_v1",
+  "feature_family": "fasttext_document_embeddings",
+  "hyperparameters": {
+    "C": 1.0,
+    "class_weight": null,
+    "normalize_embeddings": false,
+    "pooling": "mean",
+    "vector_size": 100,
+    "window": 3
+  },
+  "kit_version": "1.0.0",
+  "model_family": "logistic_regression",
+  "random_seed": 30,
+  "row_counts": {
+    "test": 450,
+    "validation": 450
+  },
+  "run_id": "06_FASTTEXT-EMB_LOG-REG_20261008T074721Z",
+  "schema": [
+    "row_id",
+    "split",
+    "y_true",
+    "y_prob"
+  ],
+  "selected_threshold": 0.5,
+  "split_version": "split_v1_stratified_70_15_15_seed30",
+  "technique": "06_FASTTEXT-EMB_LOG-REG",
+  "test_set_used_for_selection": false,
+  "threshold_metric": "accuracy",
+  "threshold_selected_on_split": "validation",
+  "threshold_strategy": "grid_search_on_validation"
+}

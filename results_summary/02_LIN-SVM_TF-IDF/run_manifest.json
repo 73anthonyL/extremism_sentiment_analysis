@@ -1,0 +1,28 @@
+{
+  "committed_artifacts": {
+    "ablation_results.csv": "120cae49daf3cd1d2f981cfee28de5bebe6497e4187479daf894b99193264679",
+    "attributions/shap-partition_test_seed30.csv": "ce9d0d14eafe0d810dec8de0d91a9f56ecccec52b083fce4fb40195ba9e2948f",
+    "attributions/shap-partition_test_seed30.json": "b1e8b83f4ae608c2b58f204c077413860ccb036ccc1c8f8f0955788e7071f0fa",
+    "attributions/shap-partition_validation_seed30.csv": "bf6c3ae139e7520898505d29015f071b2e7726c35d5f4d97c6956c768684ef31",
+    "attributions/shap-partition_validation_seed30.json": "5735ea08220a513a726d81df12b5f270ee8fcf9f603ef8e6b66be52dda697294",
+    "best_config.json": "00407b3c95c87eedd2cca15656d536bad635610a533884a674122efc487d94d5",
+    "classification_report_test.json": "37a5df7d55867408a150eda5cc28068421db6801d773026a98e3ac88c93c6a94",
+    "confusion_matrix_test.csv": "b97817257c3894506f63c047c8028ecde8fdae76fbc14559fdbf5eb8d73357b3",
+    "identity_fpr_terms_test.csv": "1428b340d1c4b3df92307bdd8f77c0419d90e9cfbf0136868de04228bb04d24b",
+    "identity_fpr_test.json": "d1067e5721975c7bbb8d6e89861faa18bf9bdf45ca584a9adbdb4081b4110134",
+    "metrics_test.json": "63a110ffb8f1c8396e1b93e04eec81f19a691dbb61ae8be0fe7e78500b49ff71",
+    "metrics_validation.json": "dae40475dc307fd159e156250f16dd5975202cfdbc202e8b1b50a5ab787fa59c",
+    "threshold_sweep_validation.csv": "92d66eb5cbcb8a1669d10367226f286a4f2e762a22fc95185f5e6d0b96cd7280"
+  },
+  "committed_hashed_utc": "2026-10-08T16:39:55+00:00",
+  "created_utc": "2026-10-08T16:37:58+00:00",
+  "external_assets": [],
+  "run_id": "02_LIN-SVM_TF-IDF_20261008T073452Z",
+  "source": {
+    "git_commit": "a941c94c",
+    "kaggle_notebook": "https://www.kaggle.com/code/anthony73/02-lin-svm-tf-idf-ipynb",
+    "kaggle_version": 1,
+    "notes": "Primed rerun; artifacts fetched with the Kaggle CLI."
+  },
+  "technique": "02_LIN-SVM_TF-IDF"
+}

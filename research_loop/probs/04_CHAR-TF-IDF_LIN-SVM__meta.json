@@ -1,0 +1,42 @@
+{
+  "artifact_sha256": {
+    "test": "a5fda371a824e74e",
+    "validation": "8b6c601ff0b9556b"
+  },
+  "contains_text": false,
+  "dataset_version": "extremism_dataset_clean_v1",
+  "feature_family": "tfidf_char",
+  "hyperparameters": {
+    "C": 1.0,
+    "class_weight": null,
+    "max_df": 0.95,
+    "max_features": 50000,
+    "min_df": 1,
+    "ngram_range": [
+      2,
+      5
+    ],
+    "sublinear_tf": true
+  },
+  "kit_version": "1.0.0",
+  "model_family": "calibrated_linear_svm",
+  "random_seed": 30,
+  "row_counts": {
+    "test": 450,
+    "validation": 450
+  },
+  "run_id": "04_CHAR-TF-IDF_LIN-SVM_20261008T073910Z",
+  "schema": [
+    "row_id",
+    "split",
+    "y_true",
+    "y_prob"
+  ],
+  "selected_threshold": 0.5,
+  "split_version": "split_v1_stratified_70_15_15_seed30",
+  "technique": "04_CHAR-TF-IDF_LIN-SVM",
+  "test_set_used_for_selection": false,
+  "threshold_metric": "accuracy",
+  "threshold_selected_on_split": "validation",
+  "threshold_strategy": "grid_search_on_validation"
+}

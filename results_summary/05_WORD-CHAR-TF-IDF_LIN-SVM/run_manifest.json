@@ -1,0 +1,28 @@
+{
+  "committed_artifacts": {
+    "ablation_results.csv": "c1a84d3c0029ac4fb6c7ab276a4d864f7eb04c4ca0e84a70a6e3259d71b0e167",
+    "attributions/shap-partition_test_seed30.csv": "b66d56ff5a5ca9e7190c0b60deca0aee80c2c1cd4f7ac623e02140dadb9a27a5",
+    "attributions/shap-partition_test_seed30.json": "2297045503d33802c704647ee70943ca1bc3be988bbac037322ccbcb4e87bc23",
+    "attributions/shap-partition_validation_seed30.csv": "9b72b595d17753ef555a06c5a2f78ba380b7c8fd4a0ee10b9d142e3bfe291ec9",
+    "attributions/shap-partition_validation_seed30.json": "7d34be2ee1ac7c76d00a3df40ebd4b808da052235359c7a4a928882e5c6f4453",
+    "best_config.json": "05183dfcec7780efdbddf63da69e4364ca779970723fb794724654424f7a1e24",
+    "classification_report_test.json": "405d9286bd0eae60cbc8af444e885cb71d312f2d8cceb17292c975bef3219ff8",
+    "confusion_matrix_test.csv": "7d757295562e9c08790991539137e337f55872f7815f13bd043d2d6f1d74a882",
+    "identity_fpr_terms_test.csv": "938f7198509f69c7f95fd5b56bb118b9a70e815e3e7a2ceb42f1f8a737742960",
+    "identity_fpr_test.json": "770a074314b376ec1203f57150ae2717feb93fcf64cc816eddf4d915035a2811",
+    "metrics_test.json": "af94b22f54c03b0365026a0441b2c21e824e480229888aa123e67c2983282ecc",
+    "metrics_validation.json": "4c3a7ac667d4949f356c7e01e7e7f36d6709df3c310e50fcbf542eeef16479cd",
+    "threshold_sweep_validation.csv": "c43dfae1e3a739401b5bc2e1c1d9b9131922cce106f573f1b74153dcffdb6831"
+  },
+  "committed_hashed_utc": "2026-10-08T16:39:55+00:00",
+  "created_utc": "2026-10-08T16:37:58+00:00",
+  "external_assets": [],
+  "run_id": "05_WORD-CHAR-TF-IDF_LIN-SVM_20261008T074307Z",
+  "source": {
+    "git_commit": "032384c9",
+    "kaggle_notebook": "https://www.kaggle.com/code/anthony73/05-word-char-tf-idf-lin-svm-ipynb",
+    "kaggle_version": 1,
+    "notes": "Primed rerun; artifacts fetched with the Kaggle CLI."
+  },
+  "technique": "05_WORD-CHAR-TF-IDF_LIN-SVM"
+}

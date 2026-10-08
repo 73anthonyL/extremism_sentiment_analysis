@@ -1,0 +1,30 @@
+{
+  "committed_artifacts": {
+    "ablation_results.csv": "d1cccfa54d3972b2eaff8b5c67408a72b67fec7827367dcb0d46108c8c5673a8",
+    "attributions/coefficients.csv": "842ba44d812d26d91d2d4ee8b04978b27bcf8836175181c4ae81763737969793",
+    "attributions/shap-partition_test_seed30.csv": "abdc667b450b1c9d890d1a117b3e0ff0b8c7c34530bac6182b9197697353c607",
+    "attributions/shap-partition_test_seed30.json": "188c918c981b37faebd4e06624cec079f80e49976654d1fb0518fd188d122cbb",
+    "attributions/shap-partition_test_seed30__coefficient_check.json": "f75b9e96aee32fc76c8122f61388c02be75791245ed71f0adc7bdc552b15c0eb",
+    "attributions/shap-partition_validation_seed30.csv": "b7efcad4d8a60529dffe252149cdb4f4b28d40c1ae01a5b9fb97fee0248ff2f0",
+    "attributions/shap-partition_validation_seed30.json": "f8d0675f9227bad8fb63a3e231da172bf6206bcd5f3e07d7c34a44385c116320",
+    "best_config.json": "de73f433e97455c182622468ec23007aba32b64a283ba06e02b16b3692074211",
+    "classification_report_test.json": "3685ce6b5611a0b3edca92cfab5c87ff0e0f5eb0e16dfffa7b9303f9d28a9871",
+    "confusion_matrix_test.csv": "d0d14a52a1d07c312434056fde69ad881311017f1e2fdf7afdd4d3e45818a3f6",
+    "identity_fpr_terms_test.csv": "0a8386ff3e90ac5be673ed311ecaa022a10ed9aaeadd5878226423c6eb0adb6c",
+    "identity_fpr_test.json": "87a62117b7851262a84e20760c40c8f6d086cf2af8d9ed76f0d8f590c6bbcea4",
+    "metrics_test.json": "2e2314f470b16e452d90b6fc4111af03af71bf2e2cb42b9292b27c00f339b633",
+    "metrics_validation.json": "e063990347c3d3f9d60a32339baf5172acb044ef4b09134fa42b562a04613b13",
+    "threshold_sweep_validation.csv": "8cff84405108a8a154b3d9d832adc21d7dc414a0f930d750f48b3cf4995c486c"
+  },
+  "committed_hashed_utc": "2026-10-08T16:39:55+00:00",
+  "created_utc": "2026-10-08T16:37:59+00:00",
+  "external_assets": [],
+  "run_id": "06_FASTTEXT-EMB_LOG-REG_20261008T074721Z",
+  "source": {
+    "git_commit": "fd5ef337",
+    "kaggle_notebook": "https://www.kaggle.com/code/anthony73/06-fasttext-emb-log-reg-ipynb",
+    "kaggle_version": 1,
+    "notes": "Primed rerun; artifacts fetched with the Kaggle CLI."
+  },
+  "technique": "06_FASTTEXT-EMB_LOG-REG"
+}

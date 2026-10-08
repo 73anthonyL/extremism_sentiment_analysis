@@ -1,0 +1,18 @@
+{
+  "fisher_odds_ratio": 2.1279761904761907,
+  "fisher_p_value": 0.06906473617608289,
+  "fpr_overall": 0.10357142857142858,
+  "fpr_ratio": 1.9427860696517414,
+  "fpr_with_identity_terms": 0.16417910447761194,
+  "fpr_without_identity_terms": 0.08450704225352113,
+  "min_term_support": 5,
+  "n_identity_terms_in_lexicon": 96,
+  "n_negative": 280,
+  "n_negative_with_identity_terms": 67,
+  "n_positive_with_identity_terms": 83,
+  "recall_with_identity_terms": 0.7469879518072289,
+  "recall_without_identity_terms": 0.8275862068965517,
+  "split": "test",
+  "technique": "01_LOG-REG_TF-IDF",
+  "threshold": 0.48
+}

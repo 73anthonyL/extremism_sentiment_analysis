@@ -1,0 +1,16 @@
+{
+  "explainer": "shap.PartitionExplainer(maskers.Text(r'\\W+'))",
+  "n_shared_words": 1523,
+  "passed": true,
+  "run_id": "shap-partition_test_seed30",
+  "spearman_mean_attribution_vs_coefficient": 0.8729761351880327,
+  "technique": "01_LOG-REG_TF-IDF",
+  "thresholds": {
+    "min_sign_agreement": 0.9,
+    "min_spearman": 0.8
+  },
+  "top_k": 50,
+  "top_k_coverage": 0.94,
+  "top_k_sign_agreement": 1.0,
+  "top_k_sign_disagreements": []
+}
