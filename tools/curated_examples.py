@@ -1,9 +1,12 @@
 """Classify and explain curated texts with every technique, side by side.
 
 Input: a plain-text file with one curated text per line (blank lines and
-lines starting with `#` are skipped). Each line becomes `curated_NN`. An
-optional notes file (`--notes`) carries one note per text in the same order,
-shown under the text in the report.
+lines starting with `#` are skipped). Each line becomes `curated_NN`. Two
+optional side files follow the same order: `--labels` holds the expected
+label of each text (`extremist` or `non-extremist`; same line rule as the
+texts) and `--notes` a free-text note per text (one line per text, blank for
+none). With labels, every classification is also recorded as correct or not;
+the tool draws no further conclusion.
 
 For every technique the tool
 
@@ -19,11 +22,15 @@ For every technique the tool
 
 Outputs go to an untracked folder (default `external/curated_examples/`):
 
-    examples.csv                       example_id, text, sha256 (holds the texts)
+    examples.csv                       example_id, text, sha256[, expected_label, note] (holds the texts)
     <TECHNIQUE>/predictions.csv        example_id, technique, member, y_prob, threshold, y_pred
     <TECHNIQUE>/local_attributions.csv example_id, technique, member, position, token, attribution, category
     <TECHNIQUE>/run.json               what was loaded, verification result, explainer settings
     summary.csv                        text-free: one row per example x technique x member
+                                       (expected label and `correct` when labels were given)
+    results.json                       one nested record per example: text, expected label,
+                                       every model's probability, prediction, correctness and
+                                       per-token attributions
     report.html                        every example with each model's highlighted words
 
 Only `summary.csv` is text-free. Nothing here is a committed research
@@ -34,13 +41,16 @@ Usage:
     python3 tools/curated_examples.py explain --texts curated.txt \\
         --external-root external --techniques 01_LOG-REG_TF-IDF 07_TWITTER-ROBERTA_FINE-TUNE
     python3 tools/curated_examples.py explain --texts curated.txt --external-root external --all
-    python3 tools/curated_examples.py report --out external/curated_examples
+    python3 tools/curated_examples.py explain --texts curated.txt --labels labels.txt --notes notes.txt ...
+    python3 tools/curated_examples.py report --out external/curated_examples [--labels labels.txt]
 """
 
 import argparse
+import contextlib
 import datetime as dt
 import hashlib
 import html
+import io
 import json
 import sys
 from pathlib import Path
@@ -53,7 +63,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from categorize_attributions import build_word_index, categorize_word  # noqa: E402
 from lexicons import load_lexicons  # noqa: E402
-from model_loaders import ModelLoadError, load_technique  # noqa: E402
+from model_loaders import (  # noqa: E402
+    ModelLoadError,
+    load_technique,
+    log_odds_to_probability,
+    pool_component_log_odds,
+)
 from notebook_kit import (  # noqa: E402
     EXPLAINER_ID,
     KIT_VERSION,
@@ -79,7 +94,18 @@ PREDICTIONS_FILENAME = "predictions.csv"
 ATTRIBUTIONS_FILENAME = "local_attributions.csv"
 RUN_FILENAME = "run.json"
 SUMMARY_FILENAME = "summary.csv"
+RESULTS_FILENAME = "results.json"
 REPORT_FILENAME = "report.html"
+EXPECTED_LABEL_COLUMN = "expected_label"
+NOTE_COLUMN = "note"
+ANNOTATION_COLUMNS = (EXPECTED_LABEL_COLUMN, NOTE_COLUMN)
+LABEL_ALIASES = {
+    POSITIVE_CLASS_NAME: {"extremist", "1", "positive", POSITIVE_CLASS_NAME.lower()},
+    NEGATIVE_CLASS_NAME: {
+        "non extremist", "non-extremist", "non_extremist", "nonextremist", "not extremist",
+        "0", "negative", NEGATIVE_CLASS_NAME.lower(),
+    },
+}
 WHOLE_MODEL = "whole"
 CURATED_SPLIT = "curated"
 
@@ -108,29 +134,28 @@ class CuratedExamplesError(ValueError):
 # ---------------------------------------------------------------------------
 # Inputs
 # ---------------------------------------------------------------------------
-def read_examples(path):
-    """One curated text per non-empty, non-comment line -> frame(example_id, text, sha256)."""
+def _read_lines(path, what):
+    """Non-empty, non-comment lines of a side file, in order."""
     path = Path(path)
     if not path.is_file():
-        raise CuratedExamplesError(f"texts file {path} does not exist")
-    texts = []
+        raise CuratedExamplesError(f"{what} file {path} does not exist")
+    lines = []
     for raw in path.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        texts.append(line)
-    if not texts:
-        raise CuratedExamplesError(f"{path}: no curated texts (every line is blank or a comment)")
-    duplicates = sorted({t for t in texts if texts.count(t) > 1})
-    if duplicates:
-        raise CuratedExamplesError(f"{path}: {len(duplicates)} text(s) appear more than once")
-    width = max(2, len(str(len(texts))))
-    return pd.DataFrame(
-        {
-            "example_id": [f"curated_{i + 1:0{width}d}" for i in range(len(texts))],
-            "text": texts,
-            "sha256": [hashlib.sha256(t.encode("utf-8")).hexdigest()[:16] for t in texts],
-        }
+        lines.append(line)
+    return lines
+
+
+def normalize_expected_label(value):
+    """Map a hand-written label (`Extremist`, `non extremist`, `0`, ...) onto the class names."""
+    key = " ".join(str(value).strip().lower().split())
+    for class_name, aliases in LABEL_ALIASES.items():
+        if key in aliases:
+            return class_name
+    raise CuratedExamplesError(
+        f"unrecognised expected label {value!r}; use 'extremist' or 'non-extremist'"
     )
 
 
@@ -148,6 +173,42 @@ def read_notes(path, n_examples):
             "file needs exactly one line per text, in the same order (blank for none)"
         )
     return notes
+
+
+def attach_annotations(examples, labels_path=None, notes_path=None):
+    """Add expected_label and/or note columns to the examples frame, one line per text."""
+    examples = examples.copy()
+    if labels_path is not None:
+        labels = _read_lines(labels_path, "labels")
+        if len(labels) != len(examples):
+            raise CuratedExamplesError(
+                f"{labels_path}: {len(labels)} labels for {len(examples)} curated texts; the labels "
+                "file must hold exactly one line per text, in the same order"
+            )
+        examples[EXPECTED_LABEL_COLUMN] = [normalize_expected_label(line) for line in labels]
+    if notes_path is not None:
+        examples[NOTE_COLUMN] = read_notes(notes_path, len(examples))
+    return examples
+
+
+def read_examples(path, labels_path=None, notes_path=None):
+    """One curated text per non-empty, non-comment line -> frame(example_id, text, sha256[, annotations])."""
+    path = Path(path)
+    texts = _read_lines(path, "texts")
+    if not texts:
+        raise CuratedExamplesError(f"{path}: no curated texts (every line is blank or a comment)")
+    duplicates = sorted({t for t in texts if texts.count(t) > 1})
+    if duplicates:
+        raise CuratedExamplesError(f"{path}: {len(duplicates)} text(s) appear more than once")
+    width = max(2, len(str(len(texts))))
+    examples = pd.DataFrame(
+        {
+            "example_id": [f"curated_{i + 1:0{width}d}" for i in range(len(texts))],
+            "text": texts,
+            "sha256": [hashlib.sha256(t.encode("utf-8")).hexdigest()[:16] for t in texts],
+        }
+    )
+    return attach_annotations(examples, labels_path, notes_path)
 
 
 def examples_digest(examples):
@@ -303,6 +364,199 @@ def explain_model(
     return predictions, attributions
 
 
+# ---------------------------------------------------------------------------
+# Pooled ensembles that do not fit in memory: replay against a component cache
+# ---------------------------------------------------------------------------
+class _CacheMiss(Exception):
+    """Raised inside a predictor when a string's component log-odds are not cached yet."""
+
+
+class ComponentCache:
+    """Seed-mean log-odds per (component, raw string), filled one component at a time.
+
+    The whole-model predictor and every member predictor read from this cache
+    and raise `_CacheMiss` for strings not in it. `serve()` evaluates every
+    pending string with `log_odds_fn`, which loads each component's checkpoints
+    in turn, so at most one checkpoint is resident at any time.
+    """
+
+    def __init__(self, names, weights, log_odds_fn):
+        if not names or len(names) != len(weights):
+            raise CuratedExamplesError("pooling needs one weight per component name")
+        self.names = list(names)
+        self.weights = [float(w) for w in weights]
+        self.log_odds_fn = log_odds_fn
+        self.values = {name: {} for name in self.names}
+        self.pending = {name: set() for name in self.names}
+        self.rounds = 0
+        self.evaluations = {name: 0 for name in self.names}
+
+    def _require(self, names, strings):
+        missing = False
+        for name in names:
+            cached = self.values[name]
+            for string in strings:
+                if string not in cached:
+                    self.pending[name].add(string)
+                    missing = True
+        if missing:
+            raise _CacheMiss()
+
+    def whole(self, texts):
+        strings = [str(t) for t in texts]
+        self._require(self.names, strings)
+        log_odds = {
+            name: np.array([self.values[name][s] for s in strings], dtype=float) for name in self.names
+        }
+        return pool_component_log_odds(log_odds, self.names, self.weights)
+
+    def member(self, name):
+        if name not in self.values:
+            raise CuratedExamplesError(f"unknown pooling component {name!r}")
+
+        def predict(texts):
+            strings = [str(t) for t in texts]
+            self._require([name], strings)
+            return log_odds_to_probability(np.array([self.values[name][s] for s in strings], dtype=float))
+
+        return predict
+
+    def n_pending(self):
+        return sum(len(p) for p in self.pending.values())
+
+    def serve(self):
+        """Evaluate every pending string, component by component; returns strings served."""
+        served = 0
+        for name in self.names:
+            strings = sorted(self.pending[name])
+            if not strings:
+                continue
+            values = np.asarray(self.log_odds_fn(name, strings), dtype=float).reshape(-1)
+            if values.shape != (len(strings),) or not np.isfinite(values).all():
+                raise CuratedExamplesError(
+                    f"component {name!r} returned {values.shape} finite-or-not log-odds for "
+                    f"{len(strings)} strings"
+                )
+            self.values[name].update(zip(strings, values.tolist()))
+            self.evaluations[name] += len(strings)
+            self.pending[name].clear()
+            served += len(strings)
+        self.rounds += 1
+        return served
+
+
+def _replay_explain(ctx, predict, text_frame, seed, max_evals, batch_size):
+    """One `notebook_kit.explain` call on a padded two-row frame, deterministic per replay.
+
+    The partition explainer breaks priority ties with the global numpy RNG, which
+    the kit does not seed; the replay seeds it so every replay of the same text
+    walks the same path once the cache holds the same values.
+    """
+    np.random.seed(int(seed))
+    with contextlib.redirect_stdout(io.StringIO()):
+        bundle = explain(ctx, predict, text_frame, seed=seed, max_evals=max_evals, batch_size=batch_size)
+    return bundle.tokens_per_post[0], bundle.values_per_post[0]
+
+
+def explain_model_sequential(
+    model,
+    examples,
+    max_evals=DEFAULT_MAX_EVALS,
+    seed=DEFAULT_SEED,
+    batch_size=DEFAULT_BATCH_SIZE,
+    include_members=True,
+    word_index=None,
+    log=print,
+):
+    """`explain_model` for a pooled ensemble evaluated one checkpoint at a time.
+
+    Each (predictor, text) explanation is replayed against `ComponentCache`
+    until it finishes without a miss; between replays every pending string of
+    every text is evaluated in one pass over the checkpoints. The explainer and
+    its settings are the same as in `explain_model`; only the order in which
+    the checkpoints see the masked strings differs.
+
+    Returns (predictions, attributions, serving) where `serving` records the
+    number of rounds and evaluations for the run record.
+    """
+    if not model.pooling:
+        raise CuratedExamplesError(f"{model.technique} has no pooling; use explain_model")
+    if word_index is None:
+        word_index, _ = build_word_index(load_lexicons())
+    cache = ComponentCache(model.pooling["names"], model.pooling["weights"], model.pooling["log_odds"])
+    predictors = [(WHOLE_MODEL, cache.whole)]
+    if include_members:
+        predictors.extend((name, cache.member(name)) for name in cache.names)
+    ctx = _explainer_ctx(max_evals, seed, batch_size)
+    frame = explainer_frame(examples)
+    texts = frame["text"].tolist()
+
+    # The raw texts first: they give the predictions and the explainer's own f(x).
+    cache.pending = {name: set(texts) for name in cache.names}
+    cache.serve()
+
+    tasks = {}
+    for member, predict in predictors:
+        for example_id, text in zip(frame["row_id"], texts):
+            pair = pd.DataFrame({"row_id": [example_id, example_id], "text": [text, text], "split": CURATED_SPLIT})
+            tasks[(member, example_id)] = (predict, pair)
+    results = {}
+    while tasks:
+        for key, (predict, pair) in list(tasks.items()):
+            try:
+                results[key] = _replay_explain(ctx, predict, pair, seed, max_evals, batch_size)
+            except _CacheMiss:
+                continue
+            del tasks[key]
+        if not tasks:
+            break
+        if cache.n_pending() == 0:
+            raise CuratedExamplesError(
+                f"{len(tasks)} explanation(s) keep missing the cache although nothing is pending"
+            )
+        served = cache.serve()
+        log(f"   round {cache.rounds}: served {served} strings, {len(tasks)} explanations still open")
+
+    prediction_rows = []
+    attribution_rows = []
+    for member, predict in predictors:
+        y_prob = np.asarray(predict(texts), dtype=float)
+        y_pred = (y_prob >= model.threshold).astype(int)
+        for example_id, prob, pred in zip(frame["row_id"], y_prob, y_pred):
+            prediction_rows.append(
+                {
+                    "example_id": example_id,
+                    "technique": model.technique,
+                    "member": member,
+                    "y_prob": float(prob),
+                    "threshold": float(model.threshold),
+                    "y_pred": int(pred),
+                }
+            )
+            tokens, values = results[(member, example_id)]
+            for position, (token, value) in enumerate(zip(tokens, values)):
+                attribution_rows.append(
+                    {
+                        "example_id": example_id,
+                        "technique": model.technique,
+                        "member": member,
+                        "position": position,
+                        "token": str(token),
+                        "attribution": float(value),
+                        "category": _token_category(token, word_index),
+                    }
+                )
+    serving = {
+        "mode": "sequential_checkpoints",
+        "rounds": int(cache.rounds),
+        "strings_evaluated_per_component": {k: int(v) for k, v in cache.evaluations.items()},
+        "tie_break_seed_per_text": int(seed),
+    }
+    predictions = pd.DataFrame(prediction_rows, columns=list(PREDICTION_COLUMNS))
+    attributions = pd.DataFrame(attribution_rows, columns=list(ATTRIBUTION_COLUMNS))
+    return predictions, attributions, serving
+
+
 def write_technique_outputs(out_dir, model, predictions, attributions, record):
     folder = Path(out_dir) / model.technique
     folder.mkdir(parents=True, exist_ok=True)
@@ -320,12 +574,15 @@ def _write_examples(out_dir, examples, fresh):
     path = out_dir / EXAMPLES_FILENAME
     digest = examples_digest(examples)
     if path.exists() and not fresh:
-        existing = pd.read_csv(path)
+        existing = pd.read_csv(path, keep_default_na=False)
         if "text" not in existing.columns or examples_digest(existing) != digest:
             raise CuratedExamplesError(
                 f"{out_dir} already holds outputs for a different curated set; pass --fresh "
                 "to replace them or choose another --out folder"
             )
+        for column in ANNOTATION_COLUMNS:
+            if column in existing.columns and column not in examples.columns:
+                examples[column] = existing[column].to_numpy()
     elif fresh:
         for stale in out_dir.iterdir():
             if stale.is_dir():
@@ -343,7 +600,6 @@ def run_explain(
     external_root,
     techniques,
     out_dir=DEFAULT_OUT,
-    notes_path=None,
     results_dir=None,
     max_evals=DEFAULT_MAX_EVALS,
     seed=DEFAULT_SEED,
@@ -355,10 +611,16 @@ def run_explain(
     fresh=False,
     reference_loader=load_reference_rows,
     committed_loader=None,
+    labels_path=None,
+    notes_path=None,
+    resident=True,
 ):
-    """The `explain` subcommand. Returns the list of technique folders written."""
-    examples = read_examples(texts_path)
-    examples["note"] = read_notes(notes_path, len(examples)) if notes_path else ""
+    """The `explain` subcommand. Returns the list of technique folders written.
+
+    `resident=False` evaluates a pooled ensemble one checkpoint at a time
+    (`explain_model_sequential`); other families are unaffected.
+    """
+    examples = read_examples(texts_path, labels_path, notes_path)
     digest = _write_examples(out_dir, examples, fresh)
     word_index, _ = build_word_index(load_lexicons())
     if committed_loader is None:
@@ -376,6 +638,7 @@ def run_explain(
             results_dir=results_dir,
             device=device,
             batch_size=batch_size,
+            resident=resident,
         )
         for note in model.notes:
             print(f"   note: {note}")
@@ -388,15 +651,27 @@ def run_explain(
             )
         else:
             print("   verification skipped (--verify-rows 0)")
-        predictions, attributions = explain_model(
-            model,
-            examples,
-            max_evals=max_evals,
-            seed=seed,
-            batch_size=batch_size,
-            include_members=include_members,
-            word_index=word_index,
-        )
+        serving = {"mode": "resident"}
+        if model.pooling and not resident:
+            predictions, attributions, serving = explain_model_sequential(
+                model,
+                examples,
+                max_evals=max_evals,
+                seed=seed,
+                batch_size=batch_size,
+                include_members=include_members,
+                word_index=word_index,
+            )
+        else:
+            predictions, attributions = explain_model(
+                model,
+                examples,
+                max_evals=max_evals,
+                seed=seed,
+                batch_size=batch_size,
+                include_members=include_members,
+                word_index=word_index,
+            )
         record = {
             "technique": technique,
             "family": model.family,
@@ -416,6 +691,7 @@ def run_explain(
                 "batch_size": int(batch_size),
             },
             "device": device,
+            "serving": serving,
             "kit_version": KIT_VERSION,
             "written_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         }
@@ -435,8 +711,6 @@ def load_outputs(out_dir):
     if not examples_path.exists():
         raise CuratedExamplesError(f"{out_dir}: no {EXAMPLES_FILENAME}; run `explain` first")
     examples = pd.read_csv(examples_path, keep_default_na=False)
-    if "note" not in examples.columns:
-        examples["note"] = ""
     expected_ids = set(examples["example_id"].astype(str))
 
     predictions, attributions, records = [], [], {}
@@ -479,8 +753,12 @@ def load_outputs(out_dir):
     )
 
 
-def build_summary(predictions, attributions):
-    """Text-free summary: one row per example x technique x member with category shares."""
+def build_summary(predictions, attributions, examples=None):
+    """Text-free summary: one row per example x technique x member with category shares.
+
+    With `examples` carrying an expected_label column, each row also records the
+    expected label and whether the prediction at the locked threshold matches it.
+    """
     attributions = attributions.copy()
     attributions["abs_attribution"] = attributions["attribution"].abs()
     attributions["positive_attribution"] = attributions["attribution"].clip(lower=0.0)
@@ -519,10 +797,123 @@ def build_summary(predictions, attributions):
     summary["predicted_class"] = np.where(
         summary["y_pred"] == 1, POSITIVE_CLASS_NAME, NEGATIVE_CLASS_NAME
     )
+    summary = _add_correctness(summary, examples)
     leaked = [c for c in summary.columns if c in TEXT_BEARING_COLUMNS or c in ("token", "word")]
     if leaked:
         raise CuratedExamplesError(f"summary would carry text-bearing columns {leaked}")
     return summary.sort_values(keys).reset_index(drop=True)
+
+
+def _expected_labels(examples):
+    """{example_id: expected class name} or {} when the examples carry no labels."""
+    if examples is None or EXPECTED_LABEL_COLUMN not in examples.columns:
+        return {}
+    labels = {}
+    for row in examples.itertuples():
+        value = getattr(row, EXPECTED_LABEL_COLUMN)
+        if value is None or (isinstance(value, float) and np.isnan(value)) or str(value) == "":
+            continue
+        labels[str(row.example_id)] = normalize_expected_label(value)
+    return labels
+
+
+def _add_correctness(frame, examples):
+    """expected_label and correct ('yes'/'no', empty without labels) next to predicted_class.
+
+    Spelled yes/no rather than true/false so a CSV reader does not silently
+    coerce the column to booleans.
+    """
+    labels = _expected_labels(examples)
+    frame = frame.copy()
+    frame[EXPECTED_LABEL_COLUMN] = frame["example_id"].astype(str).map(labels).fillna("")
+    frame["correct"] = np.where(
+        frame[EXPECTED_LABEL_COLUMN] == "",
+        "",
+        np.where(frame[EXPECTED_LABEL_COLUMN] == frame["predicted_class"], "yes", "no"),
+    )
+    return frame
+
+
+def build_results(examples, predictions, attributions, records):
+    """One nested, text-bearing record per example for `results.json`.
+
+    Facts only: the text, its expected label when given, and for every
+    technique and member the probability, threshold, predicted class, whether
+    that matches the expected label, and every token's attribution and category.
+    """
+    labels = _expected_labels(examples)
+    notes = (
+        dict(zip(examples["example_id"].astype(str), examples[NOTE_COLUMN].astype(str)))
+        if NOTE_COLUMN in examples.columns
+        else {}
+    )
+    predictions = predictions.sort_values(["example_id", "technique", "member"])
+    attributions = attributions.sort_values(["example_id", "technique", "member", "position"])
+    grouped = {key: block for key, block in attributions.groupby(["example_id", "technique", "member"])}
+    example_records = []
+    for example in examples.itertuples():
+        example_id = str(example.example_id)
+        expected = labels.get(example_id)
+        classifications = []
+        for row in predictions[predictions["example_id"] == example_id].itertuples():
+            predicted = POSITIVE_CLASS_NAME if int(row.y_pred) == 1 else NEGATIVE_CLASS_NAME
+            block = grouped.get((example_id, row.technique, row.member))
+            tokens = []
+            if block is not None:
+                tokens = [
+                    {
+                        "position": int(t.position),
+                        "token": str(t.token),
+                        "attribution": float(t.attribution),
+                        "category": str(t.category) if str(t.category) else None,
+                    }
+                    for t in block.itertuples()
+                ]
+            classifications.append(
+                {
+                    "technique": str(row.technique),
+                    "member": str(row.member),
+                    "y_prob": float(row.y_prob),
+                    "threshold": float(row.threshold),
+                    "predicted_label": predicted,
+                    "correct": None if expected is None else bool(predicted == expected),
+                    "tokens": tokens,
+                }
+            )
+        example_records.append(
+            {
+                "example_id": example_id,
+                "text": str(example.text),
+                "sha256": str(example.sha256),
+                "expected_label": expected,
+                "note": notes.get(example_id) or None,
+                "classifications": classifications,
+            }
+        )
+    techniques = {
+        name: {
+            "family": record.get("family"),
+            "threshold": record.get("threshold"),
+            "members": record.get("members", []),
+            "verification": record.get("verification"),
+            "notes": record.get("notes", []),
+            "device": record.get("device"),
+            "explainer": record.get("explainer"),
+            "written_utc": record.get("written_utc"),
+        }
+        for name, record in sorted(records.items())
+    }
+    return {
+        "generated_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "kit_version": KIT_VERSION,
+        "class_names": {"positive": POSITIVE_CLASS_NAME, "negative": NEGATIVE_CLASS_NAME},
+        "member_whole_model": WHOLE_MODEL,
+        "categories": list(CATEGORIES),
+        "n_examples": int(len(example_records)),
+        "n_labelled": int(sum(1 for e in example_records if e["expected_label"] is not None)),
+        "techniques": techniques,
+        "examples": example_records,
+    }
 
 
 _CSS = """
@@ -541,6 +932,7 @@ th { color: var(--muted); font-weight: 600; } td.num { text-align: right; font-v
 .tok[data-cat="slur"], .tok[data-cat="extremist_framing"], .tok[data-cat="identity_term"] { text-decoration: underline dotted; text-underline-offset: 3px; }
 .legend { display: inline-block; padding: 1px 6px; border-radius: 3px; margin-right: 6px; }
 .flag { color: rgb(var(--pos)); font-weight: 600; }
+.wrong { outline: 2px solid rgb(var(--pos)); outline-offset: -2px; }
 """
 
 
@@ -587,11 +979,17 @@ def build_report_html(examples, predictions, attributions, summary, records):
         "that model on that text. Dotted underline: word is in a lexicon (hover for the category).</p>",
     ]
 
+    labels = _expected_labels(examples)
     out.append("<h2>Overview</h2><table><tr><th>Example</th>")
+    if labels:
+        out.append("<th>Expected</th>")
     out.extend(f"<th>{html.escape(t)}</th>" for t in techniques)
     out.append("</tr>")
     for example in examples.itertuples():
+        expected = labels.get(str(example.example_id))
         out.append(f"<tr><td>{html.escape(example.example_id)}</td>")
+        if labels:
+            out.append(f"<td>{html.escape(expected or '')}</td>")
         for technique in techniques:
             cell = whole[(whole["example_id"] == example.example_id) & (whole["technique"] == technique)]
             if cell.empty:
@@ -599,20 +997,33 @@ def build_report_html(examples, predictions, attributions, summary, records):
             else:
                 prob = float(cell["y_prob"].iloc[0])
                 flagged = int(cell["y_pred"].iloc[0]) == 1
-                out.append(f"<td class='num{' flag' if flagged else ''}'>{prob:.3f}</td>")
+                predicted = POSITIVE_CLASS_NAME if flagged else NEGATIVE_CLASS_NAME
+                classes = ["num"] + (["flag"] if flagged else []) + (
+                    ["wrong"] if expected is not None and predicted != expected else []
+                )
+                out.append(f"<td class='{' '.join(classes)}'>{prob:.3f}</td>")
         out.append("</tr>")
     out.append(f"</table><p class='meta'>Cell: P({POSITIVE_CLASS_NAME}); bold red when at or above the "
-               "technique's locked validation threshold.</p>")
+               "technique's locked validation threshold"
+               + ("; outlined when the prediction differs from the expected label" if labels else "")
+               + ".</p>")
 
     for example in examples.itertuples():
         out.append(f"<h2>{html.escape(example.example_id)}</h2>")
         out.append(f"<blockquote>{html.escape(str(example.text))}</blockquote>")
-        note = str(getattr(example, "note", "") or "")
-        if note:
-            out.append(f"<p class='meta'>{html.escape(note)}</p>")
+        expected = labels.get(str(example.example_id))
+        meta_bits = []
+        if expected is not None:
+            meta_bits.append(f"Expected: {html.escape(expected)}")
+        note = getattr(example, NOTE_COLUMN, "") if NOTE_COLUMN in examples.columns else ""
+        if str(note):
+            meta_bits.append(f"Note: {html.escape(str(note))}")
+        if meta_bits:
+            out.append(f"<p class='meta'>{' · '.join(meta_bits)}</p>")
         rows = predictions[predictions["example_id"] == example.example_id]
         out.append("<table><tr><th>Model</th><th>P(EXTREMIST)</th><th>Threshold</th><th>Prediction</th>"
-                   "<th>Positive mass: framing / identity / slur / topical</th></tr>")
+                   + ("<th>Correct</th>" if expected is not None else "")
+                   + "<th>Positive mass: framing / identity / slur / topical</th></tr>")
         for row in rows.itertuples():
             shares = summary[
                 (summary["example_id"] == row.example_id)
@@ -627,10 +1038,14 @@ def build_report_html(examples, predictions, attributions, summary, records):
                     for c in ("extremist_framing", "identity_term", "slur", "topical")
                 )
             label = POSITIVE_CLASS_NAME if row.y_pred == 1 else NEGATIVE_CLASS_NAME
+            correct_cell = ""
+            if expected is not None:
+                correct_cell = f"<td>{'yes' if label == expected else 'no'}</td>"
             out.append(
                 f"<tr><td>{html.escape(_predictor_label(row.technique, row.member))}</td>"
                 f"<td class='num'>{row.y_prob:.3f}</td><td class='num'>{row.threshold:.3f}</td>"
-                f"<td class='{'flag' if row.y_pred == 1 else ''}'>{label}</td><td>{share_text}</td></tr>"
+                f"<td class='{'flag' if row.y_pred == 1 else ''}'>{label}</td>{correct_cell}"
+                f"<td>{share_text}</td></tr>"
             )
         out.append("</table>")
         for row in rows.itertuples():
@@ -659,15 +1074,26 @@ def build_report_html(examples, predictions, attributions, summary, records):
     return "\n".join(out)
 
 
-def run_report(out_dir=DEFAULT_OUT):
-    """The `report` subcommand: summary.csv and report.html from the technique folders."""
+def run_report(out_dir=DEFAULT_OUT, labels_path=None, notes_path=None):
+    """The `report` subcommand: summary.csv, results.json and report.html from the technique folders.
+
+    `labels_path` / `notes_path` attach (or replace) the annotations in examples.csv
+    without rerunning any model.
+    """
     out_dir = Path(out_dir)
     examples, predictions, attributions, records = load_outputs(out_dir)
-    summary = build_summary(predictions, attributions)
+    if labels_path is not None or notes_path is not None:
+        examples = attach_annotations(examples, labels_path, notes_path)
+        examples.to_csv(out_dir / EXAMPLES_FILENAME, index=False)
+    summary = build_summary(predictions, attributions, examples)
     summary.to_csv(out_dir / SUMMARY_FILENAME, index=False)
+    results = build_results(examples, predictions, attributions, records)
+    with open(out_dir / RESULTS_FILENAME, "w", encoding="utf-8") as handle:
+        json.dump(results, handle, indent=2, ensure_ascii=False)
     page = build_report_html(examples, predictions, attributions, summary, records)
     (out_dir / REPORT_FILENAME).write_text(page, encoding="utf-8")
     print(f"wrote {out_dir / SUMMARY_FILENAME} ({len(summary)} rows)")
+    print(f"wrote {out_dir / RESULTS_FILENAME} ({results['n_examples']} examples, {results['n_labelled']} labelled)")
     print(f"wrote {out_dir / REPORT_FILENAME}")
     return summary
 
@@ -690,6 +1116,8 @@ def main(argv=None):
 
     p = sub.add_parser("explain", help="classify and explain the curated texts with each technique")
     p.add_argument("--texts", required=True, help="plain-text file, one curated text per line")
+    p.add_argument("--labels", default=None,
+                   help="optional file with the expected label of each text, one per line, same order")
     p.add_argument("--notes", default=None,
                    help="optional file with one note per curated text, same order (blank for none)")
     p.add_argument("--external-root", default=str(DEFAULT_EXTERNAL_ROOT),
@@ -701,16 +1129,21 @@ def main(argv=None):
     p.add_argument("--max-evals", type=int, default=DEFAULT_MAX_EVALS, help="SHAP budget per text (notebooks use 500)")
     p.add_argument("--seed", type=int, default=DEFAULT_SEED)
     p.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
-    p.add_argument("--device", default="auto", choices=("auto", "cpu", "cuda"))
+    p.add_argument("--device", default="auto", choices=("auto", "cpu", "cuda", "mps"))
     p.add_argument("--verify-rows", type=int, default=DEFAULT_VERIFY_ROWS,
                    help="test rows used to verify the restored model against the committed artifact (0 skips)")
     p.add_argument("--tolerance", type=float, default=DEFAULT_TOLERANCE)
     p.add_argument("--no-members", action="store_true", help="skip per-member runs for ensembles")
+    p.add_argument("--sequential-checkpoints", action="store_true",
+                   help="pooled ensembles: load one checkpoint at a time and replay each explanation "
+                        "against a component cache (for machines that cannot hold the whole pool)")
     p.add_argument("--fresh", action="store_true", help="replace outputs from a different curated set")
     p.add_argument("--no-report", action="store_true", help="do not rebuild summary.csv and report.html")
 
-    r = sub.add_parser("report", help="rebuild summary.csv and report.html from existing outputs")
+    r = sub.add_parser("report", help="rebuild summary.csv, results.json and report.html from existing outputs")
     r.add_argument("--out", default=str(DEFAULT_OUT))
+    r.add_argument("--labels", default=None, help="attach expected labels (one per text, same order) without rerunning")
+    r.add_argument("--notes", default=None, help="attach notes (one per text, same order, blank for none) without rerunning")
 
     args = parser.parse_args(argv)
     try:
@@ -725,7 +1158,6 @@ def main(argv=None):
                 args.external_root,
                 techniques,
                 out_dir=args.out,
-                notes_path=args.notes,
                 results_dir=args.results_dir,
                 max_evals=args.max_evals,
                 seed=args.seed,
@@ -735,11 +1167,14 @@ def main(argv=None):
                 tolerance=args.tolerance,
                 include_members=not args.no_members,
                 fresh=args.fresh,
+                labels_path=args.labels,
+                notes_path=args.notes,
+                resident=not args.sequential_checkpoints,
             )
             if not args.no_report:
                 run_report(args.out)
         else:
-            run_report(args.out)
+            run_report(args.out, labels_path=args.labels, notes_path=args.notes)
     except (CuratedExamplesError, ModelLoadError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1

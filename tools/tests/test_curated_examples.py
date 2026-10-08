@@ -5,9 +5,12 @@ regression pipeline, saves it the way notebook 01 does, and drives the tool
 through verification, explanation and the report. Adversarial tests prove the
 tool refuses: weights it cannot recognise, a best_config without a threshold,
 a restored model that disagrees with the committed probabilities, outputs
-from two different curated sets in one folder, and a technique folder whose
-predictions do not cover every example. The pinning tests parse the
-notebooks and compare the constants the loaders reproduce.
+from two different curated sets in one folder, a technique folder whose
+predictions do not cover every example, a labels file that does not line up
+with the texts, and a pooling component that returns malformed log-odds. The
+sequential-checkpoint path is checked against the resident explainer on a
+synthetic two-component pool. The pinning tests parse the notebooks and
+compare the constants the loaders reproduce.
 """
 
 import json
@@ -388,3 +391,137 @@ class TestExplainAndReport:
         assert row["share_positive_mass_identity_term"] == pytest.approx(0.25)
         assert row["share_abs_mass_topical"] == pytest.approx(0.2)
         assert row["predicted_class"] == "EXTREMIST"
+
+
+class TestAnnotations:
+    def test_labels_and_notes_attach_in_order(self, world, tmp_path):
+        labels = tmp_path / "labels.txt"
+        labels.write_text("# expected\nExtremist\n\nnon extremist\n0\n")
+        notes = tmp_path / "notes.txt"
+        notes.write_text("first\nsecond\nthird\n")
+        examples = ce.read_examples(world["texts"], labels, notes)
+        assert examples[ce.EXPECTED_LABEL_COLUMN].tolist() == [
+            ce.POSITIVE_CLASS_NAME, ce.NEGATIVE_CLASS_NAME, ce.NEGATIVE_CLASS_NAME
+        ]
+        assert examples[ce.NOTE_COLUMN].tolist() == ["first", "second", "third"]
+
+    def test_label_count_mismatch_is_refused(self, world, tmp_path):
+        labels = tmp_path / "labels.txt"
+        labels.write_text("extremist\nnon-extremist\n")
+        with pytest.raises(ce.CuratedExamplesError, match="one line per text"):
+            ce.read_examples(world["texts"], labels)
+
+    def test_unknown_label_is_refused(self, world, tmp_path):
+        labels = tmp_path / "labels.txt"
+        labels.write_text("extremist\nmaybe\nextremist\n")
+        with pytest.raises(ce.CuratedExamplesError, match="unrecognised expected label"):
+            ce.read_examples(world["texts"], labels)
+
+    def test_existing_annotations_survive_a_rerun_without_them(self, world, tmp_path):
+        labels = tmp_path / "labels.txt"
+        labels.write_text("extremist\nnon-extremist\nextremist\n")
+        ce.run_explain(
+            world["texts"], world["external_root"], [TECHNIQUE], out_dir=world["out"],
+            results_dir=world["results_dir"], max_evals=60, verify_rows=0, labels_path=labels,
+        )
+        run_world(world)  # no labels given this time
+        examples = pd.read_csv(world["out"] / ce.EXAMPLES_FILENAME)
+        assert examples[ce.EXPECTED_LABEL_COLUMN].tolist() == [
+            ce.POSITIVE_CLASS_NAME, ce.NEGATIVE_CLASS_NAME, ce.POSITIVE_CLASS_NAME
+        ]
+
+    def test_report_records_correctness_without_rerunning(self, world, tmp_path):
+        run_world(world)
+        labels = tmp_path / "labels.txt"
+        labels.write_text("extremist\nnon-extremist\nextremist\n")
+        summary = ce.run_report(world["out"], labels_path=labels)
+        assert set(summary["correct"]) <= {"yes", "no"}
+        expected = summary[ce.EXPECTED_LABEL_COLUMN] == summary["predicted_class"]
+        assert (summary["correct"].eq("yes") == expected).all()
+        reread = pd.read_csv(world["out"] / ce.SUMMARY_FILENAME)
+        assert reread["correct"].dtype == object and set(reread["correct"]) <= {"yes", "no"}
+        assert not set(summary.columns) & set(ce.TEXT_BEARING_COLUMNS)
+
+        results = json.loads((world["out"] / ce.RESULTS_FILENAME).read_text(encoding="utf-8"))
+        assert results["n_examples"] == 3 and results["n_labelled"] == 3
+        assert TECHNIQUE in results["techniques"]
+        first = results["examples"][0]
+        assert first["expected_label"] == ce.POSITIVE_CLASS_NAME and first["text"]
+        classification = first["classifications"][0]
+        assert classification["technique"] == TECHNIQUE and classification["member"] == ce.WHOLE_MODEL
+        assert classification["correct"] == (classification["predicted_label"] == first["expected_label"])
+        assert classification["tokens"] and {"position", "token", "attribution", "category"} <= set(
+            classification["tokens"][0]
+        )
+        page = (world["out"] / ce.REPORT_FILENAME).read_text(encoding="utf-8")
+        assert "Expected" in page and "Correct" in page
+
+
+def synthetic_pool(seed=5):
+    """Two components with continuous, deterministic word scores, pooled like notebook 11."""
+    rng = np.random.default_rng(seed)
+    vocab = POSITIVE_WORDS + NEGATIVE_WORDS + NEUTRAL_WORDS + [ce.MASK_TOKEN]
+    tables = [{w: float(rng.normal(scale=1.5)) for w in vocab} for _ in range(2)]
+
+    def score(table, string):
+        return sum(table.get(w, 0.37) for w in str(string).split())
+
+    def log_odds(name, strings):
+        table = tables[{"A": 0, "B": 1}[name]]
+        return np.array([score(table, s) for s in strings], dtype=float)
+
+    names, weights = ["A", "B"], [1.0, 1.0]
+
+    def predict(texts):
+        return ml.pool_component_log_odds({n: log_odds(n, texts) for n in names}, names, weights)
+
+    members = {n: (lambda texts, n=n: ml.log_odds_to_probability(log_odds(n, texts))) for n in names}
+    return ml.LoadedModel(
+        technique="99_POOL", family="pooled_transformer_ensemble", threshold=0.5, predict=predict,
+        members=members, pooling={"names": names, "weights": weights, "log_odds": log_odds},
+    )
+
+
+class TestSequentialCheckpoints:
+    def test_replay_matches_the_resident_explainer(self, world):
+        model = synthetic_pool()
+        examples = ce.read_examples(world["texts"])
+        word_index, _ = ce.build_word_index(ce.load_lexicons())
+        resident_predictions, resident_attributions = ce.explain_model(
+            model, examples, max_evals=200, word_index=word_index
+        )
+        predictions, attributions, serving = ce.explain_model_sequential(
+            model, examples, max_evals=200, word_index=word_index, log=lambda *_: None
+        )
+        assert serving["mode"] == "sequential_checkpoints" and serving["rounds"] >= 2
+        keys = ["example_id", "member"]
+        assert predictions.sort_values(keys)["y_prob"].to_numpy() == pytest.approx(
+            resident_predictions.sort_values(keys)["y_prob"].to_numpy()
+        )
+        left = resident_attributions.sort_values(keys + ["position"]).reset_index(drop=True)
+        right = attributions.sort_values(keys + ["position"]).reset_index(drop=True)
+        assert left["token"].tolist() == right["token"].tolist()
+        assert np.allclose(left["attribution"], right["attribution"], atol=1e-9)
+        for name in model.pooling["names"]:
+            assert serving["strings_evaluated_per_component"][name] > 0
+
+    def test_malformed_component_output_is_refused(self, world):
+        model = synthetic_pool()
+        examples = ce.read_examples(world["texts"])
+        broken = dict(model.pooling, log_odds=lambda name, strings: np.zeros(len(strings) - 1))
+        short = ml.LoadedModel(**{**model.__dict__, "pooling": broken})
+        with pytest.raises(ce.CuratedExamplesError, match="log-odds"):
+            ce.explain_model_sequential(short, examples, max_evals=60, log=lambda *_: None)
+        nan = dict(model.pooling, log_odds=lambda name, strings: np.full(len(strings), np.nan))
+        with pytest.raises(ce.CuratedExamplesError, match="log-odds"):
+            ce.explain_model_sequential(
+                ml.LoadedModel(**{**model.__dict__, "pooling": nan}), examples, max_evals=60,
+                log=lambda *_: None,
+            )
+
+    def test_a_model_without_pooling_is_refused(self, world):
+        model = ml.load_technique(
+            TECHNIQUE, world["external_root"] / TECHNIQUE, results_dir=world["results_dir"]
+        )
+        with pytest.raises(ce.CuratedExamplesError, match="no pooling"):
+            ce.explain_model_sequential(model, ce.read_examples(world["texts"]))
