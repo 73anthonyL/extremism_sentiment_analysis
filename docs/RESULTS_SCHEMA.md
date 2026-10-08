@@ -276,6 +276,31 @@ The folder is uploaded to external storage, and
 `tools/run_manifest.py add-assets-from --file external_assets.json` records
 every file in `run_manifest.json`, text-bearing ones with `contains_text: true`.
 
+### Curated examples (local, untracked)
+
+`tools/curated_examples.py` classifies and explains a hand-curated list of
+texts (one per line of a `.txt` file) with every technique, from the
+downloaded `external/<TECHNIQUE>/` folders and the committed locked
+thresholds. It restores each notebook's `predict_proba_texts`
+(`tools/model_loaders.py`), verifies the restored model against the
+technique's committed test probability artifact, and runs the kit's one
+explainer (`notebook_kit.explain`) on the curated texts. Its outputs live
+under `external/curated_examples/` and are never committed:
+
+```text
+external/curated_examples/
+├── examples.csv                       example_id, text, sha256
+├── <TECHNIQUE>/predictions.csv        example_id, technique, member, y_prob, threshold, y_pred
+├── <TECHNIQUE>/local_attributions.csv example_id, technique, member, position, token, attribution, category
+├── <TECHNIQUE>/run.json               sources, verification, explainer settings
+├── summary.csv                        text-free: per example x technique x member, category shares
+└── report.html                        every text under every model, words highlighted
+```
+
+The curated texts are illustration for RQ2-RQ4. They are not dataset rows,
+carry no label, and produce no committed artifact; nothing in the paper's
+tables derives from them.
+
 ## Foundation folder
 
 Dataset and split artifacts should be stored under:
