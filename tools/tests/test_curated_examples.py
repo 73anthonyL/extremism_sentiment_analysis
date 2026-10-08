@@ -197,6 +197,29 @@ class TestLoaders:
         assert model.family == "slp_tfidf"
         assert np.allclose(model.predict(texts), expected, atol=1e-6)
 
+    def test_numpy_random_shim_accepts_numpy2_pickle_conventions(self):
+        """numpy 2 pickles pass a BitGenerator class or instance and a newer state format."""
+        import numpy.random._pickle as np_pickle
+        from numpy.random import MT19937, RandomState
+
+        ml._install_numpy_random_unpickle_shim()
+        # Dunder names are mangled inside a class body, so fetch them by string.
+        bit_ctor = getattr(np_pickle, "__bit_generator_ctor")
+        state_ctor = getattr(np_pickle, "__randomstate_ctor")
+        by_class = bit_ctor(MT19937)
+        assert isinstance(by_class, MT19937)
+        assert isinstance(bit_ctor("MT19937"), MT19937)
+        state = state_ctor(MT19937())
+        assert isinstance(state, RandomState)
+        # A state in an unknown format is ignored instead of failing the load.
+        by_class.__setstate__({"bit_generator": "MT19937", "state": {"unknown": 1}})
+        state.__setstate__({"bit_generator": "MT19937", "state": {"unknown": 1}})
+        # A legacy state still round-trips.
+        state.set_state(RandomState(7).get_state())
+        assert state.randint(0, 1000) == RandomState(7).randint(0, 1000)
+        with pytest.raises(ValueError):
+            bit_ctor("NoSuchGenerator")
+
     def test_pooling_matches_notebook_11_arithmetic(self):
         log_odds = {"A": np.array([0.0, 2.0]), "B": np.array([2.0, -2.0])}
         pooled = ml.pool_component_log_odds(log_odds, ["A", "B"], [1.0, 1.0])

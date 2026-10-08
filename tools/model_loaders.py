@@ -205,6 +205,82 @@ def fasttext_pool(tokenized, vector_of, dimension, pooling, idf, normalize):
     return embeddings
 
 
+def _install_numpy_random_unpickle_shim():
+    """Let numpy 1.x unpickle random states saved under numpy 2.
+
+    numpy 2 pickles a RandomState with its bit-generator *class* as the
+    constructor argument; numpy 1.x expects the class *name* and refuses the
+    class. gensim's FastText carries such a state, so without this the Kaggle
+    model cannot be loaded here. The shim maps a class to its name and leaves
+    string arguments untouched, and tolerates a state format it cannot restore
+    (TolerantRandomState).
+    """
+    import numpy.random._pickle as np_pickle
+
+    if getattr(np_pickle, "_model_loaders_shim", False):
+        return
+    bit_ctor = np_pickle.__bit_generator_ctor
+
+    from numpy.random import BitGenerator
+
+    def name_of(value):
+        return value if isinstance(value, str) else getattr(value, "__name__", str(value))
+
+    def as_bit_generator(value, ctor):
+        # numpy 2 passes an already-built BitGenerator instance to these helpers.
+        return value if isinstance(value, BitGenerator) else ctor(name_of(value))
+
+    tolerant_classes = {}
+
+    def tolerant_class(base):
+        """A subclass of one BitGenerator that ignores a state it cannot restore."""
+        if base not in tolerant_classes:
+
+            class TolerantBitGenerator(base):
+                def __setstate__(self, state):
+                    try:
+                        super().__setstate__(state)
+                    except (ValueError, TypeError, KeyError):
+                        pass
+
+            TolerantBitGenerator.__name__ = f"Tolerant{base.__name__}"
+            tolerant_classes[base] = TolerantBitGenerator
+        return tolerant_classes[base]
+
+    def bit_generator_ctor(bit_generator_name="MT19937"):
+        if isinstance(bit_generator_name, BitGenerator):
+            return bit_generator_name
+        name = name_of(bit_generator_name)
+        if name not in np_pickle.BitGenerators:
+            return bit_ctor(name)
+        return tolerant_class(np_pickle.BitGenerators[name])()
+
+    class TolerantRandomState(np_pickle.RandomState):
+        """A RandomState that accepts a numpy 2 pickled state it cannot restore.
+
+        The state only matters for further training; inference never draws
+        from it. When the stored format is unknown the generator is left
+        freshly seeded instead of failing the whole model load.
+        """
+
+        def __setstate__(self, state):
+            try:
+                super().__setstate__(state)
+            except (ValueError, TypeError, KeyError):
+                pass
+
+    def randomstate_ctor(bit_generator_name="MT19937", bit_generator_ctor=bit_generator_ctor):
+        return TolerantRandomState(as_bit_generator(bit_generator_name, bit_generator_ctor))
+
+    def generator_ctor(bit_generator_name="MT19937", bit_generator_ctor=bit_generator_ctor):
+        return np_pickle.Generator(as_bit_generator(bit_generator_name, bit_generator_ctor))
+
+    np_pickle.__bit_generator_ctor = bit_generator_ctor
+    np_pickle.__randomstate_ctor = randomstate_ctor
+    np_pickle.__generator_ctor = generator_ctor
+    np_pickle._model_loaders_shim = True
+
+
 def _load_fasttext_logreg(external_dir, hyperparameters):
     import joblib
 
@@ -221,6 +297,7 @@ def _load_fasttext_logreg(external_dir, hyperparameters):
     main_module = sys.modules["__main__"]
     if not hasattr(main_module, "stable_hash"):
         setattr(main_module, "stable_hash", fasttext_stable_hash)
+    _install_numpy_random_unpickle_shim()
     ft_model = FastText.load(str(weights / "fasttext.model"))
     classifier = joblib.load(weights / "classifier.joblib")
     idf_lookup = joblib.load(weights / "idf_lookup.joblib")
