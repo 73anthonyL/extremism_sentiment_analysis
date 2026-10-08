@@ -1,120 +1,136 @@
 {
-  "technique": "11_MULTI-CHECKPOINT_LOGIT-POOL",
-  "run_id": "11_MULTI-CHECKPOINT_LOGIT-POOL_20260808_215449",
-  "model_family": "heterogeneous_checkpoint_logit_pooled_transformer_ensemble",
-  "feature_family": "contextual_transformer_logit_probability_pooling",
+  "artifact_sha256": {
+    "test": "30364accf2d4a2a0",
+    "validation": "02b2be03bb74d238"
+  },
+  "contains_text": false,
   "dataset_version": "extremism_dataset_clean_v1",
-  "split_version": "split_v1_stratified_70_15_15_seed30",
-  "random_seed": 30,
+  "feature_family": "contextual_transformer_logit_probability_pooling",
   "hyperparameters": {
-    "A_anchor": {
-      "checkpoint": "cardiffnlp/twitter-roberta-base-hate-latest",
-      "learning_rate": 3e-05,
-      "num_epochs": 3,
-      "batch_size": 8,
-      "gradient_accumulation_steps": 2,
-      "max_length": 192,
-      "weight_decay": 0.01,
-      "class_weight": null,
-      "label_smoothing": 0.0,
-      "use_fgm": false,
-      "amp_dtype": "float16"
+    "component_run_configs": {
+      "A_anchor": {
+        "amp_dtype": "float16",
+        "batch_size": 8,
+        "checkpoint": "cardiffnlp/twitter-roberta-base-hate-latest",
+        "class_weight": null,
+        "component": "A_anchor",
+        "ema_decay": 0.995,
+        "fgm_epsilon": 1.0,
+        "gradient_accumulation_steps": 2,
+        "gradient_checkpointing": false,
+        "label_smoothing": 0.0,
+        "layerwise_lr_decay": null,
+        "learning_rate": 3e-05,
+        "max_length": 192,
+        "num_epochs": 3,
+        "orientation_swap": false,
+        "use_ema": false,
+        "use_fgm": false,
+        "weight_decay": 0.01
+      },
+      "B_dynabench": {
+        "amp_dtype": "float16",
+        "batch_size": 8,
+        "checkpoint": "facebook/roberta-hate-speech-dynabench-r4-target",
+        "class_weight": null,
+        "component": "B_dynabench",
+        "ema_decay": 0.995,
+        "fgm_epsilon": 1.0,
+        "gradient_accumulation_steps": 2,
+        "gradient_checkpointing": false,
+        "label_smoothing": 0.0,
+        "layerwise_lr_decay": null,
+        "learning_rate": 3e-05,
+        "max_length": 192,
+        "num_epochs": 3,
+        "orientation_swap": false,
+        "use_ema": false,
+        "use_fgm": false,
+        "weight_decay": 0.01
+      },
+      "C_hatebert": {
+        "amp_dtype": "float16",
+        "batch_size": 8,
+        "checkpoint": "GroNLP/hateBERT",
+        "class_weight": null,
+        "component": "C_hatebert",
+        "ema_decay": 0.995,
+        "fgm_epsilon": 1.0,
+        "gradient_accumulation_steps": 2,
+        "gradient_checkpointing": false,
+        "label_smoothing": 0.0,
+        "layerwise_lr_decay": null,
+        "learning_rate": 3e-05,
+        "max_length": 192,
+        "num_epochs": 3,
+        "orientation_swap": false,
+        "use_ema": false,
+        "use_fgm": false,
+        "weight_decay": 0.01
+      },
+      "E_twitter_large": {
+        "amp_dtype": "float16",
+        "batch_size": 8,
+        "checkpoint": "cardiffnlp/twitter-roberta-large-hate-latest",
+        "class_weight": null,
+        "component": "E_twitter_large",
+        "ema_decay": 0.995,
+        "fgm_epsilon": 1.0,
+        "gradient_accumulation_steps": 2,
+        "gradient_checkpointing": false,
+        "label_smoothing": 0.0,
+        "layerwise_lr_decay": null,
+        "learning_rate": 2e-05,
+        "max_length": 192,
+        "num_epochs": 3,
+        "orientation_swap": false,
+        "use_ema": false,
+        "use_fgm": false,
+        "weight_decay": 0.01
+      }
     },
-    "B_dynabench": {
-      "checkpoint": "facebook/roberta-hate-speech-dynabench-r4-target",
-      "learning_rate": 3e-05,
-      "num_epochs": 3,
-      "batch_size": 8,
-      "gradient_accumulation_steps": 2,
-      "max_length": 192,
-      "weight_decay": 0.01,
-      "class_weight": null,
-      "label_smoothing": 0.0,
-      "use_fgm": false,
-      "amp_dtype": "float16"
+    "component_weights": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "components": [
+      "A_anchor",
+      "B_dynabench",
+      "C_hatebert",
+      "E_twitter_large"
+    ],
+    "pooling": {
+      "across_components": "weighted_mean_of_component_mean_log_odds",
+      "admission_floor_val_accuracy_at_0_50": 0.84,
+      "logit_clip_eps": 1e-06,
+      "min_seeds_for_admission": 2,
+      "sigmoid_clip": 40.0,
+      "within_component": "mean_of_seed_log_odds"
     },
-    "C_hatebert": {
-      "checkpoint": "GroNLP/hateBERT",
-      "learning_rate": 3e-05,
-      "num_epochs": 3,
-      "batch_size": 8,
-      "gradient_accumulation_steps": 2,
-      "max_length": 192,
-      "weight_decay": 0.01,
-      "class_weight": null,
-      "label_smoothing": 0.0,
-      "use_fgm": false,
-      "amp_dtype": "float16"
-    },
-    "D_deberta": {
-      "checkpoint": "microsoft/deberta-v3-base",
-      "learning_rate": 2e-05,
-      "num_epochs": 3,
-      "batch_size": 8,
-      "gradient_accumulation_steps": 2,
-      "max_length": 192,
-      "weight_decay": 0.01,
-      "class_weight": null,
-      "label_smoothing": 0.0,
-      "use_fgm": false,
-      "amp_dtype": "float16"
-    },
-    "E_twitter_large": {
-      "checkpoint": "cardiffnlp/twitter-roberta-large-hate-latest",
-      "learning_rate": 2e-05,
-      "num_epochs": 3,
-      "batch_size": 8,
-      "gradient_accumulation_steps": 2,
-      "max_length": 192,
-      "weight_decay": 0.01,
-      "class_weight": null,
-      "label_smoothing": 0.0,
-      "use_fgm": false,
-      "amp_dtype": "float16"
-    },
-    "F_anchor_fgm": {
-      "checkpoint": "cardiffnlp/twitter-roberta-base-hate-latest",
-      "learning_rate": 3e-05,
-      "num_epochs": 3,
-      "batch_size": 8,
-      "gradient_accumulation_steps": 2,
-      "max_length": 192,
-      "weight_decay": 0.01,
-      "class_weight": null,
-      "label_smoothing": 0.0,
-      "use_fgm": true,
-      "amp_dtype": "float16"
-    }
+    "selected_strategy": "strategy_primary",
+    "text_normalization_mode": "minimal_twitter"
   },
-  "selected_strategy": "primary__equal_weight_pool_A_to_E__fixed_0_50",
-  "selected_threshold": 0.5,
-  "threshold_selected_on_split": "validation",
-  "gate": {
-    "test_unlocked": true,
-    "note": "gate passed: 393/450 validation correct >= 392"
-  },
-  "contains_raw_text": false,
+  "kit_version": "1.0.0",
+  "model_family": "heterogeneous_checkpoint_logit_pooled_transformer_ensemble",
+  "random_seed": 30,
   "row_counts": {
-    "validation": {
-      "total": 450,
-      "positive": 169
-    },
-    "test": {
-      "total": 450,
-      "positive": 170
-    }
+    "test": 450,
+    "validation": 450
   },
-  "validation_looks_declared": {
-    "screening_scores": 8,
-    "admission_scores": 6,
-    "decision_layer_scores": 5,
-    "total_scored_looks": 19,
-    "per_epoch_early_stopping_peeks": "<=3 per training run across <=22 runs"
-  },
+  "run_id": "11_MULTI-CHECKPOINT_LOGIT-POOL_20261008T093502Z",
   "schema": [
     "row_id",
     "split",
     "y_true",
     "y_prob"
-  ]
+  ],
+  "selected_threshold": 0.5,
+  "split_version": "split_v1_stratified_70_15_15_seed30",
+  "technique": "11_MULTI-CHECKPOINT_LOGIT-POOL",
+  "test_set_used_for_selection": false,
+  "threshold_metric": "accuracy",
+  "threshold_selected_on_split": "validation",
+  "threshold_strategy": "fixed_0.50_unless_grid_search_on_validation_gains_3_correct_rows"
 }

@@ -1,0 +1,36 @@
+{
+  "committed_artifacts": {
+    "ablation_results.csv": "972b01b8db119cea5bbb6102692dcc922e0c8af99189411a00ea2e9ddd91783f",
+    "attributions/shap-partition_test_seed30.csv": "a6061d16b0cfdd802a58252167fed2e6d8004afba32bf1597b71aa84a4a00020",
+    "attributions/shap-partition_test_seed30.json": "51eba0ddf95e2a5af2f9157d5329a787f5b65e15354ecdc1b65d59c596171fc7",
+    "attributions/shap-partition_test_seed30_member-A_anchor.csv": "5fe8817ef35473c72932c67f5045df532b41ce34c6eb13388c269680b1010a45",
+    "attributions/shap-partition_test_seed30_member-A_anchor.json": "078677d61ce9e4afceae519b0a691da26bbd417b2b4cde7cae79602afb25ecb5",
+    "attributions/shap-partition_test_seed30_member-B_dynabench.csv": "3bb82f7f6b2b58ff160baa07286c7120b39a723c9f38e09db182107dc058eeec",
+    "attributions/shap-partition_test_seed30_member-B_dynabench.json": "cd762a77fb7dfa352196a55e72465844bc222684bfcac787e145cac4c4d220f8",
+    "attributions/shap-partition_test_seed30_member-C_hatebert.csv": "7d094173d01e822592be657589851dab16ccb4324d75d1e5fa8b06e5bd887dfe",
+    "attributions/shap-partition_test_seed30_member-C_hatebert.json": "4d4d7f1966b7c6fe6eb08199af5f815ed48a9dd8287d425a73de4ce95734ae60",
+    "attributions/shap-partition_test_seed30_member-E_twitter_large.csv": "533e196a58b01fac6d649d0562ac36deeca8ad7afa2da79303742b611b028485",
+    "attributions/shap-partition_test_seed30_member-E_twitter_large.json": "521267eb1a9fe57f7a990f66c65d40f5d324088d1fab4ca12f4f1dc1537c081c",
+    "attributions/shap-partition_validation_seed30.csv": "2450e4e9a03134e4401b43f607ca84776dc0c4a24690f39c087d3ae5b1793518",
+    "attributions/shap-partition_validation_seed30.json": "aa20086157e27ab23a78baa8da092cbbdafa04e37482fb020eede1d10886aae4",
+    "best_config.json": "8967936379033b7c9265726bed4297967c9a00abe3341eb050946bcdf43d25e0",
+    "classification_report_test.json": "ae65e7ffcde8267b6acaf6378ed30c128b02d34383e7b7f02482c27faa04f2b0",
+    "confusion_matrix_test.csv": "d8cdfb787d475085ad47fd120e0b0877bb435b819cf2ab3b879a9cd5d3bbd1d7",
+    "identity_fpr_terms_test.csv": "a6ae05b77b5596ecc4c49abb788639beee75f6a78dfafa6d8331a9ee18fdb568",
+    "identity_fpr_test.json": "eafab25097bfc2ffe503b3caef6293e8c81f060c1b6bf21b1ed2518a162b14a7",
+    "metrics_test.json": "374ab092d881badbe5350133e690bfb606e822cdda3e9a64a61b0843cf575a17",
+    "metrics_validation.json": "265c991f45c71ec4febd0d4448639de8743025e06c7fcfa1740979d375cf2906",
+    "threshold_sweep_validation.csv": "c4c947f9de83790732a45d3ed243b5f9aa71e387a6a10e7815f43449578dcac1"
+  },
+  "committed_hashed_utc": "2026-10-08T15:51:56+00:00",
+  "created_utc": "2026-10-08T15:51:56+00:00",
+  "external_assets": [],
+  "run_id": "11_MULTI-CHECKPOINT_LOGIT-POOL_20261008T093502Z",
+  "source": {
+    "git_commit": "cabcc15a",
+    "kaggle_notebook": "https://www.kaggle.com/code/anthony73/11-multi-checkpoint-logit-pool-ipynb",
+    "kaggle_version": 1,
+    "notes": "Primed rerun; GitHub sync of the notebook file failed, artifacts fetched with the Kaggle CLI."
+  },
+  "technique": "11_MULTI-CHECKPOINT_LOGIT-POOL"
+}
