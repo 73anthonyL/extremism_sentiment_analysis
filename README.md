@@ -23,9 +23,9 @@ Three further transformer-ensemble notebooks (`08`, `09`, `10`) exist but are **
 
 **All twelve notebooks are primed on one template.** Each loads one shared helper (`tools/notebook_kit.py`), selects its threshold by one rule, explains its model with one attribution method, and writes its outputs in one layout. Notebooks `00` to `07` and `11` have been rerun on Kaggle in that form and are committed with their cell outputs, and every number in this README comes from those reruns. Notebooks `08`, `09` and `10` are primed but not rerun, as closed lines. `notebooks/README.md` describes the template and how to run a notebook.
 
-The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster around a similar performance range, while contextual transformer models provide the strongest registered held-out test results — the single fine-tuned Twitter-RoBERTa run, and above it a logit-pooled ensemble of heterogeneous checkpoints. This supports the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
+The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster in a narrow range (374 to 385 of 450 test rows correct), while the two contextual transformer techniques have the highest held-out test accuracy: the single fine-tuned Twitter-RoBERTa (400 of 450) and the logit-pooled ensemble of heterogeneous checkpoints (409 of 450). This is consistent with the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
 
-A second finding is methodological, and it constrains how the first one may be stated: the test split is 450 rows, so detecting a difference at McNemar exact significance requires roughly +3 accuracy points, about 14 rows. The transformer family's margin over the classical baselines clears that floor comfortably. The gaps *among* the classical baselines do not come close, and the gaps *among* the transformer variants tried so far sit at or below it — and no amount of decimal places changes that. `INCONCLUSIVE` is therefore a first-class, publishable outcome here, and a higher accuracy number is not by itself evidence of a better model.
+A second finding is methodological, and it constrains how the first one may be stated: the test split is 450 rows, so detecting a difference at McNemar exact significance requires roughly +3 accuracy points, about 14 rows. The ensemble's margin over the best classical baselines (24 rows) clears that floor; the single transformer's (15 rows) sits at it. The gaps *among* the classical baselines (at most 11 rows) and *between* the two transformer techniques (9 rows) stay below it, and no amount of decimal places changes that. `INCONCLUSIVE` is therefore a first-class, publishable outcome here, and a higher accuracy number is not by itself evidence of a better model.
 
 ## Research motivation
 
@@ -309,7 +309,7 @@ Notebooks `08`–`11` ensemble contextual transformers. Only `11` has a register
 
 ### About the highest accuracy figures
 
-Notebook `11` reports the strongest held-out test result in the repository: **409 of 450 rows, accuracy 0.9089**, ROC-AUC 0.9682, PR-AUC 0.9553. It pools mean log-odds across four admitted checkpoints — a fifth, `microsoft/deberta-v3-base`, was excluded by the prespecified 0.84 validation admission floor — at a fixed 0.50 cutoff.
+Notebook `11` has the highest held-out test accuracy in the repository: **409 of 450 rows, accuracy 0.9089**, ROC-AUC 0.9682, PR-AUC 0.9553. It pools mean log-odds across four admitted checkpoints — a fifth, `microsoft/deberta-v3-base`, was excluded by the prespecified 0.84 validation admission floor — at a fixed 0.50 cutoff.
 
 The way it got there is worth as much as the number. Its validation gate passed at 393/450 against a prespecified bar of 392, and the prespecified primary decision rule was **retained**, because the strongest of four challengers gained only 2 correct validation examples against a required 3. The result was not tuned into existence after the fact.
 
@@ -324,7 +324,7 @@ Two caveats still apply, and they are the difference between a strong measuremen
 1. **The margin is below the detection floor.** Notebook `11` leads the champion by 9 test rows. Roughly 14 are needed for a McNemar-detectable difference on a 450-row split, before Holm correction over a family that has now consumed ten test unlocks. It may well come back `INCONCLUSIVE`.
 2. **No adjudication was run.** The champion pointer in `research_loop/registry.json` still names `07_TWITTER-ROBERTA_FINE-TUNE`; the judge that would move it is archived in `legacy_tools/`.
 
-So notebook `11` is a real, derived, schema-valid result that leads on every metric. What matters for the paper is what it relies on, which the explainability tools measure.
+So notebook `11` is a real, derived, schema-valid result with the highest value in every column of the comparison table, by margins the test split cannot yet resolve against notebook `07`. What matters for the paper is what it relies on, which the explainability tools measure.
 
 ## Reproducibility workflow
 
