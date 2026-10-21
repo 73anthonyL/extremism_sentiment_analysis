@@ -44,6 +44,7 @@ This project treats extremist-content detection as a distinct text-classificatio
 * GitHub repository: <https://github.com/73anthonyL/extremism_sentiment_analysis>
 * Kaggle dataset: <https://www.kaggle.com/datasets/adityasureshgithub/digital-extremism-detection-curated-dataset>
 * Kaggle competition: <https://www.kaggle.com/competitions/social-media-extremism-detection-challenge>
+* Curated SHAP gallery: <https://73anthonyl.github.io/curated-shap-gallery/>
 
 ## Kaggle competition
 
@@ -308,6 +309,34 @@ Rendered by tools/render_tables.py from results_summary/ — do not edit by hand
 RQ3 comparisons are in `results_summary/rq/rq3_reliance_comparison.csv` and
 `rq3_stability.csv`, from each technique's test and validation runs and
 notebook `11`'s per-member runs; they share the RQ2 lexicon caveat.
+
+### Curated examples and the SHAP gallery
+
+Alongside the dataset-level tables, 34 hand-written curated texts (17 meant
+to be extremist and 17 not; none from the dataset) are classified and
+explained by every technique from its downloaded weights, after each
+restored model is checked against its committed test probabilities. The
+plots are published as a static gallery at
+<https://73anthonyl.github.io/curated-shap-gallery/>:
+
+* one SHAP waterfall per text per model, and a word beeswarm per model;
+* word beeswarms over the test and validation posts each notebook explained,
+  coloured by the true label, checked against the committed word tables;
+* a method page that explains, in plain English and technically, how every
+  plot was made, with its numbers read from the runs' records.
+
+The curated texts illustrate RQ2-RQ4 and support no accuracy claim. They,
+the plots and every per-post file stay outside this repository, under the
+untracked `external/`; the gallery is its own repository. To rebuild it from
+downloaded `external/<TECHNIQUE>/` folders:
+
+```bash
+python3 tools/curated_examples.py explain --texts curated.txt --labels labels.txt --all \
+    --out external/curated_examples_34        # add --sequential-checkpoints on an 8 GB machine
+python3 tools/curated_plots.py --out external/curated_examples_34
+python3 tools/split_beeswarms.py --out external/split_beeswarms
+python3 tools/curated_site.py --out external/curated_examples_34 --dataset-beeswarms external/split_beeswarms
+```
 
 ## Transformer ensemble notebooks
 
