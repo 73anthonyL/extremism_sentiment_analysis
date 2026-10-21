@@ -9,7 +9,8 @@ writes a site folder with `index.html` as the front page:
     method.html                      how the plots were made, in plain English and technically
     dataset.html, dataset/           with --dataset-beeswarms: the word beeswarms over the
                                      dataset posts each notebook explained (split_beeswarms.py)
-    README.md, .nojekyll             what the site is; serve the files without Jekyll
+    README.md, .nojekyll             what the site is and where it is published (--site-url);
+                                     serve the files without Jekyll
     .curated_site                    marks the folder as this tool's output
 
 Every page gains a robots `noindex` meta, since the pages hold the curated
@@ -89,6 +90,7 @@ METHOD_STYLE = (
     "code { font-size:13px; background:var(--card); padding:0 4px; border-radius:3px; }"
 )
 PROJECT_URL = "https://github.com/73anthonyL/extremism_sentiment_analysis"
+DEFAULT_SITE_URL = "https://73anthonyl.github.io/curated-shap-gallery/"
 SEQUENTIAL_SERVING = "sequential_checkpoints"
 
 # best_config.json family codes in words; an unknown code is shown as written.
@@ -156,12 +158,25 @@ def check_links(pages, files):
         )
 
 
-def readme(n_texts, n_techniques):
+def readme(n_texts, n_techniques, site_url=None, dataset=False):
+    """The site's README: what it is, and with `site_url` where it is published, page by page."""
+    pages = [("index.html", "Overview: every curated text under every model")]
+    if dataset:
+        pages.append((DATASET_FILENAME, "Dataset beeswarms: the dataset posts each model's notebook explained"))
+    pages.append((METHOD_FILENAME, f"{METHOD_TITLE}"))
+    if site_url:
+        base = site_url.rstrip("/") + "/"
+        where = (f"**View the site: <{base}>**\n\n"
+                 + "".join(f"* [{text}]({base}{'' if href == 'index.html' else href})\n" for href, text in pages)
+                 + "\n")
+    else:
+        where = "Open " + ", ".join(f"`{href}` ({text.split(':')[0].lower()})" for href, text in pages) + ".\n\n"
+    extra = ", plus word beeswarms over the dataset posts each model's notebook explained" if dataset else ""
     return (
         "# Curated SHAP gallery\n\n"
-        f"SHAP waterfall and beeswarm plots for {n_texts} hand-written curated texts under each of "
-        f"the {n_techniques} techniques of [extremism_sentiment_analysis]({PROJECT_URL}). "
-        f"Open `index.html`; `{METHOD_FILENAME}` explains how the plots were made.\n\n"
+        + where
+        + f"SHAP waterfall and beeswarm plots for {n_texts} hand-written curated texts under each of "
+        f"the {n_techniques} techniques of [extremism_sentiment_analysis]({PROJECT_URL}){extra}.\n\n"
         "Built by `tools/curated_site.py` from the gallery of `tools/curated_plots.py`. The curated "
         "texts are not dataset rows; they illustrate model behaviour and support no accuracy claim. "
         "This is not a moderation tool.\n"
@@ -523,10 +538,11 @@ def _prepare_destination(site_dir):
 
 
 def run_site(out_dir=DEFAULT_OUT, site_dir=DEFAULT_SITE, results_dir=RESULTS_DIR,
-             manifest_path=DATASET_MANIFEST_JSON, dataset_dir=None, log=print):
+             manifest_path=DATASET_MANIFEST_JSON, dataset_dir=None, site_url=None, log=print):
     """Check the gallery and the records, then write the site folder. Returns the site folder.
 
-    `dataset_dir`, an output folder of split_beeswarms.py, adds the dataset beeswarm page.
+    `dataset_dir`, an output folder of split_beeswarms.py, adds the dataset beeswarm page;
+    `site_url`, where the site is published, is linked from its README.
     """
     out_dir, site_dir = Path(out_dir), Path(site_dir)
     plots_dir = out_dir / PLOTS_DIRNAME
@@ -556,7 +572,7 @@ def run_site(out_dir=DEFAULT_OUT, site_dir=DEFAULT_SITE, results_dir=RESULTS_DIR
             if (dataset_root / relative).is_file():
                 images.append((dataset_root / relative, f"{DATASET_FOLDER}/{relative}"))
     extras = {
-        "README.md": readme(len(facts["example_ids"]), len(facts["techniques"])),
+        "README.md": readme(len(facts["example_ids"]), len(facts["techniques"]), site_url, dataset is not None),
         ".nojekyll": "",
         MARKER_FILENAME: MARKER_TEXT,
     }
@@ -584,9 +600,12 @@ def main(argv=None):
                         help="committed result folders holding each technique's best_config.json")
     parser.add_argument("--dataset-beeswarms", default=None,
                         help="an output folder of split_beeswarms.py; adds the dataset beeswarm page")
+    parser.add_argument("--site-url", default=DEFAULT_SITE_URL,
+                        help="where the site is published, linked from its README ('' for none)")
     args = parser.parse_args(argv)
     try:
-        run_site(args.out, args.site, args.results_dir, dataset_dir=args.dataset_beeswarms)
+        run_site(args.out, args.site, args.results_dir, dataset_dir=args.dataset_beeswarms,
+                 site_url=args.site_url or None)
     except CuratedSiteError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1

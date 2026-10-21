@@ -181,6 +181,16 @@ class TestDatasetPage:
         method = (site / cs.METHOD_FILENAME).read_text(encoding="utf-8")
         assert f"450 posts per split for {TECHNIQUES[0]}; 200 posts per split for {TECHNIQUES[1]}" in method
 
+    def test_the_readme_links_the_published_site_page_by_page(self, world):
+        url = "https://example.github.io/gallery"
+        site = cs.run_site(world / "out", world / "site", results_dir=world / "results",
+                           dataset_dir=write_dataset(world / "dataset"), site_url=url, log=lambda *_: None)
+        text = (site / "README.md").read_text(encoding="utf-8")
+        assert f"**View the site: <{url}/>**" in text
+        assert f"({url}/{cs.DATASET_FILENAME})" in text and f"({url}/{cs.METHOD_FILENAME})" in text
+        plain = (build(world, world / "site") / "README.md").read_text(encoding="utf-8")
+        assert "View the site" not in plain and "Open `index.html`" in plain
+
     def test_without_the_folder_there_is_no_dataset_page(self, world):
         site = build(world)
         assert not (site / cs.DATASET_FILENAME).exists()
