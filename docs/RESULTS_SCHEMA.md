@@ -290,12 +290,24 @@ under `external/curated_examples/` and are never committed:
 ```text
 external/curated_examples/
 ├── examples.csv                       example_id, text, sha256
-├── <TECHNIQUE>/predictions.csv        example_id, technique, member, y_prob, threshold, y_pred
+├── <TECHNIQUE>/predictions.csv        example_id, technique, member, y_prob, threshold, y_pred,
+│                                      base_value, explained_output
 ├── <TECHNIQUE>/local_attributions.csv example_id, technique, member, position, token, attribution, category
 ├── <TECHNIQUE>/run.json               sources, verification, explainer settings
 ├── summary.csv                        text-free: per example x technique x member, category shares
-└── report.html                        every text under every model, words highlighted
+├── report.html                        every text under every model, words highlighted
+└── plots/                             tools/curated_plots.py: waterfalls, beeswarms, gallery
 ```
+
+`base_value` is the model on the fully masked text and `explained_output`
+the model on the text as SHAP's masker rebuilt it, the two endpoints the
+partition explainer anchors on: `base_value` plus a text's attributions
+equals `explained_output`. The rebuilt text drops trailing separators (a
+final '.' or '?'), so `explained_output` can differ from `y_prob`, which is
+the model on the raw text and decides `y_pred`. `tools/curated_plots.py`
+refuses outputs where the sum does not hold and draws whole-model waterfalls
+and beeswarms from the recorded attributions, without re-explaining; its
+`plots/checks.csv` is text-free and records both gaps.
 
 The curated texts are illustration for RQ2-RQ4. They are not dataset rows,
 carry no label, and produce no committed artifact; nothing in the paper's

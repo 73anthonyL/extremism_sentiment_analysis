@@ -23,7 +23,8 @@ For every technique the tool
 Outputs go to an untracked folder (default `external/curated_examples/`):
 
     examples.csv                       example_id, text, sha256[, expected_label, note] (holds the texts)
-    <TECHNIQUE>/predictions.csv        example_id, technique, member, y_prob, threshold, y_pred
+    <TECHNIQUE>/predictions.csv        example_id, technique, member, y_prob, threshold, y_pred,
+                                       base_value, explained_output (the explainer's endpoints)
     <TECHNIQUE>/local_attributions.csv example_id, technique, member, position, token, attribution, category
     <TECHNIQUE>/run.json               what was loaded, verification result, explainer settings
     summary.csv                        text-free: one row per example x technique x member
@@ -33,7 +34,8 @@ Outputs go to an untracked folder (default `external/curated_examples/`):
                                        per-token attributions
     report.html                        every example with each model's highlighted words
 
-Only `summary.csv` is text-free. Nothing here is a committed research
+`tools/curated_plots.py` draws waterfall and beeswarm plots from these
+outputs. Only `summary.csv` is text-free. Nothing here is a committed research
 artifact: the curated texts are illustration for RQ2-RQ4, not a fifth question.
 
 Usage:
@@ -52,6 +54,7 @@ import hashlib
 import html
 import io
 import json
+import re
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -109,7 +112,20 @@ LABEL_ALIASES = {
 WHOLE_MODEL = "whole"
 CURATED_SPLIT = "curated"
 
-PREDICTION_COLUMNS = ("example_id", "technique", "member", "y_prob", "threshold", "y_pred")
+BASE_VALUE_COLUMN = "base_value"
+EXPLAINED_OUTPUT_COLUMN = "explained_output"
+PREDICTION_COLUMNS = (
+    "example_id",
+    "technique",
+    "member",
+    "y_prob",
+    "threshold",
+    "y_pred",
+    BASE_VALUE_COLUMN,
+    EXPLAINED_OUTPUT_COLUMN,
+)
+# Outputs written before the explainer endpoints were recorded lack the last two.
+REQUIRED_PREDICTION_COLUMNS = PREDICTION_COLUMNS[:6]
 ATTRIBUTION_COLUMNS = (
     "example_id",
     "technique",
@@ -299,6 +315,42 @@ def _token_category(token, word_index):
     return categorize_word(word, word_index)[0]
 
 
+_ENDPOINT_MASKER = None
+
+
+def explainer_endpoints(text):
+    """The two strings the partition explainer anchors one text on.
+
+    Returns (fully_masked, unmasked): the masker's output with every word
+    masked and with none masked. The explainer's base value is the model on
+    the first and its attributions sum to the model on the second minus that.
+    The unmasked string is the masker's reconstruction, which drops trailing
+    separators (a final '.' or '?'), so it can differ from the raw text.
+    Posts with fewer than two words take the kit's direct path, which compares
+    the raw text with the mask token.
+    """
+    global _ENDPOINT_MASKER
+    text = str(text)
+    if len([piece for piece in re.split(MASKER_PATTERN, text) if piece]) < 2:
+        return MASK_TOKEN, text
+    if _ENDPOINT_MASKER is None:
+        import shap
+
+        _ENDPOINT_MASKER = shap.maskers.Text(MASKER_PATTERN, mask_token=MASK_TOKEN)
+    n_tokens = len(_ENDPOINT_MASKER.data_transform(text)[0])
+    fully_masked = _ENDPOINT_MASKER(np.zeros(n_tokens, dtype=bool), text)[0][0]
+    unmasked = _ENDPOINT_MASKER(np.ones(n_tokens, dtype=bool), text)[0][0]
+    return str(fully_masked), str(unmasked)
+
+
+def _endpoint_values(predict, texts):
+    """(base_values, explained_outputs) of one predictor for the given texts."""
+    pairs = [explainer_endpoints(t) for t in texts]
+    strings = [masked for masked, _ in pairs] + [unmasked for _, unmasked in pairs]
+    values = np.asarray(predict(strings), dtype=float).reshape(-1)
+    return values[: len(texts)], values[len(texts):]
+
+
 def explain_model(
     model,
     examples,
@@ -331,7 +383,9 @@ def explain_model(
     for member, predict in predictors:
         y_prob = np.asarray(predict(frame["text"].tolist()), dtype=float)
         y_pred = (y_prob >= model.threshold).astype(int)
-        for example_id, prob, pred in list(zip(frame["row_id"], y_prob, y_pred))[: len(examples)]:
+        base_values, explained = _endpoint_values(predict, examples["text"].tolist())
+        rows = zip(frame["row_id"], y_prob, y_pred, base_values, explained)
+        for example_id, prob, pred, base, output in list(rows)[: len(examples)]:
             prediction_rows.append(
                 {
                     "example_id": example_id,
@@ -340,6 +394,8 @@ def explain_model(
                     "y_prob": float(prob),
                     "threshold": float(model.threshold),
                     "y_pred": int(pred),
+                    BASE_VALUE_COLUMN: float(base),
+                    EXPLAINED_OUTPUT_COLUMN: float(output),
                 }
             )
         bundle = explain(ctx, predict, frame, seed=seed, max_evals=max_evals, batch_size=batch_size)
@@ -522,7 +578,14 @@ def explain_model_sequential(
     for member, predict in predictors:
         y_prob = np.asarray(predict(texts), dtype=float)
         y_pred = (y_prob >= model.threshold).astype(int)
-        for example_id, prob, pred in zip(frame["row_id"], y_prob, y_pred):
+        # The explainer evaluated both endpoints already; serve them if it did not.
+        try:
+            base_values, explained = _endpoint_values(predict, texts)
+        except _CacheMiss:
+            cache.serve()
+            base_values, explained = _endpoint_values(predict, texts)
+        rows = zip(frame["row_id"], y_prob, y_pred, base_values, explained)
+        for example_id, prob, pred, base, output in rows:
             prediction_rows.append(
                 {
                     "example_id": example_id,
@@ -531,6 +594,8 @@ def explain_model_sequential(
                     "y_prob": float(prob),
                     "threshold": float(model.threshold),
                     "y_pred": int(pred),
+                    BASE_VALUE_COLUMN: float(base),
+                    EXPLAINED_OUTPUT_COLUMN: float(output),
                 }
             )
             tokens, values = results[(member, example_id)]
@@ -723,7 +788,7 @@ def load_outputs(out_dir):
         with open(files[2]) as handle:
             record = json.load(handle)
         for label, frame, required in (
-            (files[0].name, pred, PREDICTION_COLUMNS),
+            (files[0].name, pred, REQUIRED_PREDICTION_COLUMNS),
             (files[1].name, attr, ATTRIBUTION_COLUMNS),
         ):
             missing = [c for c in required if c not in frame.columns]

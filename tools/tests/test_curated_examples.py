@@ -7,8 +7,9 @@ tool refuses: weights it cannot recognise, a best_config without a threshold,
 a restored model that disagrees with the committed probabilities, outputs
 from two different curated sets in one folder, a technique folder whose
 predictions do not cover every example, a labels file that does not line up
-with the texts, and a pooling component that returns malformed log-odds. The
-sequential-checkpoint path is checked against the resident explainer on a
+with the texts, and a pooling component that returns malformed log-odds.
+The end-to-end test also checks that the recorded explainer endpoints add up
+with the attributions. The sequential-checkpoint path is checked against the resident explainer on a
 synthetic two-component pool. The pinning tests parse the notebooks and
 compare the constants the loaders reproduce.
 """
@@ -311,6 +312,11 @@ class TestExplainAndReport:
         alarm = first[first["token"].str.startswith("alarm")]
         assert len(alarm) == 2 and (alarm["attribution"] > 0).all()
         assert set(attributions["category"]) <= set(ce.CATEGORIES) | {""}
+        # The recorded endpoints are the explainer's: base value + attributions = explained output.
+        sums = attributions.groupby("example_id")["attribution"].sum()
+        endpoints = predictions.set_index("example_id")
+        assert np.allclose(endpoints[ce.BASE_VALUE_COLUMN] + sums, endpoints[ce.EXPLAINED_OUTPUT_COLUMN], atol=1e-9)
+        assert endpoints[ce.BASE_VALUE_COLUMN].nunique() == 1
 
         summary = ce.run_report(world["out"])
         assert len(summary) == 3
@@ -502,6 +508,10 @@ class TestSequentialCheckpoints:
         right = attributions.sort_values(keys + ["position"]).reset_index(drop=True)
         assert left["token"].tolist() == right["token"].tolist()
         assert np.allclose(left["attribution"], right["attribution"], atol=1e-9)
+        for column in (ce.BASE_VALUE_COLUMN, ce.EXPLAINED_OUTPUT_COLUMN):
+            assert predictions.sort_values(keys)[column].to_numpy() == pytest.approx(
+                resident_predictions.sort_values(keys)[column].to_numpy()
+            )
         for name in model.pooling["names"]:
             assert serving["strings_evaluated_per_component"][name] > 0
 
