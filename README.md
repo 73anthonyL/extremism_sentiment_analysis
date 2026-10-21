@@ -55,8 +55,10 @@ The Social Media Extremism Detection Challenge on Kaggle is treated as an extern
 extremism_sentiment_analysis/
 ├── data/
 │   ├── dataset.csv
-│   └── extremism_lexicon.txt
+│   ├── extremism_lexicon.txt
+│   └── lexicons/             # word lists for RQ2 and RQ4: framing, identity terms, slurs
 ├── notebooks/
+│   ├── README.md                 # the template and how to run a notebook
 │   ├── 00_create_dataset_and_splits.ipynb
 │   ├── 01_LOG-REG_TF-IDF.ipynb
 │   ├── 02_LIN-SVM_TF-IDF.ipynb
@@ -70,7 +72,9 @@ extremism_sentiment_analysis/
 │   ├── 10_TWITTER-ROBERTA_LOGIT-POOL-STABLE.ipynb   # closed line
 │   └── 11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb         # result registered
 ├── results_summary/
+│   ├── README.md
 │   ├── foundation/
+│   ├── rq/                   # RQ2-RQ4 tables across techniques
 │   ├── 01_LOG-REG_TF-IDF/
 │   ├── 02_LIN-SVM_TF-IDF/
 │   ├── 03_SLP_TF-IDF/
@@ -83,6 +87,10 @@ extremism_sentiment_analysis/
 │   └── probs/                # sanitized probability artifacts (row_id, split, y_true, y_prob)
 ├── tools/
 │   ├── notebook_kit.py           # the helper every notebook loads: split, metrics, exports
+│   ├── metrics_core.py           # the one metric function, pinned to the kit by a test
+│   ├── split_protocol.py         # rebuilds the processed dataset and the frozen split
+│   ├── probs_artifact.py         # loads and pairs probability artifacts
+│   ├── lexicons.py, repo_paths.py  # lexicon loading; shared paths and constants
 │   ├── check_notebook.py         # static check of a notebook against the template
 │   ├── attributions.py           # word-level SHAP artifact contract
 │   ├── validate_shap.py          # pipeline check against logistic-regression coefficients
@@ -93,6 +101,11 @@ extremism_sentiment_analysis/
 │   ├── validate_results_folder.py
 │   ├── render_tables.py          # regenerates every doc results table
 │   ├── scan_text_leakage.py      # dataset text in committed files
+│   ├── model_loaders.py          # restores each notebook's predictor from external weights
+│   ├── curated_examples.py       # explains hand-curated texts with every technique
+│   ├── curated_plots.py          # SHAP waterfalls and beeswarms for those texts
+│   ├── split_beeswarms.py        # word beeswarms over the posts each notebook explained
+│   ├── curated_site.py           # the static site of those plots (see the gallery below)
 │   └── tests/                    # the toolkit's own pytest suite
 ├── legacy_tools/             # archived adjudication toolkit (ledger, judge); reference only
 ├── splits/
@@ -101,7 +114,7 @@ extremism_sentiment_analysis/
 ├── docs/
 │   ├── RESEARCH_PLAN.md
 │   └── RESULTS_SCHEMA.md
-├── CLAUDE.md
+├── external/                 # untracked: downloaded weights, per-post files, curated outputs
 ├── CITATION.cff
 ├── LICENSE
 ├── README.md
