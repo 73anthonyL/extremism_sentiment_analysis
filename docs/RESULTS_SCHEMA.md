@@ -311,6 +311,15 @@ refuses outputs where the sum does not hold and draws whole-model waterfalls
 and beeswarms from the recorded attributions, without re-explaining; its
 `plots/checks.csv` is text-free and records both gaps.
 
+`tools/curated_site.py` copies that gallery into a static site folder
+(default `external/curated_shap_site/`, which can be its own repository)
+with `index.html` as the front page, a robots `noindex` meta on every page,
+and a `method.html` whose numbers are read from the run's `run.json` files,
+the committed `best_config.json` files, `plots/checks.csv` and the dataset
+manifest. The site holds the curated texts: nothing from it is committed
+here, and publishing it is a separate step. The current site is served at
+<https://73anthonyl.github.io/curated-shap-gallery/>.
+
 The curated texts are illustration for RQ2-RQ4. They are not dataset rows,
 carry no dataset label (only an optional hand-assigned expected label), and
 produce no committed artifact; nothing in the paper's tables derives from
