@@ -289,12 +289,14 @@ under `external/curated_examples/` and are never committed:
 
 ```text
 external/curated_examples/
-├── examples.csv                       example_id, text, sha256
+├── examples.csv                       example_id, text, sha256[, expected_label, note]
 ├── <TECHNIQUE>/predictions.csv        example_id, technique, member, y_prob, threshold, y_pred,
 │                                      base_value, explained_output
 ├── <TECHNIQUE>/local_attributions.csv example_id, technique, member, position, token, attribution, category
 ├── <TECHNIQUE>/run.json               sources, verification, explainer settings
 ├── summary.csv                        text-free: per example x technique x member, category shares
+│                                      [, expected_label, correct]
+├── results.json                       one record per example: text, label, note, every model
 ├── report.html                        every text under every model, words highlighted
 └── plots/                             tools/curated_plots.py: waterfalls, beeswarms, gallery
 ```
@@ -310,8 +312,9 @@ and beeswarms from the recorded attributions, without re-explaining; its
 `plots/checks.csv` is text-free and records both gaps.
 
 The curated texts are illustration for RQ2-RQ4. They are not dataset rows,
-carry no label, and produce no committed artifact; nothing in the paper's
-tables derives from them.
+carry no dataset label (only an optional hand-assigned expected label), and
+produce no committed artifact; nothing in the paper's tables derives from
+them.
 
 ## Foundation folder
 
