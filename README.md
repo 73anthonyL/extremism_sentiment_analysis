@@ -21,11 +21,11 @@ This is an active research repository maintained by the project authors. The cur
 
 Three further transformer-ensemble notebooks (`08`, `09`, `10`) exist but are **not** part of the controlled comparison. Two ran and reported test numbers without leaving a derivable result folder; one was never run. The section [Transformer ensemble notebooks](#transformer-ensemble-notebooks) records where each one stands.
 
-**All twelve notebooks are now primed for rerun.** Each has been rewritten on one template, loads one shared helper (`tools/notebook_kit.py`), selects its threshold by one rule, explains its model with one attribution method, and writes its outputs in one layout. Their cell outputs are empty until each is rerun on Kaggle. The numbers in this README come from the runs made before priming and will be replaced, technique by technique, as the reruns land; a rerun's numbers will differ somewhat because the threshold rule and the early-stopping monitors were unified. `notebooks/README.md` describes the template and how to run a notebook.
+**All twelve notebooks are primed on one template.** Each loads one shared helper (`tools/notebook_kit.py`), selects its threshold by one rule, explains its model with one attribution method, and writes its outputs in one layout. Notebooks `00` to `07` and `11` have been rerun on Kaggle in that form and are committed with their cell outputs, and every number in this README comes from those reruns. Notebooks `08`, `09` and `10` are primed but not rerun, as closed lines. `notebooks/README.md` describes the template and how to run a notebook.
 
-The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster around a similar performance range, while contextual transformer models provide the strongest registered held-out test results — the single fine-tuned Twitter-RoBERTa run, and above it a logit-pooled ensemble of heterogeneous checkpoints. This supports the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
+The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster in a narrow range (374 to 385 of 450 test rows correct), while the two contextual transformer techniques have the highest held-out test accuracy: the single fine-tuned Twitter-RoBERTa (400 of 450) and the logit-pooled ensemble of heterogeneous checkpoints (409 of 450). This is consistent with the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
 
-A second finding is methodological, and it constrains how the first one may be stated: the test split is 450 rows, so detecting a difference at McNemar exact significance requires roughly +3 accuracy points, about 14 rows. The transformer family's margin over the classical baselines clears that floor comfortably. The gaps *among* the classical baselines do not come close, and the gaps *among* the transformer variants tried so far sit at or below it — and no amount of decimal places changes that. `INCONCLUSIVE` is therefore a first-class, publishable outcome here, and a higher accuracy number is not by itself evidence of a better model.
+A second finding is methodological, and it constrains how the first one may be stated: the test split is 450 rows, so detecting a difference at McNemar exact significance requires roughly +3 accuracy points, about 14 rows. The ensemble's margin over the best classical baselines (24 rows) clears that floor; the single transformer's (15 rows) sits at it. The gaps *among* the classical baselines (at most 11 rows) and *between* the two transformer techniques (9 rows) stay below it, and no amount of decimal places changes that. `INCONCLUSIVE` is therefore a first-class, publishable outcome here, and a higher accuracy number is not by itself evidence of a better model.
 
 ## Research motivation
 
@@ -44,6 +44,7 @@ This project treats extremist-content detection as a distinct text-classificatio
 * GitHub repository: <https://github.com/73anthonyL/extremism_sentiment_analysis>
 * Kaggle dataset: <https://www.kaggle.com/datasets/adityasureshgithub/digital-extremism-detection-curated-dataset>
 * Kaggle competition: <https://www.kaggle.com/competitions/social-media-extremism-detection-challenge>
+* Curated SHAP gallery: <https://73anthonyl.github.io/curated-shap-gallery/>
 
 ## Kaggle competition
 
@@ -55,8 +56,10 @@ The Social Media Extremism Detection Challenge on Kaggle is treated as an extern
 extremism_sentiment_analysis/
 ├── data/
 │   ├── dataset.csv
-│   └── extremism_lexicon.txt
+│   ├── extremism_lexicon.txt
+│   └── lexicons/             # word lists for RQ2 and RQ4: framing, identity terms, slurs
 ├── notebooks/
+│   ├── README.md                 # the template and how to run a notebook
 │   ├── 00_create_dataset_and_splits.ipynb
 │   ├── 01_LOG-REG_TF-IDF.ipynb
 │   ├── 02_LIN-SVM_TF-IDF.ipynb
@@ -70,7 +73,9 @@ extremism_sentiment_analysis/
 │   ├── 10_TWITTER-ROBERTA_LOGIT-POOL-STABLE.ipynb   # closed line
 │   └── 11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb         # result registered
 ├── results_summary/
+│   ├── README.md
 │   ├── foundation/
+│   ├── rq/                   # RQ2-RQ4 tables across techniques
 │   ├── 01_LOG-REG_TF-IDF/
 │   ├── 02_LIN-SVM_TF-IDF/
 │   ├── 03_SLP_TF-IDF/
@@ -83,6 +88,10 @@ extremism_sentiment_analysis/
 │   └── probs/                # sanitized probability artifacts (row_id, split, y_true, y_prob)
 ├── tools/
 │   ├── notebook_kit.py           # the helper every notebook loads: split, metrics, exports
+│   ├── metrics_core.py           # the one metric function, pinned to the kit by a test
+│   ├── split_protocol.py         # rebuilds the processed dataset and the frozen split
+│   ├── probs_artifact.py         # loads and pairs probability artifacts
+│   ├── lexicons.py, repo_paths.py  # lexicon loading; shared paths and constants
 │   ├── check_notebook.py         # static check of a notebook against the template
 │   ├── attributions.py           # word-level SHAP artifact contract
 │   ├── validate_shap.py          # pipeline check against logistic-regression coefficients
@@ -93,6 +102,11 @@ extremism_sentiment_analysis/
 │   ├── validate_results_folder.py
 │   ├── render_tables.py          # regenerates every doc results table
 │   ├── scan_text_leakage.py      # dataset text in committed files
+│   ├── model_loaders.py          # restores each notebook's predictor from external weights
+│   ├── curated_examples.py       # explains hand-curated texts with every technique
+│   ├── curated_plots.py          # SHAP waterfalls and beeswarms for those texts
+│   ├── split_beeswarms.py        # word beeswarms over the posts each notebook explained
+│   ├── curated_site.py           # the static site of those plots (see the gallery below)
 │   └── tests/                    # the toolkit's own pytest suite
 ├── legacy_tools/             # archived adjudication toolkit (ledger, judge); reference only
 ├── splits/
@@ -101,7 +115,7 @@ extremism_sentiment_analysis/
 ├── docs/
 │   ├── RESEARCH_PLAN.md
 │   └── RESULTS_SCHEMA.md
-├── CLAUDE.md
+├── external/                 # untracked: downloaded weights, per-post files, curated outputs
 ├── CITATION.cff
 ├── LICENSE
 ├── README.md
@@ -238,18 +252,11 @@ Rendered by tools/render_tables.py from results_summary/ — do not edit by hand
 <!-- RENDERED-TABLE:END id=confusion-test -->
 
 
-Current ranking by held-out test PR-AUC:
+Each technique's PR-AUC, positive-class precision, recall and F1, and the
+other test metrics are in `results_summary/<TECHNIQUE>/metrics_test.json`,
+computed from its committed probability artifact.
 
-1. `11_MULTI-CHECKPOINT_LOGIT-POOL` — PR-AUC 0.9553, ROC-AUC 0.9682, positive F1 0.8746.
-2. `07_TWITTER-ROBERTA_FINE-TUNE` — PR-AUC 0.9233, ROC-AUC 0.9496, positive F1 0.8555.
-3. `01_LOG-REG_TF-IDF` — PR-AUC 0.8881, ROC-AUC 0.9111, positive F1 0.8024.
-4. `02_LIN-SVM_TF-IDF` — PR-AUC 0.8825, ROC-AUC 0.9037, positive F1 0.7962.
-5. `05_WORD-CHAR-TF-IDF_LIN-SVM` — PR-AUC 0.8818, ROC-AUC 0.9032, positive F1 0.7886.
-6. `03_SLP_TF-IDF` — PR-AUC 0.8777, ROC-AUC 0.9022, positive F1 0.7768.
-7. `06_FASTTEXT-EMB_LOG-REG` — PR-AUC 0.8763, ROC-AUC 0.9033, positive F1 0.7722.
-8. `04_CHAR-TF-IDF_LIN-SVM` — PR-AUC 0.8745, ROC-AUC 0.9028, positive F1 0.7875.
-
-A ranking is not a significance test. On a 450-row test split, roughly 14 rows of difference are needed for McNemar significance, and most gaps above are smaller. Accuracy is RQ1 and is kept brief; the contribution is the attribution comparison below.
+A higher number is not a significance test. On a 450-row test split, roughly 14 rows of difference are needed for McNemar significance, and most gaps above are smaller. Accuracy is RQ1 and is kept brief; the contribution is the attribution comparison below.
 
 These are baseline research metrics. They should not be interpreted as deployment readiness.
 
@@ -261,7 +268,10 @@ spectrum. The tables below are rendered from committed artifacts by
 artifact.
 
 RQ2, share of positive attribution mass by lexicon category (top-50 words,
-whole-model runs averaged):
+whole-model runs averaged). These shares are preliminary: the slur lexicon
+is still empty and the extremist-framing lexicon lacks words such as "kill"
+and "genocide", so slurs and violent vocabulary currently count as topical
+until the lexicons are curated (`docs/RESEARCH_PLAN.md`, WP3).
 
 <!-- RENDERED-TABLE:BEGIN id=rq2-category-shares -->
 | Technique | Runs | Slur | Extremist framing | Identity term | Topical |
@@ -296,8 +306,37 @@ terms:
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
 <!-- RENDERED-TABLE:END id=rq4-identity-fpr -->
 
-RQ3 comparisons live in `results_summary/rq/rq3_reliance_comparison.csv` and
-`rq3_stability.csv` once at least two attribution runs per technique exist.
+RQ3 comparisons are in `results_summary/rq/rq3_reliance_comparison.csv` and
+`rq3_stability.csv`, from each technique's test and validation runs and
+notebook `11`'s per-member runs; they share the RQ2 lexicon caveat.
+
+### Curated examples and the SHAP gallery
+
+Alongside the dataset-level tables, 34 hand-written curated texts (17 meant
+to be extremist and 17 not; none from the dataset) are classified and
+explained by every technique from its downloaded weights, after each
+restored model is checked against its committed test probabilities. The
+plots are published as a static gallery at
+<https://73anthonyl.github.io/curated-shap-gallery/>:
+
+* one SHAP waterfall per text per model, and a word beeswarm per model;
+* word beeswarms over the test and validation posts each notebook explained,
+  coloured by the true label, checked against the committed word tables;
+* a method page that explains, in plain English and technically, how every
+  plot was made, with its numbers read from the runs' records.
+
+The curated texts illustrate RQ2-RQ4 and support no accuracy claim. They,
+the plots and every per-post file stay outside this repository, under the
+untracked `external/`; the gallery is its own repository. To rebuild it from
+downloaded `external/<TECHNIQUE>/` folders:
+
+```bash
+python3 tools/curated_examples.py explain --texts curated.txt --labels labels.txt --all \
+    --out external/curated_examples_34        # add --sequential-checkpoints on an 8 GB machine
+python3 tools/curated_plots.py --out external/curated_examples_34
+python3 tools/split_beeswarms.py --out external/split_beeswarms
+python3 tools/curated_site.py --out external/curated_examples_34 --dataset-beeswarms external/split_beeswarms
+```
 
 ## Transformer ensemble notebooks
 
@@ -312,7 +351,7 @@ Notebooks `08`–`11` ensemble contextual transformers. Only `11` has a register
 
 ### About the highest accuracy figures
 
-Notebook `11` reports the strongest held-out test result in the repository: **409 of 450 rows, accuracy 0.9089**, ROC-AUC 0.9682, PR-AUC 0.9553. It pools mean log-odds across four admitted checkpoints — a fifth, `microsoft/deberta-v3-base`, was excluded by the prespecified 0.84 validation admission floor — at a fixed 0.50 cutoff.
+Notebook `11` has the highest held-out test accuracy in the repository: **409 of 450 rows, accuracy 0.9089**, ROC-AUC 0.9682, PR-AUC 0.9553. It pools mean log-odds across four admitted checkpoints — a fifth, `microsoft/deberta-v3-base`, was excluded by the prespecified 0.84 validation admission floor — at a fixed 0.50 cutoff.
 
 The way it got there is worth as much as the number. Its validation gate passed at 393/450 against a prespecified bar of 392, and the prespecified primary decision rule was **retained**, because the strongest of four challengers gained only 2 correct validation examples against a required 3. The result was not tuned into existence after the fact.
 
@@ -327,7 +366,7 @@ Two caveats still apply, and they are the difference between a strong measuremen
 1. **The margin is below the detection floor.** Notebook `11` leads the champion by 9 test rows. Roughly 14 are needed for a McNemar-detectable difference on a 450-row split, before Holm correction over a family that has now consumed ten test unlocks. It may well come back `INCONCLUSIVE`.
 2. **No adjudication was run.** The champion pointer in `research_loop/registry.json` still names `07_TWITTER-ROBERTA_FINE-TUNE`; the judge that would move it is archived in `legacy_tools/`.
 
-So notebook `11` is a real, derived, schema-valid result that leads on every metric. What matters for the paper is what it relies on, which the explainability tools measure.
+So notebook `11` is a real, derived, schema-valid result with the highest value in every column of the comparison table, by margins the test split cannot yet resolve against notebook `07`. What matters for the paper is what it relies on, which the explainability tools measure.
 
 ## Reproducibility workflow
 
@@ -372,9 +411,11 @@ results_summary/<TECHNIQUE>/
 research_loop/probs/<TECHNIQUE>__validation.csv, __test.csv, __meta.json
 ```
 
-Folders committed before priming use older layouts (the transformer folder,
-for example, has a confusion-matrix image instead of the CSV); each is
-replaced when its notebook is rerun.
+All eight result folders come from the primed reruns (`07_TWITTER-ROBERTA_FINE-TUNE`
+also keeps a confusion-matrix image). The tools add each folder's
+`run_manifest.json` and RQ outputs (`attributions/*__categorized.csv`,
+`*__category_shares.csv`, `identity_fpr_test.json`); `docs/RESULTS_SCHEMA.md`
+defines them.
 
 ## Installation and environment
 

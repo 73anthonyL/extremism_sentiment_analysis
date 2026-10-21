@@ -9,7 +9,10 @@ refuses, before writing anything: a folder without a gallery, a gallery older
 than the explain outputs, techniques explained with different settings, a
 technique without its best_config.json, a page that links to an image the site
 would not contain, a link that leaves the site, and a destination holding
-files the tool did not write.
+files the tool did not write. With a split beeswarm folder (checks.csv and
+stand-in images), the dataset page is checked, and a folder without its
+checks, a beeswarm whose word table was not reproduced, and a listed
+beeswarm image that is missing are refused.
 """
 
 import json
@@ -29,6 +32,7 @@ pytest.importorskip("matplotlib")
 import curated_examples as ce  # noqa: E402
 import curated_plots as cp  # noqa: E402
 import curated_site as cs  # noqa: E402
+import split_beeswarms as sb  # noqa: E402
 from test_curated_plots import TECHNIQUES, TEXTS, write_outputs  # noqa: E402
 
 EXPLAINER = {"algorithm": "partition", "mask_token": "...", "masker": "\\W+", "max_evals": 60, "seed": 30}
@@ -74,9 +78,25 @@ def world(drawn, tmp_path):
     return tmp_path / "world"
 
 
-def build(world, site=None):
+def build(world, site=None, dataset_dir=None):
     site = world / "site" if site is None else site
-    return cs.run_site(world / "out", site, results_dir=world / "results", log=lambda *_: None)
+    return cs.run_site(world / "out", site, results_dir=world / "results", dataset_dir=dataset_dir,
+                       log=lambda *_: None)
+
+
+def write_dataset(folder, n_posts=None):
+    """A split_beeswarms.py output folder: checks.csv and a stand-in image per technique and split."""
+    n_posts = n_posts or {TECHNIQUES[0]: 450, TECHNIQUES[1]: 200}
+    rows = []
+    for technique in TECHNIQUES:
+        for split in sb.SPLITS:
+            image = folder / technique / sb.beeswarm_filename(split)
+            image.parent.mkdir(parents=True, exist_ok=True)
+            image.write_bytes(b"\x89PNG stand-in")
+            rows.append({"technique": technique, "split": split, "n_posts": n_posts[technique],
+                         "n_words": 900, "max_table_diff": 4e-9})
+    pd.DataFrame(rows, columns=list(sb.CHECK_COLUMNS)).to_csv(folder / sb.CHECKS_FILENAME, index=False)
+    return folder
 
 
 class TestSite:
@@ -143,6 +163,60 @@ class TestMethodPage:
         (world / "results" / TECHNIQUES[0] / "best_config.json").unlink()
         with pytest.raises(cs.CuratedSiteError, match="best_config"):
             build(world)
+
+
+class TestDatasetPage:
+    def test_the_page_its_images_and_every_menu(self, world):
+        site = build(world, dataset_dir=write_dataset(world / "dataset"))
+        page = (site / cs.DATASET_FILENAME).read_text(encoding="utf-8")
+        for technique in TECHNIQUES:
+            for split in sb.SPLITS:
+                assert (site / cs.DATASET_FOLDER / technique / sb.beeswarm_filename(split)).is_file()
+        assert "450 posts explained" in page and "200 posts explained" in page
+        # The committed manifest's splits hold 450 posts, so only the 200-post technique is a sample.
+        assert f"{TECHNIQUES[1]} explained a sample" in page and f"{TECHNIQUES[0]} explained" not in page
+        for path in site.rglob("*.html"):
+            prefix = "../" * len(path.relative_to(site).parts[:-1])
+            assert f'href="{prefix}{cs.DATASET_FILENAME}"' in path.read_text(encoding="utf-8")
+        method = (site / cs.METHOD_FILENAME).read_text(encoding="utf-8")
+        assert f"450 posts per split for {TECHNIQUES[0]}; 200 posts per split for {TECHNIQUES[1]}" in method
+
+    def test_the_readme_links_the_published_site_page_by_page(self, world):
+        url = "https://example.github.io/gallery"
+        site = cs.run_site(world / "out", world / "site", results_dir=world / "results",
+                           dataset_dir=write_dataset(world / "dataset"), site_url=url, log=lambda *_: None)
+        text = (site / "README.md").read_text(encoding="utf-8")
+        assert f"**View the site: <{url}/>**" in text
+        assert f"({url}/{cs.DATASET_FILENAME})" in text and f"({url}/{cs.METHOD_FILENAME})" in text
+        plain = (build(world, world / "site") / "README.md").read_text(encoding="utf-8")
+        assert "View the site" not in plain and "Open `index.html`" in plain
+
+    def test_without_the_folder_there_is_no_dataset_page(self, world):
+        site = build(world)
+        assert not (site / cs.DATASET_FILENAME).exists()
+        assert cs.DATASET_FILENAME not in (site / "index.html").read_text(encoding="utf-8")
+
+    def test_a_folder_without_checks_is_refused(self, world):
+        folder = write_dataset(world / "dataset")
+        (folder / sb.CHECKS_FILENAME).unlink()
+        with pytest.raises(cs.CuratedSiteError, match="split_beeswarms.py"):
+            build(world, dataset_dir=folder)
+        assert not (world / "site").exists()
+
+    def test_a_word_table_that_was_not_reproduced_is_refused(self, world):
+        folder = write_dataset(world / "dataset")
+        checks = pd.read_csv(folder / sb.CHECKS_FILENAME)
+        checks.loc[0, "max_table_diff"] = 0.01
+        checks.to_csv(folder / sb.CHECKS_FILENAME, index=False)
+        with pytest.raises(cs.CuratedSiteError, match="did not reproduce"):
+            build(world, dataset_dir=folder)
+
+    def test_a_listed_image_that_is_missing_is_refused(self, world):
+        folder = write_dataset(world / "dataset")
+        (folder / TECHNIQUES[1] / sb.beeswarm_filename("validation")).unlink()
+        with pytest.raises(cs.CuratedSiteError, match="would not contain"):
+            build(world, dataset_dir=folder)
+        assert not (world / "site").exists()
 
 
 class TestRefusals:
