@@ -238,18 +238,11 @@ Rendered by tools/render_tables.py from results_summary/ — do not edit by hand
 <!-- RENDERED-TABLE:END id=confusion-test -->
 
 
-Current ranking by held-out test PR-AUC:
+Each technique's PR-AUC, positive-class precision, recall and F1, and the
+other test metrics are in `results_summary/<TECHNIQUE>/metrics_test.json`,
+computed from its committed probability artifact.
 
-1. `11_MULTI-CHECKPOINT_LOGIT-POOL` — PR-AUC 0.9553, ROC-AUC 0.9682, positive F1 0.8746.
-2. `07_TWITTER-ROBERTA_FINE-TUNE` — PR-AUC 0.9233, ROC-AUC 0.9496, positive F1 0.8555.
-3. `01_LOG-REG_TF-IDF` — PR-AUC 0.8881, ROC-AUC 0.9111, positive F1 0.8024.
-4. `02_LIN-SVM_TF-IDF` — PR-AUC 0.8825, ROC-AUC 0.9037, positive F1 0.7962.
-5. `05_WORD-CHAR-TF-IDF_LIN-SVM` — PR-AUC 0.8818, ROC-AUC 0.9032, positive F1 0.7886.
-6. `03_SLP_TF-IDF` — PR-AUC 0.8777, ROC-AUC 0.9022, positive F1 0.7768.
-7. `06_FASTTEXT-EMB_LOG-REG` — PR-AUC 0.8763, ROC-AUC 0.9033, positive F1 0.7722.
-8. `04_CHAR-TF-IDF_LIN-SVM` — PR-AUC 0.8745, ROC-AUC 0.9028, positive F1 0.7875.
-
-A ranking is not a significance test. On a 450-row test split, roughly 14 rows of difference are needed for McNemar significance, and most gaps above are smaller. Accuracy is RQ1 and is kept brief; the contribution is the attribution comparison below.
+A higher number is not a significance test. On a 450-row test split, roughly 14 rows of difference are needed for McNemar significance, and most gaps above are smaller. Accuracy is RQ1 and is kept brief; the contribution is the attribution comparison below.
 
 These are baseline research metrics. They should not be interpreted as deployment readiness.
 
