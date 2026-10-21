@@ -392,8 +392,10 @@ text under every model. `tools/curated_plots.py` draws a SHAP waterfall per
 text and a word beeswarm per technique (whole models) from those
 attributions, with an HTML gallery, and `tools/curated_site.py` copies the
 gallery into a static site with a method page, published at
-<https://73anthonyl.github.io/curated-shap-gallery/>. Outputs stay under
-`external/`.
+<https://73anthonyl.github.io/curated-shap-gallery/>. `tools/split_beeswarms.py`
+adds word beeswarms over the test and validation posts each notebook
+explained, checked against the committed word tables, as the site's
+dataset page. Outputs stay under `external/`.
 
 The curated texts are not dataset rows and carry no dataset label (only an
 optional hand-assigned expected label), so they support
