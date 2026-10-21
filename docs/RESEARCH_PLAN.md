@@ -388,9 +388,12 @@ RQ2-RQ4. `tools/curated_examples.py explain` restores each technique's
 (`tools/model_loaders.py`), verifies it against the committed test
 probability artifact, and runs `notebook_kit.explain` on the curated texts;
 `report` writes a text-free `summary.csv` and a `report.html` with every
-text under every model. Outputs stay under `external/curated_examples/`.
+text under every model. `tools/curated_plots.py` draws a SHAP waterfall per
+text and a word beeswarm per technique (whole models) from those
+attributions, with an HTML gallery. Outputs stay under `external/`.
 
-The curated texts are not dataset rows and carry no label, so they support
+The curated texts are not dataset rows and carry no dataset label (only an
+optional hand-assigned expected label), so they support
 no accuracy claim and enter no rendered table. Notebooks 08, 09 and 10 have
 no loader, as closed lines.
 

@@ -58,6 +58,9 @@ class LoadedModel:
     members: dict = field(default_factory=dict)  # member id -> predict function
     sources: dict = field(default_factory=dict)  # what was loaded, for the run record
     notes: list = field(default_factory=list)  # deviations from the notebook's serving
+    # Pooled ensembles only: {"names": [...], "weights": [...], "log_odds": fn(name, strings)}
+    # so a caller can evaluate one component at a time and pool the cached log-odds itself.
+    pooling: dict = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -340,6 +343,8 @@ def _torch_device(device):
         device = "cuda" if torch.cuda.is_available() else "cpu"
     if device == "cuda" and not torch.cuda.is_available():
         raise ModelLoadError("device 'cuda' requested but CUDA is not available")
+    if device == "mps" and not torch.backends.mps.is_available():
+        raise ModelLoadError("device 'mps' requested but the Apple GPU backend is not available")
     return torch.device(device)
 
 
@@ -396,7 +401,9 @@ def _load_transformer(external_dir, hyperparameters, device, batch_size):
 
     notes = []
     if torch_device.type != "cuda":
-        notes.append("served in float32 on CPU; the notebook used float16 autocast on the GPU")
+        notes.append(
+            f"served in float32 on {torch_device.type}; the notebook used float16 autocast on the GPU"
+        )
     return predict, {"model": str(model_dir), "tokenizer": str(tokenizer_dir), "max_length": max_length}, notes
 
 
@@ -472,7 +479,28 @@ def _read_inference_dtypes(external_dir):
     }
 
 
-def _load_pooled_ensemble(external_dir, hyperparameters, device, batch_size):
+def _release_model(model, torch_device):
+    """Drop one checkpoint and give its memory back before the next one is loaded."""
+    import gc
+
+    import torch
+
+    del model
+    gc.collect()
+    if torch_device.type == "mps" and hasattr(torch, "mps"):
+        torch.mps.empty_cache()
+    elif torch_device.type == "cuda":
+        torch.cuda.empty_cache()
+
+
+def _load_pooled_ensemble(external_dir, hyperparameters, device, batch_size, resident=True):
+    """Restore notebook 11's pooled ensemble.
+
+    `resident=True` keeps every checkpoint in memory, as the notebook did.
+    `resident=False` records where each checkpoint lives and loads it only
+    while it is being evaluated, one at a time, which is what a machine that
+    cannot hold the whole pool needs. The arithmetic is the same either way.
+    """
     from transformers import AutoTokenizer
 
     external_dir = Path(external_dir)
@@ -502,9 +530,14 @@ def _load_pooled_ensemble(external_dir, hyperparameters, device, batch_size):
         runs = []
         for seed, folder in folders:
             dtype = dtypes.get((component, seed), "float32")
-            if torch_device.type != "cuda":
+            if torch_device.type == "cpu":
+                # CPU half precision is not a supported inference path; mps and cuda keep
+                # the dtype the notebook recorded for the run.
                 dtype = "float32"
-            runs.append({"seed": seed, "model": _load_hf_classifier(folder, torch_device, dtype)})
+            run = {"seed": seed, "folder": folder, "dtype": dtype}
+            if resident:
+                run["model"] = _load_hf_classifier(folder, torch_device, dtype)
+            runs.append(run)
         loaded[component] = {
             "tokenizer": tokenizer,
             "runs": runs,
@@ -515,17 +548,29 @@ def _load_pooled_ensemble(external_dir, hyperparameters, device, batch_size):
             "folders": [str(folder) for _, folder in folders],
             "tokenizer": str(tokenizer_dir),
         }
-    if torch_device.type != "cuda":
+    if torch_device.type == "cpu":
         notes.append("members served in float32 on CPU; the notebook served float16 runs in float16")
+    elif torch_device.type != "cuda":
+        notes.append(f"members served on {torch_device.type} in the dtype the notebook recorded per run")
+    if not resident:
+        notes.append("checkpoints loaded one at a time while evaluated, not held resident")
+    sources["resident"] = bool(resident)
 
     def component_log_odds(component, strings):
+        """Seed-mean log-odds of one component on raw strings (normalisation applied here)."""
         entry = loaded[component]
+        strings = [str(value) for value in strings]
+        if not strings:
+            return np.zeros(0)
         prepared = [normalize_model_text(value, mode) for value in strings]
         per_seed = []
         for run in entry["runs"]:
+            model = run["model"] if resident else _load_hf_classifier(run["folder"], torch_device, run["dtype"])
             probabilities = _transformer_probabilities(
-                run["model"], entry["tokenizer"], prepared, entry["max_length"], batch_size, torch_device
+                model, entry["tokenizer"], prepared, entry["max_length"], batch_size, torch_device
             )
+            if not resident:
+                _release_model(model, torch_device)
             per_seed.append(probability_to_log_odds(probabilities))
         return np.mean(per_seed, axis=0)
 
@@ -538,14 +583,19 @@ def _load_pooled_ensemble(external_dir, hyperparameters, device, batch_size):
         return lambda texts: log_odds_to_probability(component_log_odds(component, [str(t) for t in texts]))
 
     members = {component: make_member(component) for component in components}
-    return predict, members, sources, notes
+    pooling = {"names": list(components), "weights": list(weights), "log_odds": component_log_odds}
+    return predict, members, sources, notes, pooling
 
 
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
-def load_technique(technique, external_dir, results_dir=None, device="auto", batch_size=64):
-    """Restore one technique: its predictor, its members, and its locked threshold."""
+def load_technique(technique, external_dir, results_dir=None, device="auto", batch_size=64, resident=True):
+    """Restore one technique: its predictor, its members, and its locked threshold.
+
+    `resident=False` only matters for the pooled ensemble: its checkpoints are
+    then loaded one at a time while evaluated instead of all at once.
+    """
     external_dir = Path(external_dir)
     if not external_dir.is_dir():
         raise ModelLoadError(f"{technique}: external folder {external_dir} does not exist")
@@ -554,6 +604,7 @@ def load_technique(technique, external_dir, results_dir=None, device="auto", bat
     family = detect_family(external_dir)
     members = {}
     notes = []
+    pooling = {}
 
     if family == "sklearn_pipeline":
         predict, sources = _load_sklearn_pipeline(external_dir)
@@ -564,8 +615,8 @@ def load_technique(technique, external_dir, results_dir=None, device="auto", bat
     elif family == "transformer":
         predict, sources, notes = _load_transformer(external_dir, hyperparameters, device, batch_size)
     elif family == "pooled_transformer_ensemble":
-        predict, members, sources, notes = _load_pooled_ensemble(
-            external_dir, hyperparameters, device, batch_size
+        predict, members, sources, notes, pooling = _load_pooled_ensemble(
+            external_dir, hyperparameters, device, batch_size, resident=resident
         )
     else:  # pragma: no cover - detect_family refuses anything else
         raise ModelLoadError(f"unhandled family {family}")
@@ -584,4 +635,5 @@ def load_technique(technique, external_dir, results_dir=None, device="auto", bat
         members=members,
         sources=sources,
         notes=notes,
+        pooling=pooling,
     )
