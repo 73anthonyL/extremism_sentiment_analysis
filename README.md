@@ -21,7 +21,7 @@ This is an active research repository maintained by the project authors. The cur
 
 Three further transformer-ensemble notebooks (`08`, `09`, `10`) exist but are **not** part of the controlled comparison. Two ran and reported test numbers without leaving a derivable result folder; one was never run. The section [Transformer ensemble notebooks](#transformer-ensemble-notebooks) records where each one stands.
 
-**All twelve notebooks are now primed for rerun.** Each has been rewritten on one template, loads one shared helper (`tools/notebook_kit.py`), selects its threshold by one rule, explains its model with one attribution method, and writes its outputs in one layout. Their cell outputs are empty until each is rerun on Kaggle. The numbers in this README come from the runs made before priming and will be replaced, technique by technique, as the reruns land; a rerun's numbers will differ somewhat because the threshold rule and the early-stopping monitors were unified. `notebooks/README.md` describes the template and how to run a notebook.
+**All twelve notebooks are primed on one template.** Each loads one shared helper (`tools/notebook_kit.py`), selects its threshold by one rule, explains its model with one attribution method, and writes its outputs in one layout. Notebooks `00` to `07` and `11` have been rerun on Kaggle in that form and are committed with their cell outputs, and every number in this README comes from those reruns. Notebooks `08`, `09` and `10` are primed but not rerun, as closed lines. `notebooks/README.md` describes the template and how to run a notebook.
 
 The main research finding so far is that the classical TF-IDF and static-embedding approaches cluster around a similar performance range, while contextual transformer models provide the strongest registered held-out test results — the single fine-tuned Twitter-RoBERTa run, and above it a logit-pooled ensemble of heterogeneous checkpoints. This supports the hypothesis that extremist-text classification benefits from context-aware representations that preserve word order, stance, negation, and social-media phrasing.
 
@@ -254,7 +254,10 @@ spectrum. The tables below are rendered from committed artifacts by
 artifact.
 
 RQ2, share of positive attribution mass by lexicon category (top-50 words,
-whole-model runs averaged):
+whole-model runs averaged). These shares are preliminary: the slur lexicon
+is still empty and the extremist-framing lexicon lacks words such as "kill"
+and "genocide", so slurs and violent vocabulary currently count as topical
+until the lexicons are curated (`docs/RESEARCH_PLAN.md`, WP3).
 
 <!-- RENDERED-TABLE:BEGIN id=rq2-category-shares -->
 | Technique | Runs | Slur | Extremist framing | Identity term | Topical |
@@ -289,8 +292,9 @@ terms:
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
 <!-- RENDERED-TABLE:END id=rq4-identity-fpr -->
 
-RQ3 comparisons live in `results_summary/rq/rq3_reliance_comparison.csv` and
-`rq3_stability.csv` once at least two attribution runs per technique exist.
+RQ3 comparisons are in `results_summary/rq/rq3_reliance_comparison.csv` and
+`rq3_stability.csv`, from each technique's test and validation runs and
+notebook `11`'s per-member runs; they share the RQ2 lexicon caveat.
 
 ## Transformer ensemble notebooks
 
@@ -365,9 +369,11 @@ results_summary/<TECHNIQUE>/
 research_loop/probs/<TECHNIQUE>__validation.csv, __test.csv, __meta.json
 ```
 
-Folders committed before priming use older layouts (the transformer folder,
-for example, has a confusion-matrix image instead of the CSV); each is
-replaced when its notebook is rerun.
+All eight result folders come from the primed reruns (`07_TWITTER-ROBERTA_FINE-TUNE`
+also keeps a confusion-matrix image). The tools add each folder's
+`run_manifest.json` and RQ outputs (`attributions/*__categorized.csv`,
+`*__category_shares.csv`, `identity_fpr_test.json`); `docs/RESULTS_SCHEMA.md`
+defines them.
 
 ## Installation and environment
 
