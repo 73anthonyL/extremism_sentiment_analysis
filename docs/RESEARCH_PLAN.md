@@ -390,7 +390,10 @@ probability artifact, and runs `notebook_kit.explain` on the curated texts;
 `report` writes a text-free `summary.csv` and a `report.html` with every
 text under every model. `tools/curated_plots.py` draws a SHAP waterfall per
 text and a word beeswarm per technique (whole models) from those
-attributions, with an HTML gallery. Outputs stay under `external/`.
+attributions, with an HTML gallery, and `tools/curated_site.py` copies the
+gallery into a static site with a method page, published at
+<https://73anthonyl.github.io/curated-shap-gallery/>. Outputs stay under
+`external/`.
 
 The curated texts are not dataset rows and carry no dataset label (only an
 optional hand-assigned expected label), so they support
