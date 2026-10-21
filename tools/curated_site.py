@@ -7,15 +7,18 @@ writes a site folder with `index.html` as the front page:
     by_model/                        the beeswarm and waterfall images (the by_example/
                                      copies are left out; no page links to them)
     method.html                      how the plots were made, in plain English and technically
+    dataset.html, dataset/           with --dataset-beeswarms: the word beeswarms over the
+                                     dataset posts each notebook explained (split_beeswarms.py)
     README.md, .nojekyll             what the site is; serve the files without Jekyll
     .curated_site                    marks the folder as this tool's output
 
 Every page gains a robots `noindex` meta, since the pages hold the curated
-texts. Nothing is redrawn: the pages and images are the gallery's own. The
-method page takes every number it states from the run's records (each
-technique's run.json and committed best_config.json, the gallery's
-checks.csv) and from the committed dataset manifest, so it describes the run
-it sits beside.
+texts. Nothing is redrawn: the pages and images are the gallery's own and
+those of `tools/split_beeswarms.py`. The method and dataset pages take every
+number they state from the runs' records (each technique's run.json and
+committed best_config.json, the gallery's checks.csv, the split beeswarms'
+checks.csv) and from the committed dataset manifest, so they describe the
+runs they sit beside.
 
 The site holds the curated texts, so it belongs in its own folder under
 `external/` (untracked here) and is published from there as a separate,
@@ -25,12 +28,14 @@ so the folder can be its own repository.
 The tool refuses, before writing anything: a plots folder without the
 gallery, a gallery older than the explain outputs, techniques explained with
 different explainer settings, a technique without its committed
-best_config.json, a page that links to a file the site would not contain,
-and a destination that holds files this tool did not write.
+best_config.json, a split beeswarm folder without its checks or with a word
+table it did not reproduce, a page that links to a file the site would not
+contain, and a destination that holds files this tool did not write.
 
 Usage:
 
-    python3 tools/curated_site.py --out external/curated_examples_34 --site external/curated_shap_site
+    python3 tools/curated_site.py --out external/curated_examples_34 --site external/curated_shap_site \\
+        --dataset-beeswarms external/split_beeswarms
 """
 
 import argparse
@@ -46,6 +51,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import split_beeswarms as sb  # noqa: E402
 from curated_examples import DEFAULT_OUT, _expected_labels, load_outputs  # noqa: E402
 from curated_plots import (  # noqa: E402
     CHECKS_FILENAME,
@@ -70,6 +76,9 @@ PAGE_FOLDERS = ("examples", "models")
 IMAGE_FOLDER = "by_model"
 METHOD_FILENAME = "method.html"
 METHOD_TITLE = "How these plots were made"
+DATASET_FILENAME = "dataset.html"
+DATASET_TITLE = "Dataset beeswarms"
+DATASET_FOLDER = "dataset"
 VIEWPORT_META = '<meta name="viewport" content="width=device-width, initial-scale=1">'
 ROBOTS_META = '<meta name="robots" content="noindex, nofollow">'
 LINK_PATTERN = re.compile(r'(?:href|src)="([^"]*)"')
@@ -105,15 +114,23 @@ class CuratedSiteError(ValueError):
     """The gallery cannot be turned into a faithful static site."""
 
 
-def adapt_page(page, name):
-    """One gallery page with the robots meta and a link to the method page."""
+def site_nav(prefix="", dataset=False):
+    """The site's menu: overview, the dataset beeswarms when the site has them, the method page."""
+    links = [("index.html", "Overview")]
+    if dataset:
+        links.append((DATASET_FILENAME, DATASET_TITLE))
+    links.append((METHOD_FILENAME, METHOD_TITLE))
+    return "<nav>" + "".join(f'<a href="{prefix}{href}">{text}</a>' for href, text in links) + "</nav>"
+
+
+def adapt_page(page, name, dataset=False):
+    """One gallery page with the robots meta and the site's menu."""
     prefix = "../" * name.count("/")
     nav = f'<nav><a href="{prefix}index.html">Overview</a></nav>'
     if page.count(VIEWPORT_META) != 1 or page.count(nav) != 1:
         raise CuratedSiteError(f"{name}: not a curated_plots.py page (expected one viewport meta and one nav)")
     page = page.replace(VIEWPORT_META, VIEWPORT_META + ROBOTS_META)
-    return page.replace(nav, f'<nav><a href="{prefix}index.html">Overview</a>'
-                             f'<a href="{prefix}{METHOD_FILENAME}">{METHOD_TITLE}</a></nav>')
+    return page.replace(nav, site_nav(prefix, dataset))
 
 
 def check_links(pages, files):
@@ -242,8 +259,12 @@ def _one_of(values, what):
     return f"{what} " + " / ".join(found)
 
 
-def method_page(facts, style):
-    """The method page: plain English, then technical, every number from `facts`."""
+def method_page(facts, style, dataset=None):
+    """The method page: plain English, then technical, every number from `facts`.
+
+    `dataset` is the split beeswarms' checks (load_dataset_beeswarms), when
+    the site carries them.
+    """
     esc = html.escape
     rows = facts["techniques"]
     n_models = len(rows)
@@ -310,6 +331,12 @@ def method_page(facts, style):
         "pushed and coloured by the post's expected label.",
         "<b>This site organises everything:</b> an overview grid, one page per post and one page per model.",
     ]
+    if dataset is not None:
+        plain.append(
+            "<b>The dataset beeswarms do the same for real dataset posts.</b> They use the SHAP values each "
+            "notebook had already computed for its test and tuning posts, and colour each dot by the post's "
+            "real label."
+        )
 
     table_rows = "".join(
         f"<tr><td>{esc(r['technique'])}</td><td>{esc(r['model'])}</td><td>{esc(r['features'])}</td>"
@@ -371,14 +398,23 @@ def method_page(facts, style):
         "within one text are summed; words are ranked by total |SHAP| across the texts, one dot per "
         "(word, text), x = SHAP value, colour = expected label, placed with a swarm layout.",
     ]
+    if dataset is not None:
+        technical.append(
+            "<b>Dataset beeswarms.</b> <code>tools/split_beeswarms.py</code> draws them from the per-post "
+            "attributions each notebook exported for its test and validation runs "
+            f"({esc(_posts_explained(dataset))}). Each per-post file is first re-aggregated with "
+            "<code>notebook_kit.aggregate_word_attributions</code> and must reproduce the committed word "
+            f"table (largest difference {_number(max(r['max_table_diff'] for r in dataset))}); a word's "
+            "occurrences within one post are summed, and the colour is the true label from the committed "
+            "probability artifact."
+        )
 
     items = lambda values: "".join(f"<li>{v}</li>" for v in values)  # noqa: E731
     style = style.replace("</style>", f"{METHOD_STYLE}</style>")
     return (
         f"<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\">{VIEWPORT_META}{ROBOTS_META}"
         f"<title>{METHOD_TITLE}</title>{style}</head><body><main class=\"method\">"
-        f"<nav><a href=\"index.html\">Overview</a><a href=\"{METHOD_FILENAME}\">{METHOD_TITLE}</a></nav>"
-        f"<h1>{METHOD_TITLE}</h1>"
+        f"{site_nav('', dataset is not None)}<h1>{METHOD_TITLE}</h1>"
         '<p class="muted">From data to model to explanation, in plain English and in technical terms.</p>'
         f"<h2>Plain English</h2><ol>{items(plain)}</ol>"
         f"<h2>Technical</h2><ol>{items(technical)}</ol>"
@@ -387,6 +423,82 @@ def method_page(facts, style):
         "detect extremist content, not accounts or radicalisation over time. Source: "
         f'<a href="{PROJECT_URL}">extremism_sentiment_analysis</a>.</p>'
         "</main></body></html>\n"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Dataset beeswarms
+# ---------------------------------------------------------------------------
+def load_dataset_beeswarms(dataset_dir):
+    """The split beeswarms' checks as records, refusing a folder split_beeswarms.py did not finish."""
+    dataset_dir = Path(dataset_dir)
+    path = dataset_dir / sb.CHECKS_FILENAME
+    if not path.is_file():
+        raise CuratedSiteError(
+            f"{dataset_dir}: no {sb.CHECKS_FILENAME}; run `split_beeswarms.py --out {dataset_dir}` first"
+        )
+    checks = pd.read_csv(path)
+    if checks.empty or any(c not in checks.columns for c in sb.CHECK_COLUMNS):
+        raise CuratedSiteError(f"{path}: not a split_beeswarms.py checks file")
+    worst = float(checks["max_table_diff"].max())
+    if worst > sb.DEFAULT_TABLE_TOLERANCE:
+        raise CuratedSiteError(
+            f"{path}: a per-post file did not reproduce its committed word table (max |diff| {worst:.2g})"
+        )
+    return checks.to_dict("records")
+
+
+def _posts_explained(dataset):
+    """'450 posts per split for A, B; 200 for C' from the split beeswarms' checks."""
+    groups = {}
+    for technique in sorted({r["technique"] for r in dataset}):
+        counts = " / ".join(str(n) for n in sorted({int(r["n_posts"]) for r in dataset if r["technique"] == technique}))
+        groups.setdefault(counts, []).append(technique)
+    ordered = sorted(groups.items(), key=lambda item: -int(item[0].split(" / ")[0]))
+    return "; ".join(f"{counts} posts per split for {', '.join(names)}" for counts, names in ordered)
+
+
+def dataset_page(dataset, split_sizes, style):
+    """One section per technique: its test and validation beeswarms side by side."""
+    esc = html.escape
+    techniques = sorted({r["technique"] for r in dataset})
+    by_key = {(r["technique"], r["split"]): r for r in dataset}
+    sampled = sorted({r["technique"] for r in dataset if int(r["n_posts"]) < int(split_sizes.get(r["split"], 0))})
+    sections = []
+    for technique in techniques:
+        figures = []
+        for split in sb.SPLITS:
+            r = by_key.get((technique, split))
+            if r is None:
+                continue
+            image = f"{DATASET_FOLDER}/{technique}/{sb.beeswarm_filename(split)}"
+            figures.append(
+                f"<figure><figcaption><b>{esc(split)}</b>: {int(r['n_posts'])} posts explained, "
+                f"{int(r['n_words'])} distinct words</figcaption>"
+                f'<a href="{image}"><img class="plot" src="{image}" '
+                f'alt="Beeswarm for {esc(technique)} on its {esc(split)} posts" loading="lazy"></a></figure>'
+            )
+        sections.append(f'<h2 id="{esc(technique)}">{esc(technique)}</h2><div class="grid">{"".join(figures)}</div>')
+    sample_note = (
+        f" {', '.join(esc(t) for t in sampled)} explained a sample of each split rather than every post, "
+        "to bound SHAP's cost." if sampled else ""
+    )
+    worst = _number(max(r["max_table_diff"] for r in dataset))
+    links = " &middot; ".join(f'<a href="#{esc(t)}">{esc(t)}</a>' for t in techniques)
+    body = (
+        f"<h1>{DATASET_TITLE}</h1>"
+        '<p class="muted">Word beeswarms over the dataset posts each model\'s notebook explained, with the '
+        "same SHAP explainer as the curated plots: for every model, one plot for its test split and one for "
+        "its validation split. The words are those with the largest total |SHAP| over the explained posts "
+        "(the order SHAP's own beeswarm uses); each dot is one post containing the word, coloured by the "
+        f"post's true label, and (n) is the number of such posts.{sample_note} Every plot's values reproduce "
+        f"the model's committed word table (largest difference {worst}). The plots show words and values "
+        "only, never a post's text.</p>"
+        f"<p>Models: {links}</p>" + "".join(sections)
+    )
+    return (
+        f"<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\">{VIEWPORT_META}{ROBOTS_META}"
+        f"<title>{DATASET_TITLE}</title>{style}</head><body><main>{site_nav('', True)}{body}</main></body></html>\n"
     )
 
 
@@ -411,12 +523,17 @@ def _prepare_destination(site_dir):
 
 
 def run_site(out_dir=DEFAULT_OUT, site_dir=DEFAULT_SITE, results_dir=RESULTS_DIR,
-             manifest_path=DATASET_MANIFEST_JSON, log=print):
-    """Check the gallery and the records, then write the site folder. Returns the site folder."""
+             manifest_path=DATASET_MANIFEST_JSON, dataset_dir=None, log=print):
+    """Check the gallery and the records, then write the site folder. Returns the site folder.
+
+    `dataset_dir`, an output folder of split_beeswarms.py, adds the dataset beeswarm page.
+    """
     out_dir, site_dir = Path(out_dir), Path(site_dir)
     plots_dir = out_dir / PLOTS_DIRNAME
     if not (plots_dir / "index.html").is_file():
         raise CuratedSiteError(f"{plots_dir}: no gallery; run `curated_plots.py --out {out_dir}` first")
+    dataset_root = Path(dataset_dir) if dataset_dir is not None else None
+    dataset = load_dataset_beeswarms(dataset_root) if dataset_root is not None else None
 
     sources = [plots_dir / "index.html"]
     for folder in PAGE_FOLDERS:
@@ -424,19 +541,26 @@ def run_site(out_dir=DEFAULT_OUT, site_dir=DEFAULT_SITE, results_dir=RESULTS_DIR
     pages = {}
     for source in sources:
         name = source.relative_to(plots_dir).as_posix()
-        pages[name] = adapt_page(source.read_text(encoding="utf-8"), name)
+        pages[name] = adapt_page(source.read_text(encoding="utf-8"), name, dataset is not None)
     facts = method_facts(out_dir, results_dir, manifest_path)
     style = STYLE_PATTERN.search((plots_dir / "index.html").read_text(encoding="utf-8"))
     if style is None:
         raise CuratedSiteError(f"{plots_dir / 'index.html'}: no <style> to share with the method page")
-    pages[METHOD_FILENAME] = method_page(facts, style.group(0))
-    images = sorted(p for p in (plots_dir / IMAGE_FOLDER).rglob("*") if p.is_file())
+    pages[METHOD_FILENAME] = method_page(facts, style.group(0), dataset)
+    images = [(p, p.relative_to(plots_dir).as_posix())
+              for p in sorted((plots_dir / IMAGE_FOLDER).rglob("*")) if p.is_file()]
+    if dataset_root is not None and dataset is not None:
+        pages[DATASET_FILENAME] = dataset_page(dataset, facts["splits"], style.group(0))
+        for r in dataset:
+            relative = f"{r['technique']}/{sb.beeswarm_filename(r['split'])}"
+            if (dataset_root / relative).is_file():
+                images.append((dataset_root / relative, f"{DATASET_FOLDER}/{relative}"))
     extras = {
         "README.md": readme(len(facts["example_ids"]), len(facts["techniques"])),
         ".nojekyll": "",
         MARKER_FILENAME: MARKER_TEXT,
     }
-    files = set(pages) | set(extras) | {p.relative_to(plots_dir).as_posix() for p in images}
+    files = set(pages) | set(extras) | {name for _, name in images}
     check_links(pages, files)
 
     _prepare_destination(site_dir)
@@ -444,10 +568,10 @@ def run_site(out_dir=DEFAULT_OUT, site_dir=DEFAULT_SITE, results_dir=RESULTS_DIR
         target = site_dir / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text, encoding="utf-8")
-    for image in images:
-        target = site_dir / image.relative_to(plots_dir)
+    for source, name in images:
+        target = site_dir / name
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(image, target)
+        shutil.copyfile(source, target)
     log(f"wrote {len(pages)} pages and {len(images)} images to {site_dir}")
     return site_dir
 
@@ -458,9 +582,11 @@ def main(argv=None):
     parser.add_argument("--site", default=str(DEFAULT_SITE), help="the site folder to (re)write")
     parser.add_argument("--results-dir", default=str(RESULTS_DIR),
                         help="committed result folders holding each technique's best_config.json")
+    parser.add_argument("--dataset-beeswarms", default=None,
+                        help="an output folder of split_beeswarms.py; adds the dataset beeswarm page")
     args = parser.parse_args(argv)
     try:
-        run_site(args.out, args.site, args.results_dir)
+        run_site(args.out, args.site, args.results_dir, dataset_dir=args.dataset_beeswarms)
     except CuratedSiteError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
