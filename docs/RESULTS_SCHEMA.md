@@ -320,6 +320,17 @@ manifest. The site holds the curated texts: nothing from it is committed
 here, and publishing it is a separate step. The current site is served at
 <https://73anthonyl.github.io/curated-shap-gallery/>.
 
+`tools/split_beeswarms.py` draws a word beeswarm per technique and split
+from the per-post attributions under `external/<TECHNIQUE>/attributions_local/`
+(test and validation; all posts for 01 to 06, the notebooks' sample for 07
+and 11), coloured by the true label. It first rebuilds each committed word
+table in `results_summary/<TECHNIQUE>/attributions/` from its per-post file
+with `notebook_kit.aggregate_word_attributions` and refuses a file that does
+not reproduce it. Its outputs (`external/split_beeswarms/`: PNGs and a
+`checks.csv` of technique, split, n_posts, n_words, max_table_diff) hold
+words and values only; `curated_site.py --dataset-beeswarms` adds them to
+the site as `dataset.html`.
+
 The curated texts are illustration for RQ2-RQ4. They are not dataset rows,
 carry no dataset label (only an optional hand-assigned expected label), and
 produce no committed artifact; nothing in the paper's tables derives from

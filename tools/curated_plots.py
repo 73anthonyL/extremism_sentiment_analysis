@@ -272,8 +272,14 @@ def _swarm_offsets(values, n_bins=100, row_height=0.8, global_range=None):
     return offsets * 0.9 * (row_height / 2) / peak
 
 
-def draw_beeswarm(path, contributions, technique, labels, n_texts, n_words=DEFAULT_TOP_WORDS):
-    """One dot per (word, text containing it) for the technique's top words."""
+def draw_beeswarm(path, contributions, technique, labels, n_texts, n_words=DEFAULT_TOP_WORDS,
+                  collection="curated texts", unit="text", label_prefix="expected", dot_size=26):
+    """One dot per (word, text containing it) for the technique's top words.
+
+    `collection`, `unit` and `label_prefix` word the title and legend, so the
+    same drawing serves texts with an expected label and dataset posts with a
+    true one; `dot_size` keeps hundreds of dots per row legible.
+    """
     plt = _pyplot()
     words = top_words(contributions, technique, n_words)
     block = contributions[(contributions["technique"] == technique) & (contributions["word"].isin(words))]
@@ -288,7 +294,7 @@ def draw_beeswarm(path, contributions, technique, labels, n_texts, n_words=DEFAU
             offsets = _swarm_offsets(points["attribution"].to_numpy(), global_range=span)
             ax.axhline(y, color="#dddddd", linewidth=0.6, zorder=0)
             colours = [LABEL_COLOURS.get(labels.get(e), "#888888") for e in points["example_id"]]
-            ax.scatter(points["attribution"], y + offsets, c=colours, s=26, linewidths=0, zorder=2)
+            ax.scatter(points["attribution"], y + offsets, c=colours, s=dot_size, linewidths=0, zorder=2)
         ax.set_yticks(range(len(words)))
         support = block.groupby("word")["example_id"].nunique()
         ax.set_yticklabels([f"{w}  ({support[w]})" for w in reversed(words)])
@@ -296,15 +302,15 @@ def draw_beeswarm(path, contributions, technique, labels, n_texts, n_words=DEFAU
         ax.set_ylim(-0.7, len(words) - 0.3)
     for name, colour in ((POSITIVE_CLASS_NAME, LABEL_COLOURS[POSITIVE_CLASS_NAME]),
                          (NEGATIVE_CLASS_NAME, LABEL_COLOURS[NEGATIVE_CLASS_NAME])):
-        ax.scatter([], [], c=colour, s=26, label=f"expected {LABEL_NAMES[name]}")
+        ax.scatter([], [], c=colour, s=26, label=f"{label_prefix} {LABEL_NAMES[name]}")
     ax.legend(loc="lower right", frameon=False, fontsize=9)
     ax.set_xlabel("SHAP value (change in P(extremist))")
     for side in ("top", "right", "left"):
         ax.spines[side].set_visible(False)
     ax.tick_params(axis="y", length=0)
     ax.set_title(
-        f"{technique}: top {len(words)} words by total |SHAP| over {n_texts} curated texts\n"
-        "one dot per text containing the word; (n) = number of such texts",
+        f"{technique}: top {len(words)} words by total |SHAP| over {n_texts} {collection}\n"
+        f"one dot per {unit} containing the word; (n) = number of such {unit}s",
         fontsize=10, loc="left",
     )
     path.parent.mkdir(parents=True, exist_ok=True)
