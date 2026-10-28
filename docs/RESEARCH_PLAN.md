@@ -180,6 +180,18 @@ Other facts that shape the order of work:
   test posts are wrong for all eight techniques, eleven of them extremist
   posts; shared errors are mostly false negatives, while false positives
   are mostly made by one or two techniques.
+* **Cross-technique word agreement exists** (2026-10-28).
+  `tools/word_agreement.py` compares the committed whole-model test tables
+  word by word, with no lexicon. Three words are in every technique's
+  top-50 by positive attribution (a racial slur, kill, genocide), and 73 of
+  the 168 words in any top-50 belong to one technique only. The word
+  TF-IDF models agree with each other (Spearman 0.90, top-50 Jaccard 0.67)
+  and the two transformers with each other (0.76, 0.54); across families
+  agreement is 0.2 to 0.3. About half of the transformers' top-50 words
+  occur in a single explained post, against a quarter to two fifths for
+  the classical models, on 200 versus 450 posts; a same-post comparison
+  from the external per-post files is the next step before that
+  difference is claimed.
 * **Every technique has its attribution runs.** Two whole-model SHAP runs
   per technique (test and validation samples), and one test run per
   admitted member of 11 (`A_anchor`, `B_dynabench`, `C_hatebert`,
