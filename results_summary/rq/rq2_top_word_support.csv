@@ -1,0 +1,9 @@
+technique,member,run_id,split,top_k,n_words,n_posts_explained,median_support_top_k_positive,share_single_post_top_k_positive,share_single_post_vocabulary
+01_LOG-REG_TF-IDF,whole,shap-partition_test_seed30,test,50,2334,450,3.5,0.22,0.646101
+02_LIN-SVM_TF-IDF,whole,shap-partition_test_seed30,test,50,2334,450,3,0.26,0.646101
+03_SLP_TF-IDF,whole,shap-partition_test_seed30,test,50,2334,450,2.5,0.36,0.646101
+04_CHAR-TF-IDF_LIN-SVM,whole,shap-partition_test_seed30,test,50,2334,450,2,0.4,0.646101
+05_WORD-CHAR-TF-IDF_LIN-SVM,whole,shap-partition_test_seed30,test,50,2334,450,3,0.24,0.646101
+06_FASTTEXT-EMB_LOG-REG,whole,shap-partition_test_seed30,test,50,2334,450,3.5,0.3,0.646101
+07_TWITTER-ROBERTA_FINE-TUNE,whole,shap-partition_test_seed30,test,50,1416,200,1,0.56,0.689972
+11_MULTI-CHECKPOINT_LOGIT-POOL,whole,shap-partition_test_seed30,test,50,1416,200,1,0.52,0.689972

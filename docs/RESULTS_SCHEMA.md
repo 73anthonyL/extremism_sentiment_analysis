@@ -106,6 +106,16 @@ recovers the coefficients before any cross-model claim is made.
 Cross-technique tables live in `results_summary/rq/`, one per research
 question, and are the inputs to the rendered documentation tables.
 
+| File | Written by | Contents |
+|---|---|---|
+| `rq/rq1_mcnemar_pairs.csv` | `mcnemar_pairs.py` | One row per technique pair on the test split: both-correct, both-wrong and discordant counts, exact McNemar p, Holm-adjusted p, error-set Jaccard. |
+| `rq/rq1_error_overlap.csv` | `mcnemar_pairs.py` | Per technique: errors, false positives, false negatives, errors no other technique makes. |
+| `rq/rq1_shared_errors.csv` | `mcnemar_pairs.py` | Posts wrong for exactly k techniques, by true label. Counts only; the row-keyed matrix stays under `external/`. |
+| `rq/rq2_category_shares.csv` | `categorize_attributions.py` | Share of top-K words and attribution mass per lexicon category, per run. |
+| `rq/rq2_word_agreement_pairs.csv`, `rq/rq2_shared_top_words.csv`, `rq/rq2_top_word_support.csv` | `word_agreement.py` | Lexicon-free comparison of the whole-model word tables across techniques: pairwise Spearman and top-K Jaccard, words in several techniques' top-K, and the share of top-K words seen in a single explained post. |
+| `rq/rq3_reliance_comparison.csv`, `rq/rq3_stability.csv` | `compare_reliance.py` | Wide per-run shares with member means; across-run stability per technique. |
+| `rq/rq4_identity_fpr.csv` | `identity_fpr.py` | False-positive rate on non-extremist posts with vs without identity terms, per technique. |
+
 ### Provenance fields
 
 `best_config.json`, `metrics_validation.json` and `metrics_test.json` say how

@@ -172,6 +172,26 @@ lexicons are frozen (WP3) and the categorisation tools are run (WP5).
 
 Other facts that shape the order of work:
 
+* **The RQ1 significance table exists** (2026-10-28). `tools/mcnemar_pairs.py`
+  reads the eight test artifacts and locked thresholds. Seven of 28 pairs
+  clear Holm-corrected significance: the ensemble (11) against every
+  classical technique, and 07 against 04. No classical-versus-classical
+  gap clears it, and neither does 07 versus 11 (9 rows). Twelve of the 450
+  test posts are wrong for all eight techniques, eleven of them extremist
+  posts; shared errors are mostly false negatives, while false positives
+  are mostly made by one or two techniques.
+* **Cross-technique word agreement exists** (2026-10-28).
+  `tools/word_agreement.py` compares the committed whole-model test tables
+  word by word, with no lexicon. Three words are in every technique's
+  top-50 by positive attribution (a racial slur, kill, genocide), and 73 of
+  the 168 words in any top-50 belong to one technique only. The word
+  TF-IDF models agree with each other (Spearman 0.90, top-50 Jaccard 0.67)
+  and the two transformers with each other (0.76, 0.54); across families
+  agreement is 0.2 to 0.3. About half of the transformers' top-50 words
+  occur in a single explained post, against a quarter to two fifths for
+  the classical models, on 200 versus 450 posts; a same-post comparison
+  from the external per-post files is the next step before that
+  difference is claimed.
 * **Every technique has its attribution runs.** Two whole-model SHAP runs
   per technique (test and validation samples), and one test run per
   admitted member of 11 (`A_anchor`, `B_dynabench`, `C_hatebert`,
@@ -368,10 +388,11 @@ python3 tools/render_tables.py --write
 Then compute the two things the tools do not yet produce, and add them as
 tools with adversarial tests:
 
-* `tools/mcnemar_pairs.py`: pairwise McNemar exact test over discordant
-  pairs for every technique pair, from the test probability artifacts and
-  locked thresholds, with Holm correction over the family. This is the RQ1
-  significance table.
+* `tools/mcnemar_pairs.py` (done 2026-10-28): pairwise McNemar exact test
+  over discordant pairs for every technique pair, from the test probability
+  artifacts and locked thresholds, with Holm correction over the family.
+  This is the RQ1 significance table. It also writes the error-overlap
+  tables (`rq1_error_overlap.csv`, `rq1_shared_errors.csv`).
 * `tools/rq2_rq4_relation.py`: the rank correlation between each technique's
   RQ2 identity-term share and its RQ4 FPR ratio, from the two `rq/` tables.
 
