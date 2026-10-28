@@ -39,6 +39,9 @@ DATASET_MANIFEST_JSON = FOUNDATION_DIR / "dataset_manifest.json"
 
 # Cross-technique tables, one file per research question.
 RQ_DIR = RESULTS_DIR / "rq"
+RQ1_MCNEMAR_PAIRS_CSV = RQ_DIR / "rq1_mcnemar_pairs.csv"
+RQ1_ERROR_OVERLAP_CSV = RQ_DIR / "rq1_error_overlap.csv"
+RQ1_SHARED_ERRORS_CSV = RQ_DIR / "rq1_shared_errors.csv"
 RQ2_CATEGORY_SHARES_CSV = RQ_DIR / "rq2_category_shares.csv"
 RQ3_RELIANCE_CSV = RQ_DIR / "rq3_reliance_comparison.csv"
 RQ3_STABILITY_CSV = RQ_DIR / "rq3_stability.csv"
