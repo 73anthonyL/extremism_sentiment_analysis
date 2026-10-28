@@ -1,0 +1,10 @@
+split,n_techniques,n_techniques_wrong,n_posts,n_negative_posts,n_positive_posts,share_of_posts
+test,8,0,308,220,88,0.684444
+test,8,1,41,24,17,0.0911111
+test,8,2,25,16,9,0.0555556
+test,8,3,12,2,10,0.0266667
+test,8,4,12,7,5,0.0266667
+test,8,5,11,4,7,0.0244444
+test,8,6,19,5,14,0.0422222
+test,8,7,10,1,9,0.0222222
+test,8,8,12,1,11,0.0266667
