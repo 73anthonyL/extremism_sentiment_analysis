@@ -1,0 +1,196 @@
+{
+  "device": null,
+  "holm_adjusted_p": "see rq4_identity_counterfactual.csv (family: every row of that table)",
+  "n_identity_terms_in_lexicon": 96,
+  "n_population": 150,
+  "n_population_by_label": {
+    "extremist": 83,
+    "non_extremist": 67
+  },
+  "operations": [
+    "remove",
+    "substitute"
+  ],
+  "p_original_source": "committed probability artifact",
+  "primary_operation": "remove",
+  "rows": [
+    {
+      "fp_share_cleared": 0.2,
+      "mcnemar_exact_p": 1.0,
+      "mean_delta": 0.02642,
+      "mean_p_counterfactual": 0.283899,
+      "mean_p_original": 0.310319,
+      "median_delta": 0.0103635,
+      "n_flagged_counterfactual": 4,
+      "n_flagged_original": 5,
+      "n_flip_neg_to_pos": 0,
+      "n_flip_pos_to_neg": 1,
+      "n_posts": 67,
+      "operation": "remove",
+      "population": "non_extremist",
+      "share_delta_positive": 0.716418,
+      "split": "test",
+      "technique": "05_WORD-CHAR-TF-IDF_LIN-SVM",
+      "threshold": 0.56,
+      "verification_max_abs_diff": 6.54531e-09,
+      "wilcoxon_p": 2.04233e-05,
+      "y_true": 0
+    },
+    {
+      "fp_share_cleared": 0.6,
+      "mcnemar_exact_p": 0.25,
+      "mean_delta": 0.0290904,
+      "mean_p_counterfactual": 0.281229,
+      "mean_p_original": 0.310319,
+      "median_delta": 0.0128259,
+      "n_flagged_counterfactual": 2,
+      "n_flagged_original": 5,
+      "n_flip_neg_to_pos": 0,
+      "n_flip_pos_to_neg": 3,
+      "n_posts": 67,
+      "operation": "substitute",
+      "population": "non_extremist",
+      "share_delta_positive": 0.641791,
+      "split": "test",
+      "technique": "05_WORD-CHAR-TF-IDF_LIN-SVM",
+      "threshold": 0.56,
+      "verification_max_abs_diff": 6.54531e-09,
+      "wilcoxon_p": 0.000196869,
+      "y_true": 0
+    },
+    {
+      "fp_share_cleared": null,
+      "mcnemar_exact_p": 0.0703125,
+      "mean_delta": 0.0508864,
+      "mean_p_counterfactual": 0.564681,
+      "mean_p_original": 0.615567,
+      "median_delta": 0.0402452,
+      "n_flagged_counterfactual": 47,
+      "n_flagged_original": 53,
+      "n_flip_neg_to_pos": 1,
+      "n_flip_pos_to_neg": 7,
+      "n_posts": 83,
+      "operation": "remove",
+      "population": "extremist",
+      "share_delta_positive": 0.891566,
+      "split": "test",
+      "technique": "05_WORD-CHAR-TF-IDF_LIN-SVM",
+      "threshold": 0.56,
+      "verification_max_abs_diff": 6.54531e-09,
+      "wilcoxon_p": 3.39219e-13,
+      "y_true": 1
+    },
+    {
+      "fp_share_cleared": null,
+      "mcnemar_exact_p": 0.000976562,
+      "mean_delta": 0.0742495,
+      "mean_p_counterfactual": 0.541318,
+      "mean_p_original": 0.615567,
+      "median_delta": 0.0563004,
+      "n_flagged_counterfactual": 42,
+      "n_flagged_original": 53,
+      "n_flip_neg_to_pos": 0,
+      "n_flip_pos_to_neg": 11,
+      "n_posts": 83,
+      "operation": "substitute",
+      "population": "extremist",
+      "share_delta_positive": 1.0,
+      "split": "test",
+      "technique": "05_WORD-CHAR-TF-IDF_LIN-SVM",
+      "threshold": 0.56,
+      "verification_max_abs_diff": 6.54531e-09,
+      "wilcoxon_p": 2.50344e-15,
+      "y_true": 1
+    }
+  ],
+  "split": "test",
+  "substitute_aggregation": "mean probability over the substitute words",
+  "substitute_per_word": [
+    {
+      "mean_delta": 0.0235474,
+      "median_delta": 0.00548433,
+      "n_flagged_counterfactual": 3,
+      "population": "non_extremist",
+      "word": "group"
+    },
+    {
+      "mean_delta": 0.0425853,
+      "median_delta": 0.0266951,
+      "n_flagged_counterfactual": 2,
+      "population": "non_extremist",
+      "word": "population"
+    },
+    {
+      "mean_delta": 0.0211386,
+      "median_delta": 0.00357026,
+      "n_flagged_counterfactual": 2,
+      "population": "non_extremist",
+      "word": "humans"
+    },
+    {
+      "mean_delta": 0.0626632,
+      "median_delta": 0.0458376,
+      "n_flagged_counterfactual": 45,
+      "population": "extremist",
+      "word": "group"
+    },
+    {
+      "mean_delta": 0.0974218,
+      "median_delta": 0.0772626,
+      "n_flagged_counterfactual": 37,
+      "population": "extremist",
+      "word": "population"
+    },
+    {
+      "mean_delta": 0.0626634,
+      "median_delta": 0.0472777,
+      "n_flagged_counterfactual": 46,
+      "population": "extremist",
+      "word": "humans"
+    }
+  ],
+  "substitute_profile": {
+    "max_abs_coef": 0.5,
+    "max_share_gap": 0.1,
+    "n_lr_coefficients": 4692,
+    "reference_technique": "01_LOG-REG_TF-IDF",
+    "train_base_rate": 0.37637,
+    "words": {
+      "group": {
+        "lr_coefficient": 0.172832,
+        "lr_coefficient_rank_desc": 1510,
+        "train_extremist_share": 0.4,
+        "train_n_extremist": 4,
+        "train_n_posts": 10
+      },
+      "humans": {
+        "lr_coefficient": -0.491425,
+        "lr_coefficient_rank_desc": 4225,
+        "train_extremist_share": 0.4,
+        "train_n_extremist": 2,
+        "train_n_posts": 5
+      },
+      "population": {
+        "lr_coefficient": -0.184668,
+        "lr_coefficient_rank_desc": 3001,
+        "train_extremist_share": 0.428571,
+        "train_n_extremist": 3,
+        "train_n_posts": 7
+      }
+    }
+  },
+  "substitute_words": [
+    "group",
+    "population",
+    "humans"
+  ],
+  "technique": "05_WORD-CHAR-TF-IDF_LIN-SVM",
+  "threshold": 0.56,
+  "verification": {
+    "max_abs_diff": 6.54531e-09,
+    "mean_abs_diff": 6.37147e-11,
+    "n_rows": 150,
+    "passed": true,
+    "tolerance": 0.01
+  }
+}
