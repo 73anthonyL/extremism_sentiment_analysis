@@ -96,8 +96,11 @@ Each item cites the artifact that shows it.
    fits the post-level, text-only limitation.
 3. **Identity terms are a shortcut.** Every technique has a higher FPR on
    benign posts that mention a community (`rq4_identity_fpr.csv`, ratios 1.9
-   to 4.2). The counterfactual test (WP7) shows how much of that is caused by
-   the term itself.
+   to 4.2). In the counterfactual test (WP7), removing the term lowers
+   p(extremist) on those posts for 7 of 8 techniques. The same edit also
+   unflags extremist posts (Holm-significant for 07 and 11), so the models
+   treat identity terms as evidence of extremism whatever the label. The
+   false-positive flips (5 to 11 posts per model) are descriptive.
 4. **Transformer explanations are unstable across post samples.** Test and
    validation top-50 overlap is 0.18 to 0.22 for the transformers, against
    0.3 to 0.6 for the classical models (`rq3_stability.csv`). Per-word claims
@@ -117,11 +120,15 @@ probing and LLM self-explanation (WP9, WP10) for context (6).
 ## 5. New work packages
 
 * **WP7. Identity counterfactual test (local).** For every test post that
-  contains an identity term, remove the term or replace it with a neutral
-  word. Re-score the post with each technique's restored predictor and
+  contains an identity term, remove the term (primary) or replace it with a
+  label-balanced, near-zero-coefficient control panel (sensitivity). Re-score the post with each technique's restored predictor and
   report the probability shift, the number of predictions that flip at the
   locked threshold, and paired tests. This turns RQ4's correlation into an
-  intervention. Tool: `tools/identity_counterfactual.py`.
+  intervention. Tool: `tools/identity_counterfactual.py`. Closed
+  2026-11-04: on the 67 non-extremist test posts with identity terms,
+  removal lowers p(extremist) for 7 of 8 techniques and also unflags 15 of
+  71 (07) and 22 of 74 (11) flagged extremist posts (Holm p = 0.016 and
+  1.5e-5); details in `RESEARCH_PLAN.md`, WP7.
 * **WP8. Framework entry point and report card (local).**
 * **WP9. Layer-wise probes on the transformer members (Kaggle GPU).**
 * **WP10. Zero-shot LLM comparison with self-explanation (author decision on

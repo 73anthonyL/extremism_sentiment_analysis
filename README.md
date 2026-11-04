@@ -98,6 +98,7 @@ extremism_sentiment_analysis/
 │   ├── categorize_attributions.py  # RQ2: slur / framing / identity / topical shares
 │   ├── compare_reliance.py       # RQ3: pretraining and ensembling vs reliance; stability
 │   ├── identity_fpr.py           # RQ4: false positives on posts with identity terms
+│   ├── identity_counterfactual.py  # RQ4: re-scores those posts with the identity terms removed
 │   ├── run_manifest.py           # reconciles committed files with external assets
 │   ├── validate_results_folder.py
 │   ├── render_tables.py          # regenerates every doc results table
@@ -173,6 +174,7 @@ python3 tools/validate_shap.py --technique 01_LOG-REG_TF-IDF   # pipeline check 
 python3 tools/categorize_attributions.py --all                  # RQ2
 python3 tools/compare_reliance.py                               # RQ3
 python3 tools/identity_fpr.py --all                              # RQ4
+python3 tools/identity_counterfactual.py --all                   # RQ4 counterfactual (needs external weights)
 ```
 
 Notebooks are committed with their cell outputs on purpose, so a reader can
