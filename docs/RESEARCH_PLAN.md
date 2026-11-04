@@ -8,7 +8,10 @@ closes or a decision changes; do not let it drift from `README.md`.
 
 `README.md` summarises the project, `docs/RESULTS_SCHEMA.md` defines every
 committed artifact, and `notebooks/README.md` holds the notebook conventions.
-This document does not repeat them.
+`docs/POSITIONING.md` (2026-11-04) frames the paper as three contributions: an
+auditing framework, explanation-derived findings about detection, and a
+section on why the task is hard. It also adds WP7 to WP10. This document does
+not repeat them.
 
 ## 1. Thesis and contribution
 
@@ -497,7 +500,9 @@ Not part of this paper, and not to be started on this branch of work:
 * Account-level, temporal, network, or multimodal signals.
 * Multi-class ideology labels or a new dataset. External validation is a
   limitation, not a work package.
-* Deployment, moderation tooling, or any per-user decision.
+* Deployment, moderation tooling, or any per-user decision. The auditing
+  framework in `docs/POSITIONING.md` is a research toolkit for evaluating
+  classifiers, not moderation tooling.
 * Re-running the champion-promotion loop. `legacy_tools/` is reference only.
 
 ## 7. Open decisions for the authors
