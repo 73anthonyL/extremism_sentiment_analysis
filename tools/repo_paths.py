@@ -55,6 +55,9 @@ RQ4_IDENTITY_FPR_CSV = RQ_DIR / "rq4_identity_fpr.csv"
 RQ4_IDENTITY_COUNTERFACTUAL_CSV = RQ_DIR / "rq4_identity_counterfactual.csv"
 # Deletion faithfulness of the per-post SHAP attributions (tools/faithfulness.py).
 RQ2_FAITHFULNESS_CSV = RQ_DIR / "rq2_faithfulness.csv"
+# The same test on the validation split's whole-model run: a sibling table, so the
+# test table, its readers and its Holm families are unchanged.
+RQ2_FAITHFULNESS_VALIDATION_CSV = RQ_DIR / "rq2_faithfulness_validation.csv"
 # Same-post re-aggregation of the per-post attribution files (same_post_stability.py).
 RQ2_SAME_POST_SUPPORT_CSV = RQ_DIR / "rq2_same_post_support.csv"
 RQ3_SAME_POST_SPLIT_AGREEMENT_CSV = RQ_DIR / "rq3_same_post_split_agreement.csv"

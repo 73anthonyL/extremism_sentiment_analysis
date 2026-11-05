@@ -14,6 +14,21 @@ Remaining author actions: run notebook 12, the WP9 probe notebook and the
 WP10 open-weight LLM notebook on Kaggle; upload external assets before
 submission.
 
+## 2026-11-05 — Faithfulness replicates on the validation split
+
+Branch `research/faithfulness-validation`, merged into `research/integration`.
+`tools/faithfulness.py --split validation` runs the deletion test on each
+technique's validation whole-model SHAP run, verified against the committed
+validation probabilities (max diff 0.0058, for 07); results in a separate
+table, `rq2_faithfulness_validation.csv`, with its own Holm family, so the
+test table and every claim are untouched. All 32 shared rows beat random
+(Holm p <= 2.6e-25), and 07/11 again concentrate the effect in flagged
+posts. Review: the tool change mirrors the already-reviewed test path and
+adds 12 refusal tests; I recomputed Holm (max relative diff 4e-6) and
+confirmed the test outputs byte-identical.
+
+Checks: all pass (540 tests); check_claims OK; audit report byte-identical.
+
 ## 2026-11-04 — Author decisions recorded; PR #22 merged; integration pushed
 
 The authors settled all twelve decisions (interview, 2026-11-04). Recorded
