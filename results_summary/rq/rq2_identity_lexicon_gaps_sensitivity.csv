@@ -13,7 +13,6 @@ technique,run_id,top_k,rank,word,rule,related_entry,related_entry_ambiguous,othe
 05_WORD-CHAR-TF-IDF_LIN-SVM,shap-partition_test_seed30,50,48,stopwhitegenocide,compound,white,True,,0.0874489,1,True
 06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,50,2,whites,inflection,white,True,,0.270162,2,True
 06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,50,14,refugeesnotwelcome,compound,refugees,False,,0.13534,1,True
-06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,50,25,aliens,group_noun,,False,,0.109194,3,False
 06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,50,27,blacks,inflection,black,True,,0.107022,1,True
 06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,50,44,stopwhitegenocide,compound,white,True,,0.0895004,1,True
 07_TWITTER-ROBERTA_FINE-TUNE,shap-partition_test_seed30,50,3,refugeesnotwelcome,compound,refugees,False,,0.607725,1,True
