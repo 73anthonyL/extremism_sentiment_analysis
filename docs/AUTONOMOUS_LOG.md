@@ -23,6 +23,38 @@ dataset text to an external API is listed under "Blocked" and not attempted.
   becomes the SHAP pass rule; dropping `--primed` from the CLAUDE.md
   pre-commit list now that notebooks carry outputs.
 
+## 2026-11-04 — WP7b: preregistered within-category identity swap
+
+Branch `research/identity-swap`, merged into `research/integration`. The
+swap map (`data/lexicons/identity_swap_pairs.csv`) and analysis plan
+(`docs/preregistrations/WP7b_identity_swap.md`) were committed before the
+tool existed; the map's sha256 is recorded in every result JSON and did not
+change afterwards. `tools/identity_swap.py` replaces each identity term with
+three same-category, same-form groups (68 test posts) and compares with
+remove and substitute on the same spans, all eight techniques, Holm over 48
+rows.
+
+Descriptive results under the preregistered rule (interpretation pending
+author review): on extremist posts 07 and 11 respond to a group being named
+rather than which group (swap delta 0.006 / 0.004 against removal
+0.069 / 0.149); for 11 a neutral noun does not restore p, so an identity
+term being present matters. On the 23 non-extremist posts swapping raises
+11's p (Holm 0.022; 07 not significant), concentrated in three source
+terms and not explained by the targets' training-label skew. Classical
+models move as much under swap as under removal in absolute terms but in
+both directions, tracking the LR coefficient change; 06 meets the
+group-specific rule on extremist posts.
+
+Adversarial review confirmed preregistration integrity, Holm and signs, and
+corrected three over-readings in the first summary; it also found six
+untested map guards and a latent framing-overlap issue (no post affected).
+All fixed, mutation-tested.
+
+Checks: all five pass (523 tests); check_claims OK.
+
+Next: a single "decisions needed" brief so the author can unblock WP3,
+section 5, notebook 12 and the WP7/WP7b interpretation in one sitting.
+
 ## 2026-11-04 — Paper Results draft with a bound claims table
 
 Branch `paper/results-draft`, merged into `research/integration`.
