@@ -224,9 +224,12 @@ Other facts that shape the order of work:
   (smallest 0.33), and they are descriptive, not a ranking. On the 83
   extremist posts the same edit unflags 15 of 71 flagged posts for 07 and
   22 of 74 for 11 (Holm-adjusted McNemar p = 0.016 and 1.5e-5); no
-  classical drop survives Holm. Identity terms therefore count as evidence
-  of extremism whatever the label, and removing them trades false positives
-  for recall. Substitution with a control panel is a sensitivity check; the
+  classical drop survives Holm. Removal therefore trades false positives for
+  recall. Substitution with a control panel is the stricter control: there
+  the recall loss is Holm-significant for 01, 04, 05 and 06 and not for 07
+  or 11, so the classical models weight the identity term itself as
+  evidence of extremism, while the transformers' removal effect may partly
+  reflect deleting a noun rather than the term specifically. The
   per-model counts, the panel and the limits are under WP7. On the 59
   extremist posts that keep an unambiguous identity match, only the 11 drop
   stays Holm-significant (see the sensitivity bullet below).
@@ -270,7 +273,7 @@ Other facts that shape the order of work:
   freezes the lexicons). `tools/rq2_rq4_relation.py` ranks the eight
   techniques by test identity-term share of positive mass and by RQ4 FPR
   ratio: Spearman 0.83 (exact permutation p = 0.017; |rho| >= 0.73 is needed
-  for p <= 0.05; leave-one-out 0.74 to 0.96). Under section 5 this is
+  for p <= 0.05; leave-one-out 0.74 to 0.95). Under section 5 this is
   descriptive at n = 8. It does not show that identity reliance goes with
   identity-term false positives. Identity share against FPR on identity-term
   negatives is -0.22, and the ratio ordering follows low FPR on the other
@@ -622,8 +625,10 @@ rows, as section 5 requires.
   (15 lost, 1 gained, Holm p = 0.016) and the 11 drop (22 lost, 0 gained,
   Holm p = 1.5e-5) survive Holm. This matches RQ4: recall for 07 and 11 is
   0.855 and 0.892 on extremist posts with identity terms, against 0.839 and
-  0.793 without. The models treat identity terms as evidence of extremism
-  whatever the label. The term is not only a source of errors. Every
+  0.793 without. Under removal the transformers respond as if the term were
+  evidence of extremism whatever the label; the substitution check below
+  does not reproduce that for them, so the effect may partly come from
+  deleting a noun. The term is not only a source of errors. Every
   false-positive reduction above is reported next to this cost.
 
 *Substitute (sensitivity check).* Every match is replaced by each word of a
