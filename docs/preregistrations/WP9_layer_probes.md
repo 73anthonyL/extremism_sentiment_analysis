@@ -202,3 +202,49 @@ adaptation of a token-level method to posts. With 450 test posts the
 intervals are wide. Labels are post-level and features text-only: this
 describes representations of posts, not accounts or radicalisation over
 time.
+
+## Amendment log
+
+Every entry is dated and was written before the first Kaggle run. None
+changes the models, the representation, the targets, the probe, the metrics,
+the contrasts, the ablation or the reading rules.
+
+**2026-11-05 (after review, before any run).**
+
+1. *Identical inputs for the bases, enforced.* A base is tokenized with the
+   tokenizer its paired fine-tuned run saved, and the notebook stops unless
+   the Hub tokenizer gives the same input ids on the first 64 train posts.
+   This makes "the same inputs the model is served with" hold exactly.
+2. *One revision per base.* Every base checkpoint is downloaded once, before
+   any model runs, and that snapshot is used throughout; its commit is the
+   recorded Hub commit.
+3. *Precision from the committed record.* The inference precision of 11's
+   runs is read from 11's committed `best_config.json` (`runs`), not from
+   `training_logs/run_summary.csv`, which is no longer an input.
+4. *AUC ranked on the probe's log-odds.* Probabilities that saturate to 0 or
+   1 in float64 would otherwise tie; ranking the logits gives the AUC of the
+   same probe without those ties. The probe table gains `n_saturated`, the
+   number of posts whose probability lies within 1e-12 of 0 or 1. Accuracy
+   is unchanged (p >= 0.5).
+5. *Fail fast and recover.* The reproduction checks run as soon as each
+   model (07) or the whole pool (11) has been extracted, on validation and on
+   test. Fitted probes, rows and per-post probe scores are checkpointed under
+   `external/13_TRANSFORMER-LAYER-PROBES/probe_checkpoints/` after the probe
+   fit and before the export; they are per-post, inventoried as text-bearing,
+   and if kept are recorded with `run_manifest.py add-asset --contains-text`.
+6. *Version-proof probe fit.* The chosen C is read from `C_` and must equal
+   the cross-validation argmax; both shapes of `scores_` are handled; the
+   penalty is left at the default (L2), and a one-second self-check on random
+   data confirms the refit equals a plain L2 logistic regression. Fit
+   warnings are counted in the run record rather than printed, and the CV
+   folds run in threads so the counts are complete.
+7. *Limitations added.*
+   * The ablation sets h . u to zero rather than to its mean over posts,
+     which can move the edited states off the distribution the head was
+     trained on; the random directions, removed the same way, are the
+     reference for that.
+   * The direction is the identity probe's weights divided by the scaler's
+     standard deviations (its normal in the raw hidden space), learned on
+     mean-pooled states and applied to every token.
+   * The 95th percentile of 10 random directions is a coarse reference; a
+     margin over it close to zero is read as no margin.
