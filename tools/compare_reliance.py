@@ -19,12 +19,12 @@ rq3_stability.csv
     word sets. Reliance claims should only be made where these are stable.
 
 With --techniques, also prints the pairwise differences in positive-mass share
-between the named techniques (e.g. RoBERTa vs HateBERT vs Twitter-RoBERTa).
+between the named techniques (e.g. Twitter-RoBERTa vs plain roberta-base).
 
 USAGE
 -----
     python3 tools/compare_reliance.py
-    python3 tools/compare_reliance.py --techniques 07_TWITTER-ROBERTA_FINE-TUNE 12_HATEBERT_FINE-TUNE
+    python3 tools/compare_reliance.py --techniques 07_TWITTER-ROBERTA_FINE-TUNE 12_ROBERTA-BASE_FINE-TUNE
 """
 
 import argparse
