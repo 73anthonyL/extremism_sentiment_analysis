@@ -94,7 +94,8 @@ Each item cites the artifact that shows it.
    fits the post-level, text-only limitation.
 3. **Identity terms are hard to separate from what surrounds them.** Every technique has a higher FPR on
    benign posts that mention a community (`rq4_identity_fpr.csv`: point
-   estimates 1.9 to 4.2, Fisher p < 0.05 unadjusted for 04, 05 and 11 only).
+   estimates 1.9 to 4.2, Fisher p < 0.05 unadjusted for 04, 05 and 11 only,
+   none after Holm over the eight tests).
    Setting aside 13 ambiguous identity words keeps every ratio above 1 (1.6
    to 5.0), and the same three stay below p 0.05
    (`rq4_identity_fpr_sensitivity.csv`). In the counterfactual test (WP7),
@@ -138,7 +139,8 @@ Each item cites the artifact that shows it.
    dependent attributions rather than noisier ones. Per-word claims about
    transformers are fragile, and the paper says so.
 5. **Lexicons do not cover the vocabulary.** The "topical" category absorbs
-   80 to 100 percent of positive mass while the slur list is empty (WP3), so
+   about 80 to 100 percent of positive mass even with the lexicons frozen at
+   WP3 (HurtLex slurs reach at most one word per top-50 list), so
    category-level claims depend on curation choices.
 6. **Context matters.** Quotation, reporting and counter-speech use the same
    words as extremist posts, which no word-level method separates.

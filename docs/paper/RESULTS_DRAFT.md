@@ -19,9 +19,11 @@ citations. Citations are author-year in parentheses and are listed under
 References at the end; every one is an entry of `docs/RELATED_WORK.md`.
 
 Items that need an author decision or a result that does not exist yet are
-marked **TODO(author)**. All category-level results (RQ2, RQ3 and the
-RQ2-RQ4 relation in section 8.3) are provisional until WP3 freezes the
-lexicons: the slur list is empty today, so slurs are counted as topical.
+marked **TODO(author)**. All category-level results (RQ2, RQ3, RQ4 and the
+RQ2-RQ4 relation in section 8.3) use the lexicons frozen at WP3
+(2026-11-04): slurs from HurtLex (Bassignana et al., 2018); the identity
+and framing lists are unchanged (`data/lexicons/README.md`). No slur is
+quoted in this text.
 
 Scope, stated once for every section below: labels are post-level and
 features are text-only. The classifiers detect extremist content in a single
@@ -229,20 +231,19 @@ deviation (test run versus validation run), as the decision rules require;
 the last column adds a post-level bootstrap SD for the identity share.
 
 **Table 4.** Share of positive attribution mass in the top 50 words, test
-run, with across-run SD in brackets. Provisional until WP3: the slur lexicon
-is empty, so the slur column is unavailable and slurs are counted as
-topical.[^t4]
+run, with across-run SD in brackets. Lexicons frozen at WP3 (slurs from
+HurtLex, `data/lexicons/README.md`).[^t4]
 
-| Technique | Posts explained | Extremist framing (SD) | Identity term (SD) | Slur | Topical (SD) | Identity SD, bootstrap |
+| Technique | Posts explained | Extremist framing (SD) | Identity term (SD) | Slur (SD) | Topical (SD) | Identity SD, bootstrap |
 |---|---|---|---|---|---|---|
-| 01 | 450 [C110] | 0.000 [C111] (0.000 [C260]) | 0.094 [C112] (0.006 [C114]) | n/a | 0.906 [C113] (0.006 [C261]) | 0.016 [C115] |
-| 02 | 450 [C116] | 0.000 [C117] (0.000 [C262]) | 0.116 [C118] (0.015 [C120]) | n/a | 0.884 [C119] (0.015 [C263]) | 0.025 [C121] |
-| 03 | 450 [C122] | 0.000 [C123] (0.000 [C264]) | 0.000 [C124] (0.023 [C126]) | n/a | 1.000 [C125] (0.023 [C265]) | 0.031 [C127] |
-| 04 | 450 [C128] | 0.000 [C129] (0.000 [C266]) | 0.104 [C130] (0.019 [C132]) | n/a | 0.896 [C131] (0.019 [C267]) | 0.036 [C133] |
-| 05 | 450 [C134] | 0.000 [C135] (0.000 [C268]) | 0.130 [C136] (0.003 [C138]) | n/a | 0.870 [C137] (0.003 [C269]) | 0.020 [C139] |
-| 06 | 450 [C140] | 0.000 [C141] (0.001 [C270]) | 0.132 [C142] (0.014 [C144]) | n/a | 0.868 [C143] (0.013 [C271]) | 0.023 [C145] |
-| 07 | 200 [C146] | 0.030 [C147] (0.015 [C272]) | 0.070 [C148] (0.003 [C150]) | n/a | 0.900 [C149] (0.018 [C273]) | 0.034 [C151] |
-| 11 | 200 [C152] | 0.016 [C153] (0.007 [C274]) | 0.174 [C154] (0.002 [C156]) | n/a | 0.810 [C155] (0.009 [C275]) | 0.033 [C157] |
+| 01 | 450 [C110] | 0.000 [C111] (0.000 [C260]) | 0.094 [C112] (0.006 [C114]) | 0.010 [C276] (0.001 [C277]) | 0.896 [C113] (0.007 [C261]) | 0.016 [C115] |
+| 02 | 450 [C116] | 0.000 [C117] (0.000 [C262]) | 0.116 [C118] (0.015 [C120]) | 0.010 [C278] (0.001 [C279]) | 0.874 [C119] (0.015 [C263]) | 0.025 [C121] |
+| 03 | 450 [C122] | 0.000 [C123] (0.000 [C264]) | 0.000 [C124] (0.023 [C126]) | 0.000 [C280] (0.001 [C281]) | 1.000 [C125] (0.024 [C265]) | 0.031 [C127] |
+| 04 | 450 [C128] | 0.000 [C129] (0.000 [C266]) | 0.104 [C130] (0.019 [C132]) | 0.017 [C282] (0.000 [C283]) | 0.879 [C131] (0.019 [C267]) | 0.036 [C133] |
+| 05 | 450 [C134] | 0.000 [C135] (0.000 [C268]) | 0.130 [C136] (0.003 [C138]) | 0.007 [C284] (0.001 [C285]) | 0.863 [C137] (0.002 [C269]) | 0.020 [C139] |
+| 06 | 450 [C140] | 0.000 [C141] (0.001 [C270]) | 0.132 [C142] (0.014 [C144]) | 0.010 [C286] (0.005 [C287]) | 0.858 [C143] (0.018 [C271]) | 0.023 [C145] |
+| 07 | 200 [C146] | 0.030 [C147] (0.015 [C272]) | 0.070 [C148] (0.003 [C150]) | 0.026 [C288] (0.013 [C289]) | 0.873 [C149] (0.005 [C273]) | 0.034 [C151] |
+| 11 | 200 [C152] | 0.016 [C153] (0.007 [C274]) | 0.174 [C154] (0.002 [C156]) | 0.021 [C290] (0.001 [C291]) | 0.789 [C155] (0.008 [C275]) | 0.033 [C157] |
 
 [^t4]: Shares: `results_summary/rq/rq3_reliance_comparison.csv`, rows
     `role=whole`, `split=test`. Posts explained:
@@ -252,29 +253,52 @@ topical.[^t4]
     Bootstrap SD: `results_summary/rq/rq2_bootstrap_category_shares.csv`,
     rows `category=identity_term`, `split=test`, `post_set=own`.
 
-The topical category takes 0.81 [C158] to 1.00 [C159] of the positive mass. The
+The topical category takes 0.79 [C158] to 1.00 [C159] of the positive mass. The
 extremist framing lexicon (seeded from single-word entries of an extremism
 lexicon) matches almost none of the top words, and the identity-term share
-is 0.000 [C124] to 0.174 [C154]. With the slur list empty, Table 4 cannot yet
-answer the RQ2 hypothesis about slurs versus identity terms. The bootstrap
+is 0.000 [C124] to 0.174 [C154]. Slurs take a small share: no test top-50
+list holds more than 1 [C293] slur, and its share of positive mass is at most
+0.026 [C292] on test (0.052 [C294] on validation). Each whole-model test list
+except 03's (which holds none) contains the same racial slur, from two
+explained test posts; among 11's members, the list of member B holds a
+different slur instead (Table 5). The transformers' slur shares
+(0.026 [C288], 0.021 [C290]) are the largest. Under the preregistered rule
+(section 5 of the plan: a difference counts if it exceeds the pooled two-run
+SD) most slur differences pass, among them 07 and 11 against 01, 02 and 06,
+because the two-run SDs of the slur share are tiny. Under the bootstrap
+check reported alongside they do not: every technique's slur-share interval
+starts at 0.000 [C295] and ends between 0.015 [C296] and 0.065 [C297], so the
+intervals all overlap. The slur ordering therefore passes the primary rule
+only, rests on one word in two posts, and is not used to judge the RQ2
+hypothesis. On identity terms, the part both checks can address, the
+hypothesis that the classical models put more mass on identity terms than
+the transformers is not supported: the ensemble (11) has the largest
+identity share. The slur list covers HurtLex's conservative English ethnic
+and sexual-orientation slurs only; a slur outside it counts as topical. The bootstrap
 SDs (0.016 [C115] to 0.036 [C133]) are larger than the two-run SDs (0.002 [C156] to
 0.023 [C126]), so the SD the decision rule names understates post-sampling
-spread. Multi-word lexicon entries cannot match word-level artifacts; the
-current lexicons contain 0 [C820] such entries, so no lexicon entry is lost
-to word-level matching.[^cov]
-**TODO(author):** decide whether the section 5 difference rule uses the
-two-run SD (as preregistered) or the bootstrap intervals. **TODO(author):**
-WP3 (populate `slurs.txt` from a citable source, review the identity and
-framing lists, freeze), then rerun `categorize_attributions.py`,
-`compare_reliance.py`, `identity_fpr.py` and this table.
+spread. Lexicon entries that the word-level masker splits into several
+tokens (a space, a hyphen or other punctuation) cannot match a word-level
+artifact: the frozen lexicons contain 48 [C820] such entries, 9 [C821] of the
+58 slur entries (spaced and hyphenated spellings) and 39 [C822] of the 382
+framing entries (hyphenated words such as `neo-nazi`, numeric codes, domain
+names and symbols). They still match post text in the RQ4 tools. In the
+slur list, the spaced and hyphenated spellings of two families also have a
+closed one-token spelling that does match, and two hyphenated compounds
+have none; in the framing list the loss is larger and is one more reason
+the framing share is near zero.[^cov]
+Per the author decision on the section 5 rule, the preregistered two-run SD
+stays the primary criterion and the bootstrap intervals are reported
+alongside as a stricter check; the text says which differences pass both.
 
 The identity lexicon also misses identity references, though the evidence is
 thin. Across the eight top-50 lists there are 27 [C700] candidate
 (technique, word) pairs that look like identity references (plurals,
 hashtags, group nouns) but are not lexicon entries; they cover 14 [C703]
 distinct words, and 26 [C704] of the 27 [C701] pairs rest on two explained
-posts or fewer. 6 [C702] of the pairs are 11's.[^gaps] They are a review list
-for WP3, not additions.
+posts or fewer. 6 [C702] of the pairs are 11's.[^gaps] They are a review
+list, not additions: a term found in a test-split attribution list is not
+added to a lexicon that is then used to measure test-split results.
 
 [^gaps]: `results_summary/rq/rq2_identity_top_k_sensitivity.csv`,
     `results_summary/rq/rq2_identity_lexicon_gaps_sensitivity.csv`.
@@ -330,7 +354,10 @@ comparison is descriptive.[^support]
 RQ2 reading. The deletion test supports reading the word tables as what each
 model uses. The models share a small core of words (a racial slur, "kill",
 "genocide") and otherwise rely on different words, and the split runs along
-feature family. Category-level conclusions wait for WP3. The lexicon
+feature family. With the frozen lexicons, most positive mass is topical for
+every technique, identity terms take up to about a sixth of it, and slurs
+and framing words little; no category share separates the classical from
+the transformer techniques in the direction the RQ2 hypothesis expected. The lexicon
 shares measure a plausibility-style alignment with curated word lists, and
 the deletion test measures faithfulness; the first does not stand in for
 the second (Jacovi and Goldberg, 2020).
@@ -363,19 +390,19 @@ lineage comparison:
 **Table 5.** Share of positive attribution mass in the top 50 words, by
 transformer, with across-run SD in brackets where two runs exist. Members
 are explained on the test sample only (one run each), so they have no
-across-run SD. Provisional until WP3.[^t5]
+across-run SD.[^t5]
 
-| Model | Checkpoint | Split | Extremist framing | Identity term | Topical |
-|---|---|---|---|---|---|
-| 07 | cardiffnlp/twitter-roberta-base-hate-latest [C740] | test | 0.030 [C300] (0.015 [C272]) | 0.070 [C301] (0.003 [C150]) | 0.900 [C302] (0.018 [C273]) |
-| 07 | (same) | validation | 0.000 [C303] | 0.064 [C304] | 0.936 [C305] |
-| 11 member A | cardiffnlp/twitter-roberta-base-hate-latest [C717] | test | 0.027 [C306] | 0.089 [C307] | 0.885 [C308] |
-| 11 member B | facebook/roberta-hate-speech-dynabench-r4-target [C723] | test | 0.000 [C309] | 0.222 [C310] | 0.778 [C311] |
-| 11 member C | GroNLP/hateBERT [C729] | test | 0.014 [C312] | 0.089 [C313] | 0.897 [C314] |
-| 11 member E | cardiffnlp/twitter-roberta-large-hate-latest [C735] | test | 0.000 [C315] | 0.197 [C316] | 0.803 [C317] |
-| 11 member mean | | test | 0.010 [C318] | 0.149 [C319] | 0.841 [C320] |
-| 11 pooled | | test | 0.016 [C321] (0.007 [C274]) | 0.174 [C322] (0.002 [C156]) | 0.810 [C323] (0.009 [C275]) |
-| 11 pooled | | validation | 0.030 [C324] | 0.178 [C325] | 0.792 [C326] |
+| Model | Checkpoint | Split | Extremist framing | Identity term | Slur | Topical |
+|---|---|---|---|---|---|---|
+| 07 | cardiffnlp/twitter-roberta-base-hate-latest [C740] | test | 0.030 [C300] (0.015 [C272]) | 0.070 [C301] (0.003 [C150]) | 0.026 [C377] (0.013 [C289]) | 0.873 [C302] (0.005 [C273]) |
+| 07 | (same) | validation | 0.000 [C303] | 0.064 [C304] | 0.052 [C378] | 0.883 [C305] |
+| 11 member A | cardiffnlp/twitter-roberta-base-hate-latest [C717] | test | 0.027 [C306] | 0.089 [C307] | 0.026 [C379] | 0.859 [C308] |
+| 11 member B | facebook/roberta-hate-speech-dynabench-r4-target [C723] | test | 0.000 [C309] | 0.222 [C310] | 0.014 [C380] | 0.764 [C311] |
+| 11 member C | GroNLP/hateBERT [C729] | test | 0.014 [C312] | 0.089 [C313] | 0.012 [C381] | 0.885 [C314] |
+| 11 member E | cardiffnlp/twitter-roberta-large-hate-latest [C735] | test | 0.000 [C315] | 0.197 [C316] | 0.027 [C382] | 0.775 [C317] |
+| 11 member mean | | test | 0.010 [C318] | 0.149 [C319] | 0.020 [C383] | 0.821 [C320] |
+| 11 pooled | | test | 0.016 [C321] (0.007 [C274]) | 0.174 [C322] (0.002 [C156]) | 0.021 [C384] (0.001 [C291]) | 0.789 [C323] (0.008 [C275]) |
+| 11 pooled | | validation | 0.030 [C324] | 0.178 [C325] | 0.019 [C385] | 0.773 [C326] |
 
 [^t5]: Shares: `results_summary/rq/rq3_reliance_comparison.csv`, columns
     `share_of_positive_mass__*`. SDs: `results_summary/rq/rq3_stability.csv`
@@ -400,7 +427,7 @@ each member has one run.
 The pooled ensemble has a larger identity-term share than 07 (0.174 [C322]
 against 0.070 [C301] on test; 0.178 [C325] against 0.064 [C304] on validation). The
 difference exceeds the across-run SDs of the two (0.002 [C156] and 0.003 [C150]),
-which is the preregistered criterion (provisional until WP3). On paired
+which is the preregistered criterion. On paired
 bootstrap draws over the same 200 posts it is -0.104 [C327] (07 minus 11) with a
 percentile interval of -0.140 [C328] to -0.025 [C329].[^rq3a] The difference cannot be
 attributed to pooling: the ensemble differs from 07 in its checkpoints, its
@@ -489,15 +516,16 @@ Of the 280 [C465] non-extremist test posts, 67 [C464] contain at least one
 identity-lexicon match (83 [C466] extremist posts do).[^rq4n] Every technique
 has a higher false-positive rate on those 67 [C464] than on the other
 213 [C474] (Table 7). The ratio is 1.91 [C420] to 4.24 [C460]. Unadjusted Fisher
-exact p is below 0.05 for 04, 05 and 11 only. With so few such posts, only
+exact p is below 0.05 for 04, 05 and 11 only, and none of the three survives
+Holm over the eight tests: the smallest, 11's 0.0064 [C461], becomes about
+0.051 (eight times 0.0064). With so few such posts, only
 large ratios are detectable, so a non-significant ratio is not evidence that
-the effect is absent. The identity matches come from the lexicon, so these
-rates are provisional until WP3. That the point estimate exceeds 1 for
+the effect is absent. The identity matches come from the frozen lexicon. That the point estimate exceeds 1 for
 every technique, classical or transformer, is consistent with the bias
 being learned from the training data rather than introduced by one
 architecture, as Davidson et al. (2019) found for dialect bias across five
 abuse datasets; only three of the eight ratios reach unadjusted Fisher
-p < 0.05.
+p < 0.05, and none after Holm.
 Threshold-free subgroup and BPSN/BNSP AUCs (Borkan et al., 2019) would
 complement these rates and can be computed from the committed
 probabilities; they are not reported here.
@@ -531,8 +559,8 @@ aside the same way).[^t7]
 
 Setting the ambiguous words aside keeps every ratio above 1 (1.61 [C422] to
 5.02 [C438]), and the same three techniques stay below p = 0.05. 03 and 06 fall
-to 1.61 [C422] and 1.83 [C446], which at this n is not evidence that their effect
-is absent. The false-positive counts are small (5 [C432] to 11 [C400] with
+to 1.61 [C422] and 1.83 [C446] (p = 0.328 [C447] for 06), which at this n is not
+evidence that their effect is absent. The false-positive counts are small (5 [C432] to 11 [C400] with
 identity terms) and below the 14-row rule of thumb, so Table 7 does not rank
 the techniques.
 
@@ -656,8 +684,8 @@ set comes from the identity lexicon, not from attribution rank.
 
 ### 8.3 Does RQ2 reliance predict RQ4 false positives?
 
-This section is descriptive and, because both sides depend on the lexicons,
-provisional until WP3. The closest precedent for linking post-hoc
+This section is descriptive. Both sides depend on the lexicons, which are
+the frozen WP3 versions. The closest precedent for linking post-hoc
 attribution to identity-term over-reliance in hate classifiers is Kennedy
 et al. (2020); the difference here is the comparison across model families
 and the intervention of section 8.2. Ranking the eight techniques by RQ2 identity-term
@@ -695,7 +723,8 @@ reliance and identity-term false positives.[^rel]
 Resampling noisy ratios also pulls a rank correlation toward zero, so these
 figures describe how fragile the ordering is; they are not an interval for
 rho. RQ4 reading: every technique has a higher FPR on benign posts that
-mention a community (Fisher p < 0.05, unadjusted, for three of eight); for
+mention a community (Fisher p < 0.05, unadjusted, for three of eight, and
+for none after Holm); for
 the classical word-level techniques the identity term behaves as evidence of
 extremism under both edits; for the transformers the removal effect is not
 reproduced by the stricter substitution control; and the cross-technique
@@ -753,10 +782,12 @@ remaining difficulty sits.
    consistency (Ding and Koehn, 2021) and deletion faithfulness (DeYoung et
    al., 2020) as standard metrics.
 5. **Lexicons do not cover the vocabulary.** The topical category takes
-   0.81 [C158] to 1.00 [C159] of positive mass, the framing lexicon matches almost
-   none of the top words, the slur list is empty, and 14 [C703] distinct
-   words that look like identity references are missing from the identity
-   list (most on thin support). Category-level claims depend on curation.
+   0.79 [C158] to 1.00 [C159] of positive mass, the framing lexicon matches almost
+   none of the top words, the HurtLex slur list reaches at most one word
+   per list (0.026 [C292] of positive mass at most) and covers only ethnic and
+   sexual-orientation slurs, and 14 [C703] distinct words that look like
+   identity references are missing from the identity list (most on thin
+   support). Category-level claims depend on curation.
    Avenue: hand-annotated top words rather than lexicons alone, on the
    model of the human rationales in HateXplain (Mathew et al., 2021), or
    group-robust training that does not need group labels (Liu et al., 2021)
@@ -878,8 +909,17 @@ The perturbation stages cannot be reproduced by a reader until they are.
 ## Limitations specific to these results
 
 Labels are post-level and features text-only; one dataset and one frozen
-split; a small test split; category shares depend on lexicons that are not
-yet frozen; SHAP over subword models is aggregated to words with a
+split; a small test split; category shares depend on lexicons frozen at
+WP3, whose contents are curation choices. The slur list counts reclaimed and
+in-group spellings of a racial slur (among `data/lexicons/slurs.txt` lines 85 to
+90) as slurs, so posts in a dialect that uses them in-group are scored as
+slur use, the dialect-bias risk Sap et al. (2019) describe; and it keeps
+the four entries of one racial-typology family (lines 80 to 83), which are
+also used as a disability insult, although cognitive-disability insults
+are otherwise excluded. One identity term, `aliens`, was considered at the
+freeze and dropped: it had been found in 06's test top-50 list, so adding
+it would have fitted the lexicon to test results, and it appears only in
+the loaded phrase "illegal aliens" rather than as a neutral reference. SHAP over subword models is aggregated to words with a
 word-level masker (Kokalj et al., 2021); the pipeline check compares
 against known coefficients, and the randomization sanity checks of Adebayo
 et al. (2018) were not run; the identity lexicon does not capture
@@ -900,18 +940,17 @@ and cite it before submission.
 
 1. Notebook 12 (plain RoBERTa control): run it, rerun RQ1 (Holm family
    with 12's pairs), RQ3 and the relation, then revise sections 5 and 7.
-2. WP3 lexicon freeze: populate `slurs.txt` from a citable source, review the
-   identity list (the gap candidates) and the framing list, freeze, rerun RQ2
-   and RQ4, and remove "provisional" from sections 6 to 8.
-3. Section 5 rule: two-run SD (preregistered) or bootstrap intervals for
-   share differences.
+2. (Done 2026-11-04: WP3 lexicon freeze, RQ2 and RQ4 re-run.)
+3. (Decided 2026-11-04: the two-run SD rule stays primary and the bootstrap
+   intervals are reported alongside; sections 6 and 7 say which differences
+   pass both.)
 4. Validation-split member runs for 11, if RQ3 prose needs member SDs.
 5. WP9 (layer-wise probes) and WP10 (zero-shot LLM, data-sharing decision).
 6. A qualitative read of the shared errors, outside the repository; evidence
    or hypothesis status for C3 item 6.
 7. Redact slurs in any report-card figure.
 8. Upload and record external assets before submission.
-9. Citations: 55 entries of `docs/RELATED_WORK.md` are now cited
+9. Citations: 56 entries of `docs/RELATED_WORK.md` are now cited
     author-year and listed under References. Gaps, with no entry in
     `docs/RELATED_WORK.md` yet: TF-IDF, logistic regression, linear SVMs, the
     perceptron, FastText embeddings and logit pooling (technique list);
@@ -952,6 +991,9 @@ was checked against a primary record on 2026-11-04.
   F. M., et al. (2019).** SemEval-2019 Task 5: Multilingual Detection of Hate
   Speech Against Immigrants and Women in Twitter (HatEval). *SemEval 2019*.
   DOI 10.18653/v1/S19-2007.
+* **Bassignana, E., Basile, V., Patti, V. (2018).** Hurtlex: A Multilingual
+  Lexicon of Words to Hurt. *CLiC-it 2018*, CEUR Workshop Proceedings
+  Vol-2253, paper 49.
 * **Borkan, D., Dixon, L., Sorensen, J., Thain, N., Vasserman, L. (2019).**
   Nuanced Metrics for Measuring Unintended Bias with Real Data for Text
   Classification. *Companion Proceedings of WWW 2019*.

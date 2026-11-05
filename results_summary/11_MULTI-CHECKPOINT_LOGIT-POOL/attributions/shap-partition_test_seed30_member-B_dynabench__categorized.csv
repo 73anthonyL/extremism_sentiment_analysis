@@ -1,6 +1,6 @@
 word,mean_abs_attribution,mean_attribution,support,category,matched_categories,abs_mass,positive_mass,rank
 feminists,0.4899006,0.4899006,1,identity_term,identity_term,0.4899006,0.4899006,1
-pikey,0.47777288,0.47777288,1,topical,,0.47777288,0.47777288,2
+pikey,0.47777288,0.47777288,1,slur,slur,0.47777288,0.47777288,2
 disabled,0.44964408,0.44964408,1,topical,,0.44964408,0.44964408,3
 deportthemall,0.43033047,0.43033047,1,topical,,0.43033047,0.43033047,4
 stopwhitegenocide,0.41414245,0.41414245,1,topical,,0.41414245,0.41414245,5

@@ -186,9 +186,7 @@
         "top_k": 50
       }
     ],
-    "empty_lexicon_categories": [
-      "slur"
-    ],
+    "empty_lexicon_categories": [],
     "least_agreeing_by_jaccard": "07_TWITTER-ROBERTA_FINE-TUNE",
     "least_agreeing_by_spearman": "07_TWITTER-ROBERTA_FINE-TUNE",
     "most_agreeing_by_jaccard": "05_WORD-CHAR-TF-IDF_LIN-SVM",

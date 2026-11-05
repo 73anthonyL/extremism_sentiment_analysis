@@ -186,9 +186,7 @@
         "top_k": 50
       }
     ],
-    "empty_lexicon_categories": [
-      "slur"
-    ],
+    "empty_lexicon_categories": [],
     "least_agreeing_by_jaccard": "07_TWITTER-ROBERTA_FINE-TUNE",
     "least_agreeing_by_spearman": "06_FASTTEXT-EMB_LOG-REG",
     "most_agreeing_by_jaccard": "02_LIN-SVM_TF-IDF",
@@ -202,7 +200,7 @@
     ],
     "top_words_by_positive_mean_attribution": [
       {
-        "category": "topical",
+        "category": "slur",
         "mean_attribution": 0.398259,
         "support": 2,
         "word": "nigger"

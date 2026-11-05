@@ -35,11 +35,11 @@ Sources: `results_summary/04_CHAR-TF-IDF_LIN-SVM/attributions/shap-partition_tes
 
 No coefficients to check against; the attributions rest on the anchor's pipeline check.
 
-Top 10 words with positive mean attribution (toward EXTREMIST) in the test run `shap-partition_test_seed30` (450 posts explained). Category comes from the committed lexicons. The slur lexicon is empty (RESEARCH_PLAN WP3), so words of that kind are counted as topical here.
+Top 10 words with positive mean attribution (toward EXTREMIST) in the test run `shap-partition_test_seed30` (450 posts explained). Category comes from the committed lexicons.
 
 | Rank | Word | Category | Mean attribution | Support (posts) |
 |---|---|---|---|---|
-| 1 | `nigger` | topical | 0.2304 | 2 |
+| 1 | `nigger` | slur | 0.2304 | 2 |
 | 2 | `encourage` | topical | 0.1709 | 2 |
 | 3 | `builders` | topical | 0.1600 | 1 |
 | 4 | `resentful` | topical | 0.1583 | 5 |

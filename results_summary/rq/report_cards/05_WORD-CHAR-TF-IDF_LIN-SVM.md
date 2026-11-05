@@ -35,13 +35,13 @@ Sources: `results_summary/05_WORD-CHAR-TF-IDF_LIN-SVM/attributions/shap-partitio
 
 No coefficients to check against; the attributions rest on the anchor's pipeline check.
 
-Top 10 words with positive mean attribution (toward EXTREMIST) in the test run `shap-partition_test_seed30` (450 posts explained). Category comes from the committed lexicons. The slur lexicon is empty (RESEARCH_PLAN WP3), so words of that kind are counted as topical here.
+Top 10 words with positive mean attribution (toward EXTREMIST) in the test run `shap-partition_test_seed30` (450 posts explained). Category comes from the committed lexicons.
 
 | Rank | Word | Category | Mean attribution | Support (posts) |
 |---|---|---|---|---|
 | 1 | `shoot` | topical | 0.2016 | 9 |
 | 2 | `genocide` | topical | 0.1861 | 14 |
-| 3 | `nigger` | topical | 0.1833 | 2 |
+| 3 | `nigger` | slur | 0.1833 | 2 |
 | 4 | `builders` | topical | 0.1737 | 1 |
 | 5 | `anymore` | topical | 0.1644 | 3 |
 | 6 | `kill` | topical | 0.1598 | 63 |

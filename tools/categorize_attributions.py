@@ -14,8 +14,10 @@ Outputs, per run, next to the artifact:
 and one cross-technique long table, results_summary/rq/rq2_category_shares.csv,
 which compare_reliance.py and render_tables.py read. It also writes
 results_summary/rq/rq2_lexicon_coverage.csv: per category, the number of
-lexicon entries and how many are multi-word phrases that no word-level
-artifact can match, so that count is reported rather than only printed.
+lexicon entries and how many the word-level masker would split (spaces,
+hyphens, other non-word characters), which no word-level artifact can
+match, so that count is reported rather than only printed. The column keeps
+its name, n_multi_word_unmatchable: such an entry is several masker tokens.
 
 USAGE
 -----
@@ -78,7 +80,7 @@ COVERAGE_COLUMNS = ("category", "n_entries", "n_single_word", "n_multi_word_unma
 
 
 def lexicon_coverage(lexicons):
-    """One row per category: entries, single words, and multi-word phrases.
+    """One row per category: entries, word-level entries, and entries the masker splits.
 
     Phrases cannot match a word-level attribution artifact, so they never
     contribute to a category share; the decision rules require the count.
@@ -251,7 +253,8 @@ def main():
     coverage_path = write_coverage(lexicons)
     print(f"wrote {coverage_path}")
     if skipped:
-        print(f"note: {skipped} multi-word lexicon entries cannot match word-level artifacts")
+        print(f"note: {skipped} lexicon entries split by the masker (spaces, hyphens, punctuation) "
+              "cannot match word-level artifacts")
     for category, entries in lexicons.items():
         if not entries:
             print(f"note: lexicon for '{category}' is empty; no word can take that category")

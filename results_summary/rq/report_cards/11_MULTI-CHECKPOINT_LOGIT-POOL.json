@@ -186,9 +186,7 @@
         "top_k": 50
       }
     ],
-    "empty_lexicon_categories": [
-      "slur"
-    ],
+    "empty_lexicon_categories": [],
     "least_agreeing_by_jaccard": "03_SLP_TF-IDF",
     "least_agreeing_by_spearman": "03_SLP_TF-IDF",
     "most_agreeing_by_jaccard": "07_TWITTER-ROBERTA_FINE-TUNE",
@@ -208,7 +206,7 @@
         "word": "jew"
       },
       {
-        "category": "topical",
+        "category": "slur",
         "mean_attribution": 0.462578,
         "support": 2,
         "word": "nigger"

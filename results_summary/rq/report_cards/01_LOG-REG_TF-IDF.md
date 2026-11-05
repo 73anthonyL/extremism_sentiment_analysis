@@ -42,11 +42,11 @@ Sources: `results_summary/01_LOG-REG_TF-IDF/attributions/shap-partition_test_see
 
 This technique's SHAP check passed: its attributions track its own coefficients.
 
-Top 10 words with positive mean attribution (toward EXTREMIST) in the test run `shap-partition_test_seed30` (450 posts explained). Category comes from the committed lexicons. The slur lexicon is empty (RESEARCH_PLAN WP3), so words of that kind are counted as topical here.
+Top 10 words with positive mean attribution (toward EXTREMIST) in the test run `shap-partition_test_seed30` (450 posts explained). Category comes from the committed lexicons.
 
 | Rank | Word | Category | Mean attribution | Support (posts) |
 |---|---|---|---|---|
-| 1 | `nigger` | topical | 0.3983 | 2 |
+| 1 | `nigger` | slur | 0.3983 | 2 |
 | 2 | `shoot` | topical | 0.3128 | 9 |
 | 3 | `see` | topical | 0.2914 | 10 |
 | 4 | `ill` | topical | 0.2908 | 5 |

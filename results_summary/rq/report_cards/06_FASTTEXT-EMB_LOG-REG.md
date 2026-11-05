@@ -42,11 +42,11 @@ Sources: `results_summary/06_FASTTEXT-EMB_LOG-REG/attributions/shap-partition_te
 
 This technique's SHAP check is a recorded calibration point: its coefficients do not act on words, so a weaker match is expected. Read per-word claims with that in mind.
 
-Top 10 words with positive mean attribution (toward EXTREMIST) in the test run `shap-partition_test_seed30` (450 posts explained). Category comes from the committed lexicons. The slur lexicon is empty (RESEARCH_PLAN WP3), so words of that kind are counted as topical here.
+Top 10 words with positive mean attribution (toward EXTREMIST) in the test run `shap-partition_test_seed30` (450 posts explained). Category comes from the committed lexicons.
 
 | Rank | Word | Category | Mean attribution | Support (posts) |
 |---|---|---|---|---|
-| 1 | `nigger` | topical | 0.3205 | 2 |
+| 1 | `nigger` | slur | 0.3205 | 2 |
 | 2 | `whites` | topical | 0.2702 | 2 |
 | 3 | `ill` | topical | 0.2418 | 5 |
 | 4 | `marry` | topical | 0.1988 | 2 |

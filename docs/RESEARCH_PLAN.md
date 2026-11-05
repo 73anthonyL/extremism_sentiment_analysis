@@ -163,20 +163,21 @@ Techniques in the controlled comparison and what each one has today.
 
 | Technique | Result folder | Probability artifact | Attribution run | Coefficients | RQ2 | RQ3 | RQ4 |
 |---|---|---|---|---|---|---|---|
-| `01_LOG-REG_TF-IDF` | yes, derived | yes | 2 whole-model | yes, check PASS | no | no | **yes** |
-| `02_LIN-SVM_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `03_SLP_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `04_CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `05_WORD-CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `06_FASTTEXT-EMB_LOG-REG` | yes, derived | yes | 2 whole-model | yes, check FAIL (calibration point) | no | no | **yes** |
-| `07_TWITTER-ROBERTA_FINE-TUNE` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | yes, derived | yes | 2 whole-model + 4 member (test) | n/a | no | no | **yes** |
+| `01_LOG-REG_TF-IDF` | yes, derived | yes | 2 whole-model | yes, check PASS | **yes** | **yes** | **yes** |
+| `02_LIN-SVM_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `03_SLP_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `04_CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `06_FASTTEXT-EMB_LOG-REG` | yes, derived | yes | 2 whole-model | yes, check FAIL (calibration point) | **yes** | **yes** | **yes** |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | yes, derived | yes | 2 whole-model + 4 member (test) | n/a | **yes** | **yes** | **yes** |
 
 Every result folder is now derived from a committed probability artifact
 (`provenance: derived_from_probs`, `recomputable: true`), from the Kaggle
 reruns of 2026-10-08. The notebook 00 rerun reproduced the frozen split and
-the committed mirror is byte-identical. RQ2 and RQ3 stay "no" until the
-lexicons are frozen (WP3) and the categorisation tools are run (WP5).
+the committed mirror is byte-identical. RQ2 and RQ3 are "yes" since the
+WP3 lexicon freeze (2026-11-04) and the re-run of the categorisation tools;
+RQ3's pretraining-lineage contrast still waits for notebook 12.
 
 Other facts that shape the order of work:
 
@@ -278,8 +279,8 @@ Other facts that shape the order of work:
   recall loss is Holm-significant under every family tried. No non-extremist
   flip survives Holm (`rq4_identity_fpr_sensitivity.csv`,
   `rq4_identity_counterfactual_sensitivity.csv`).
-* **The RQ2-to-RQ4 relation is computed** (WP5, 2026-11-04; provisional until WP3
-  freezes the lexicons). `tools/rq2_rq4_relation.py` ranks the eight
+* **The RQ2-to-RQ4 relation is computed** (WP5, 2026-11-04; re-run on the frozen WP3
+  lexicons, which leave it unchanged: the slur list does not enter it). `tools/rq2_rq4_relation.py` ranks the eight
   techniques by test identity-term share of positive mass and by RQ4 FPR
   ratio: Spearman 0.83 (exact permutation p = 0.017; |rho| >= 0.73 is needed
   for p <= 0.05; leave-one-out 0.74 to 0.95). Under section 5 this is
@@ -390,9 +391,13 @@ Other facts that shape the order of work:
   significant only if all eight new pairs are themselves Holm-significant
   (with equal raw p, below about 0.0017). Otherwise it rises to at most
   0.067 and the significant count falls from 7 to 6.
-* **The slur lexicon is empty** (`data/lexicons/slurs.txt`). Until it is
-  populated, every slur is counted as topical or as extremist framing, which
-  biases RQ2 and hides the slur-versus-identity distinction RQ3 turns on.
+* **The lexicons are frozen** (WP3, 2026-11-04). `data/lexicons/slurs.txt`
+  holds 58 HurtLex entries (ethnic and sexual-orientation slurs,
+  conservative level); the identity list is unchanged (`aliens` was added at
+  the freeze and dropped on 2026-11-05, see section 7). Every test top-50
+  list except 03's now holds one slur (the same racial slur, two explained
+  posts), at most 0.026 of positive mass, so the slur-versus-identity
+  distinction is measurable but thin.
 * **`tools/scan_text_leakage.py` passes.** The outputs that contained dataset
   text, hashes and row ids were cleared by priming, and the scanner now also
   checks notebook outputs and result files for row ids.
@@ -484,8 +489,14 @@ committed.
 
 1. Populate `data/lexicons/slurs.txt` from a published, citable slur lexicon
    (record the source and licence in `data/lexicons/README.md`). Entries
-   that also appear in `identity_terms.txt` are removed from the identity
-   list, since the first-match order gives `slur` precedence anyway.
+   of the source that are neutral identity references already in
+   `identity_terms.txt` are removed from the slur list and stay identity
+   terms. (This step first said the reverse: remove them from the identity
+   list, since `slur` takes precedence. Changed at the freeze, 2026-11-04,
+   because HurtLex's slur categories contain neutral words such as `gay` and
+   `queer`; dropping them from the identity list would remove neutral
+   mentions of those groups from RQ4, which measures false positives on
+   exactly such mentions.)
 2. Review `identity_terms.txt` (96 entries) for coverage of the communities
    the dataset actually mentions. Use `identity_fpr_terms_test.csv` counts,
    which carry no text, to find high-support terms.
@@ -498,6 +509,22 @@ committed.
 *Done when.* The slur list is non-empty and sourced, the overlap report
 from `categorize_attributions.py` shows no identity-versus-slur collisions,
 and the lists are frozen.
+
+*Status: done 2026-11-04.* Slurs: HurtLex EN 1.2, conservative level,
+categories `ps` and `om`, 58 entries after removing generic insults,
+everyday-sense words, neutral references and non-lemmas (CC BY-NC-SA 4.0;
+source, licence and the removed words in `data/lexicons/README.md` and the
+header of `slurs.txt`). Identity list unchanged at 96 entries, the 13
+ambiguous entries kept (`aliens` was added on 2026-11-04 and dropped on
+2026-11-05 because it was test-derived; see section 7). Framing list reviewed and unchanged; no entry is
+shared between any two lists. Version note with sha256 in
+`data/lexicons/README.md`, with the rule that no term is added on
+test-split evidence. The WP7b swap map gained and then lost an excluded row
+for `aliens` (Amendments 1 and 2 of its preregistration; it is back to its
+preregistered bytes and the population never changed). RQ2, RQ3, RQ4, WP7,
+WP7b, the relation and the bootstrap were re-run after each change; with
+the final lists only the slur results and the coverage count differ from
+the pre-freeze outputs.
 
 ### WP4. Attribution runs for RQ2 and RQ3 (Kaggle)
 
@@ -563,7 +590,7 @@ tools with adversarial tests:
   tables (`rq1_error_overlap.csv`, `rq1_shared_errors.csv`).
 * `tools/rq2_rq4_relation.py`: the rank correlation between each technique's
   RQ2 identity-term share and its RQ4 FPR ratio, from the two `rq/` tables.
-  Done 2026-11-04 (`rq2_rq4_relation.csv`); re-run after WP3 freezes the
+  Done 2026-11-04 (`rq2_rq4_relation.csv`), and re-run on the frozen WP3
   lexicons.
 
 *Done when.* All five rendered regions are populated for every technique,
@@ -858,14 +885,16 @@ bootstrap intervals (`rq2_bootstrap_category_shares.csv`) are reported next
 to it as a stricter check, and the paper says which differences pass both. Top-K is 50 throughout;
 changing it re-runs everything and is stated. Runs are compared only when
 they explain the same number of posts with the same evaluation budget; the
-sidecar records both. Multi-word lexicon entries
-cannot match word-level artifacts and the count of skipped entries is
-reported.
+sidecar records both. Lexicon entries the word-level masker splits
+(spaces, hyphens, other punctuation) cannot match word-level artifacts and
+the count of skipped entries is reported.
 
 **Identity false positives (RQ4).** The Fisher exact test on the 2x2 table
 (identity term present or absent, false positive or true negative) is
 reported with the FPR ratio and the count of negatives with identity terms.
-With 67 such posts in the test split, only large ratios are detectable; a
+With 67 such posts in the test split (68 for one day while `aliens` was in
+the identity list, 2026-11-04 to 2026-11-05; a count update only, the rule
+itself did not change), only large ratios are detectable; a
 non-significant result is reported as such, not as absence of effect. The
 RQ2-to-RQ4 relation is reported as a rank correlation over techniques with
 n stated; with eight or nine points it is descriptive.
@@ -918,8 +947,11 @@ All open decisions were settled on 2026-11-04; `docs/DECISIONS_NEEDED.md`
 records each with its context and the option chosen. In short: slurs from
 HurtLex (conservative level, English slur categories, source and licence
 recorded in `data/lexicons/README.md`); identity list gains only terms with
-support >= 3 (currently `aliens`), ambiguous entries kept and reported via
-the sensitivity check; the section 5 share rule stays primary with the
+support >= 3, ambiguous entries kept and reported via the sensitivity
+check (the one such term, `aliens`, was added at the freeze on 2026-11-04
+and dropped on 2026-11-05 by author decision: it came from 06's own test
+top-50 gap list, always appears as "illegal aliens", and alone moved 06's
+RQ4 Fisher p below 0.05; terms are no longer added on test-split evidence); the section 5 share rule stays primary with the
 bootstrap reported alongside; notebook 12 will be run by the authors; WP7
 and WP7b take the cautious reading; WP10 uses an open-weight model on a
 Kaggle GPU, so no dataset text leaves the authors' control; WP9 probes are

@@ -186,9 +186,7 @@
         "top_k": 50
       }
     ],
-    "empty_lexicon_categories": [
-      "slur"
-    ],
+    "empty_lexicon_categories": [],
     "least_agreeing_by_jaccard": "06_FASTTEXT-EMB_LOG-REG",
     "least_agreeing_by_spearman": "06_FASTTEXT-EMB_LOG-REG",
     "most_agreeing_by_jaccard": "11_MULTI-CHECKPOINT_LOGIT-POOL",
@@ -208,7 +206,7 @@
         "word": "jew"
       },
       {
-        "category": "topical",
+        "category": "slur",
         "mean_attribution": 0.613391,
         "support": 2,
         "word": "nigger"

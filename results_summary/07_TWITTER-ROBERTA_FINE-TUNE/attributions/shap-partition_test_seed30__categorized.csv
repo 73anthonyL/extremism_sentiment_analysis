@@ -1,6 +1,6 @@
 word,mean_abs_attribution,mean_attribution,support,category,matched_categories,abs_mass,positive_mass,rank
 jew,0.79402484,0.79402484,1,identity_term,identity_term,0.79402484,0.79402484,1
-nigger,0.61339121,0.61339121,2,topical,,1.2267824,1.2267824,2
+nigger,0.61339121,0.61339121,2,slur,slur,1.2267824,1.2267824,2
 refugeesnotwelcome,0.6077251,0.6077251,1,topical,,0.6077251,0.6077251,3
 purity,0.53117716,0.53117716,1,topical,,0.53117716,0.53117716,4
 china,0.50090783,0.50090783,1,topical,,0.50090783,0.50090783,5

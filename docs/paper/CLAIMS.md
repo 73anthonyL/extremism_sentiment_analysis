@@ -29,11 +29,11 @@ Format (the checker's docstring is the reference):
   significant figures; `-` an exact string (booleans case-insensitive),
   never for a number.
 
-Id blocks: C001 to C096 RQ1; C100 to C275 RQ2 (C260 to C275 are across-run
-SDs); C300 to C376 RQ3 shares and stability; C400 to C474 RQ4 FPR; C500 to
+Id blocks: C001 to C096 RQ1; C100 to C297 RQ2 (C260 to C291 are across-run
+SDs and the slur column); C300 to C385 RQ3 shares and stability; C400 to C474 RQ4 FPR; C500 to
 C670 WP7 and the RQ2-RQ4 relation; C700 to C704 lexicon gaps; C710 to C740
 training recipes of 07 and the members of 11; C800 to C819 framework card and
-data.
+data; C820 to C822 lexicon coverage.
 
 | id | artifact | selector | column | value | decimals |
 |---|---|---|---|---|---|
@@ -146,13 +146,13 @@ data.
 | C110 | `results_summary/rq/rq2_top_word_support.csv` | `technique=01_LOG-REG_TF-IDF` | `n_posts_explained` | 450 | 0 |
 | C111 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=01_LOG-REG_TF-IDF;role=whole;split=test` | `share_of_positive_mass__extremist_framing` | 0.000 | 3 |
 | C112 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=01_LOG-REG_TF-IDF;role=whole;split=test` | `share_of_positive_mass__identity_term` | 0.094 | 3 |
-| C113 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=01_LOG-REG_TF-IDF;role=whole;split=test` | `share_of_positive_mass__topical` | 0.906 | 3 |
+| C113 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=01_LOG-REG_TF-IDF;role=whole;split=test` | `share_of_positive_mass__topical` | 0.896 | 3 |
 | C114 | `results_summary/rq/rq3_stability.csv` | `technique=01_LOG-REG_TF-IDF` | `std_share_of_positive_mass__identity_term` | 0.006 | 3 |
 | C115 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `technique=01_LOG-REG_TF-IDF;split=test;post_set=own;category=identity_term;measure=share_of_positive_mass` | `boot_sd` | 0.016 | 3 |
 | C116 | `results_summary/rq/rq2_top_word_support.csv` | `technique=02_LIN-SVM_TF-IDF` | `n_posts_explained` | 450 | 0 |
 | C117 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=02_LIN-SVM_TF-IDF;role=whole;split=test` | `share_of_positive_mass__extremist_framing` | 0.000 | 3 |
 | C118 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=02_LIN-SVM_TF-IDF;role=whole;split=test` | `share_of_positive_mass__identity_term` | 0.116 | 3 |
-| C119 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=02_LIN-SVM_TF-IDF;role=whole;split=test` | `share_of_positive_mass__topical` | 0.884 | 3 |
+| C119 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=02_LIN-SVM_TF-IDF;role=whole;split=test` | `share_of_positive_mass__topical` | 0.874 | 3 |
 | C120 | `results_summary/rq/rq3_stability.csv` | `technique=02_LIN-SVM_TF-IDF` | `std_share_of_positive_mass__identity_term` | 0.015 | 3 |
 | C121 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `technique=02_LIN-SVM_TF-IDF;split=test;post_set=own;category=identity_term;measure=share_of_positive_mass` | `boot_sd` | 0.025 | 3 |
 | C122 | `results_summary/rq/rq2_top_word_support.csv` | `technique=03_SLP_TF-IDF` | `n_posts_explained` | 450 | 0 |
@@ -164,34 +164,34 @@ data.
 | C128 | `results_summary/rq/rq2_top_word_support.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM` | `n_posts_explained` | 450 | 0 |
 | C129 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;role=whole;split=test` | `share_of_positive_mass__extremist_framing` | 0.000 | 3 |
 | C130 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;role=whole;split=test` | `share_of_positive_mass__identity_term` | 0.104 | 3 |
-| C131 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;role=whole;split=test` | `share_of_positive_mass__topical` | 0.896 | 3 |
+| C131 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;role=whole;split=test` | `share_of_positive_mass__topical` | 0.879 | 3 |
 | C132 | `results_summary/rq/rq3_stability.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__identity_term` | 0.019 | 3 |
 | C133 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;split=test;post_set=own;category=identity_term;measure=share_of_positive_mass` | `boot_sd` | 0.036 | 3 |
 | C134 | `results_summary/rq/rq2_top_word_support.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM` | `n_posts_explained` | 450 | 0 |
 | C135 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;role=whole;split=test` | `share_of_positive_mass__extremist_framing` | 0.000 | 3 |
 | C136 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;role=whole;split=test` | `share_of_positive_mass__identity_term` | 0.130 | 3 |
-| C137 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;role=whole;split=test` | `share_of_positive_mass__topical` | 0.870 | 3 |
+| C137 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;role=whole;split=test` | `share_of_positive_mass__topical` | 0.863 | 3 |
 | C138 | `results_summary/rq/rq3_stability.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__identity_term` | 0.003 | 3 |
 | C139 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;split=test;post_set=own;category=identity_term;measure=share_of_positive_mass` | `boot_sd` | 0.020 | 3 |
 | C140 | `results_summary/rq/rq2_top_word_support.csv` | `technique=06_FASTTEXT-EMB_LOG-REG` | `n_posts_explained` | 450 | 0 |
 | C141 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;role=whole;split=test` | `share_of_positive_mass__extremist_framing` | 0.000 | 3 |
 | C142 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;role=whole;split=test` | `share_of_positive_mass__identity_term` | 0.132 | 3 |
-| C143 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;role=whole;split=test` | `share_of_positive_mass__topical` | 0.868 | 3 |
+| C143 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;role=whole;split=test` | `share_of_positive_mass__topical` | 0.858 | 3 |
 | C144 | `results_summary/rq/rq3_stability.csv` | `technique=06_FASTTEXT-EMB_LOG-REG` | `std_share_of_positive_mass__identity_term` | 0.014 | 3 |
 | C145 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;split=test;post_set=own;category=identity_term;measure=share_of_positive_mass` | `boot_sd` | 0.023 | 3 |
 | C146 | `results_summary/rq/rq2_top_word_support.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE` | `n_posts_explained` | 200 | 0 |
 | C147 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__extremist_framing` | 0.030 | 3 |
 | C148 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__identity_term` | 0.070 | 3 |
-| C149 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__topical` | 0.900 | 3 |
+| C149 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__topical` | 0.873 | 3 |
 | C150 | `results_summary/rq/rq3_stability.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE` | `std_share_of_positive_mass__identity_term` | 0.003 | 3 |
 | C151 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;split=test;post_set=own;category=identity_term;measure=share_of_positive_mass` | `boot_sd` | 0.034 | 3 |
 | C152 | `results_summary/rq/rq2_top_word_support.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `n_posts_explained` | 200 | 0 |
 | C153 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=test` | `share_of_positive_mass__extremist_framing` | 0.016 | 3 |
 | C154 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=test` | `share_of_positive_mass__identity_term` | 0.174 | 3 |
-| C155 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=test` | `share_of_positive_mass__topical` | 0.810 | 3 |
+| C155 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=test` | `share_of_positive_mass__topical` | 0.789 | 3 |
 | C156 | `results_summary/rq/rq3_stability.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `std_share_of_positive_mass__identity_term` | 0.002 | 3 |
 | C157 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;split=test;post_set=own;category=identity_term;measure=share_of_positive_mass` | `boot_sd` | 0.033 | 3 |
-| C158 | `results_summary/rq/rq3_reliance_comparison.csv` | `role=whole;split=test` | `min(share_of_positive_mass__topical)@8` | 0.81 | 2 |
+| C158 | `results_summary/rq/rq3_reliance_comparison.csv` | `role=whole;split=test` | `min(share_of_positive_mass__topical)@8` | 0.79 | 2 |
 | C159 | `results_summary/rq/rq3_reliance_comparison.csv` | `role=whole;split=test` | `max(share_of_positive_mass__topical)@8` | 1.00 | 2 |
 | C160 | `results_summary/rq/rq2_shared_top_words.csv` | `n_in_top_k=8` | `count()` | 3 | 0 |
 | C161 | `results_summary/rq/rq2_shared_top_words.csv` | `n_in_top_k=1` | `count()` | 73 | 0 |
@@ -286,48 +286,70 @@ data.
 | C258 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared;k=1;technique!=07_TWITTER-ROBERTA_FINE-TUNE;technique!=11_MULTI-CHECKPOINT_LOGIT-POOL` | `min(drop_minus_random_flagged)@6` | 0.016 | 3 |
 | C259 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared;k=1;technique!=07_TWITTER-ROBERTA_FINE-TUNE;technique!=11_MULTI-CHECKPOINT_LOGIT-POOL` | `max(drop_minus_random_flagged)@6` | 0.091 | 3 |
 | C260 | `results_summary/rq/rq3_stability.csv` | `technique=01_LOG-REG_TF-IDF` | `std_share_of_positive_mass__extremist_framing` | 0.000 | 3 |
-| C261 | `results_summary/rq/rq3_stability.csv` | `technique=01_LOG-REG_TF-IDF` | `std_share_of_positive_mass__topical` | 0.006 | 3 |
+| C261 | `results_summary/rq/rq3_stability.csv` | `technique=01_LOG-REG_TF-IDF` | `std_share_of_positive_mass__topical` | 0.007 | 3 |
 | C262 | `results_summary/rq/rq3_stability.csv` | `technique=02_LIN-SVM_TF-IDF` | `std_share_of_positive_mass__extremist_framing` | 0.000 | 3 |
 | C263 | `results_summary/rq/rq3_stability.csv` | `technique=02_LIN-SVM_TF-IDF` | `std_share_of_positive_mass__topical` | 0.015 | 3 |
 | C264 | `results_summary/rq/rq3_stability.csv` | `technique=03_SLP_TF-IDF` | `std_share_of_positive_mass__extremist_framing` | 0.000 | 3 |
-| C265 | `results_summary/rq/rq3_stability.csv` | `technique=03_SLP_TF-IDF` | `std_share_of_positive_mass__topical` | 0.023 | 3 |
+| C265 | `results_summary/rq/rq3_stability.csv` | `technique=03_SLP_TF-IDF` | `std_share_of_positive_mass__topical` | 0.024 | 3 |
 | C266 | `results_summary/rq/rq3_stability.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__extremist_framing` | 0.000 | 3 |
 | C267 | `results_summary/rq/rq3_stability.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__topical` | 0.019 | 3 |
 | C268 | `results_summary/rq/rq3_stability.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__extremist_framing` | 0.000 | 3 |
-| C269 | `results_summary/rq/rq3_stability.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__topical` | 0.003 | 3 |
+| C269 | `results_summary/rq/rq3_stability.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__topical` | 0.002 | 3 |
 | C270 | `results_summary/rq/rq3_stability.csv` | `technique=06_FASTTEXT-EMB_LOG-REG` | `std_share_of_positive_mass__extremist_framing` | 0.001 | 3 |
-| C271 | `results_summary/rq/rq3_stability.csv` | `technique=06_FASTTEXT-EMB_LOG-REG` | `std_share_of_positive_mass__topical` | 0.013 | 3 |
+| C271 | `results_summary/rq/rq3_stability.csv` | `technique=06_FASTTEXT-EMB_LOG-REG` | `std_share_of_positive_mass__topical` | 0.018 | 3 |
 | C272 | `results_summary/rq/rq3_stability.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE` | `std_share_of_positive_mass__extremist_framing` | 0.015 | 3 |
-| C273 | `results_summary/rq/rq3_stability.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE` | `std_share_of_positive_mass__topical` | 0.018 | 3 |
+| C273 | `results_summary/rq/rq3_stability.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE` | `std_share_of_positive_mass__topical` | 0.005 | 3 |
 | C274 | `results_summary/rq/rq3_stability.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `std_share_of_positive_mass__extremist_framing` | 0.007 | 3 |
-| C275 | `results_summary/rq/rq3_stability.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `std_share_of_positive_mass__topical` | 0.009 | 3 |
+| C275 | `results_summary/rq/rq3_stability.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `std_share_of_positive_mass__topical` | 0.008 | 3 |
+| C276 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=01_LOG-REG_TF-IDF;role=whole;split=test` | `share_of_positive_mass__slur` | 0.010 | 3 |
+| C277 | `results_summary/rq/rq3_stability.csv` | `technique=01_LOG-REG_TF-IDF` | `std_share_of_positive_mass__slur` | 0.001 | 3 |
+| C278 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=02_LIN-SVM_TF-IDF;role=whole;split=test` | `share_of_positive_mass__slur` | 0.010 | 3 |
+| C279 | `results_summary/rq/rq3_stability.csv` | `technique=02_LIN-SVM_TF-IDF` | `std_share_of_positive_mass__slur` | 0.001 | 3 |
+| C280 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=03_SLP_TF-IDF;role=whole;split=test` | `share_of_positive_mass__slur` | 0.000 | 3 |
+| C281 | `results_summary/rq/rq3_stability.csv` | `technique=03_SLP_TF-IDF` | `std_share_of_positive_mass__slur` | 0.001 | 3 |
+| C282 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;role=whole;split=test` | `share_of_positive_mass__slur` | 0.017 | 3 |
+| C283 | `results_summary/rq/rq3_stability.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__slur` | 0.000 | 3 |
+| C284 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;role=whole;split=test` | `share_of_positive_mass__slur` | 0.007 | 3 |
+| C285 | `results_summary/rq/rq3_stability.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__slur` | 0.001 | 3 |
+| C286 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;role=whole;split=test` | `share_of_positive_mass__slur` | 0.010 | 3 |
+| C287 | `results_summary/rq/rq3_stability.csv` | `technique=06_FASTTEXT-EMB_LOG-REG` | `std_share_of_positive_mass__slur` | 0.005 | 3 |
+| C288 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__slur` | 0.026 | 3 |
+| C289 | `results_summary/rq/rq3_stability.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE` | `std_share_of_positive_mass__slur` | 0.013 | 3 |
+| C290 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=test` | `share_of_positive_mass__slur` | 0.021 | 3 |
+| C291 | `results_summary/rq/rq3_stability.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `std_share_of_positive_mass__slur` | 0.001 | 3 |
+| C292 | `results_summary/rq/rq3_reliance_comparison.csv` | `role=whole;split=test` | `max(share_of_positive_mass__slur)@8` | 0.026 | 3 |
+| C293 | `results_summary/rq/rq2_category_shares.csv` | `category=slur;split=test` | `max(n_words)@12` | 1 | 0 |
+| C294 | `results_summary/rq/rq3_reliance_comparison.csv` | `role=whole;split=validation` | `max(share_of_positive_mass__slur)@8` | 0.052 | 3 |
+| C295 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `category=slur;split=test;post_set=own;measure=share_of_positive_mass` | `max(pct_low)@8` | 0.000 | 3 |
+| C296 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `category=slur;split=test;post_set=own;measure=share_of_positive_mass` | `min(pct_high)@8` | 0.015 | 3 |
+| C297 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `category=slur;split=test;post_set=own;measure=share_of_positive_mass` | `max(pct_high)@8` | 0.065 | 3 |
 | C300 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__extremist_framing` | 0.030 | 3 |
 | C301 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__identity_term` | 0.070 | 3 |
-| C302 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__topical` | 0.900 | 3 |
+| C302 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__topical` | 0.873 | 3 |
 | C303 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=validation` | `share_of_positive_mass__extremist_framing` | 0.000 | 3 |
 | C304 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=validation` | `share_of_positive_mass__identity_term` | 0.064 | 3 |
-| C305 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=validation` | `share_of_positive_mass__topical` | 0.936 | 3 |
+| C305 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=validation` | `share_of_positive_mass__topical` | 0.883 | 3 |
 | C306 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=A_anchor` | `share_of_positive_mass__extremist_framing` | 0.027 | 3 |
 | C307 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=A_anchor` | `share_of_positive_mass__identity_term` | 0.089 | 3 |
-| C308 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=A_anchor` | `share_of_positive_mass__topical` | 0.885 | 3 |
+| C308 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=A_anchor` | `share_of_positive_mass__topical` | 0.859 | 3 |
 | C309 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=B_dynabench` | `share_of_positive_mass__extremist_framing` | 0.000 | 3 |
 | C310 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=B_dynabench` | `share_of_positive_mass__identity_term` | 0.222 | 3 |
-| C311 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=B_dynabench` | `share_of_positive_mass__topical` | 0.778 | 3 |
+| C311 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=B_dynabench` | `share_of_positive_mass__topical` | 0.764 | 3 |
 | C312 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=C_hatebert` | `share_of_positive_mass__extremist_framing` | 0.014 | 3 |
 | C313 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=C_hatebert` | `share_of_positive_mass__identity_term` | 0.089 | 3 |
-| C314 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=C_hatebert` | `share_of_positive_mass__topical` | 0.897 | 3 |
+| C314 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=C_hatebert` | `share_of_positive_mass__topical` | 0.885 | 3 |
 | C315 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=E_twitter_large` | `share_of_positive_mass__extremist_framing` | 0.000 | 3 |
 | C316 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=E_twitter_large` | `share_of_positive_mass__identity_term` | 0.197 | 3 |
-| C317 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=E_twitter_large` | `share_of_positive_mass__topical` | 0.803 | 3 |
+| C317 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=E_twitter_large` | `share_of_positive_mass__topical` | 0.775 | 3 |
 | C318 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=member_mean` | `share_of_positive_mass__extremist_framing` | 0.010 | 3 |
 | C319 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=member_mean` | `share_of_positive_mass__identity_term` | 0.149 | 3 |
-| C320 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=member_mean` | `share_of_positive_mass__topical` | 0.841 | 3 |
+| C320 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=member_mean` | `share_of_positive_mass__topical` | 0.821 | 3 |
 | C321 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=test` | `share_of_positive_mass__extremist_framing` | 0.016 | 3 |
 | C322 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=test` | `share_of_positive_mass__identity_term` | 0.174 | 3 |
-| C323 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=test` | `share_of_positive_mass__topical` | 0.810 | 3 |
+| C323 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=test` | `share_of_positive_mass__topical` | 0.789 | 3 |
 | C324 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=validation` | `share_of_positive_mass__extremist_framing` | 0.030 | 3 |
 | C325 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=validation` | `share_of_positive_mass__identity_term` | 0.178 | 3 |
-| C326 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=validation` | `share_of_positive_mass__topical` | 0.792 | 3 |
+| C326 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=validation` | `share_of_positive_mass__topical` | 0.773 | 3 |
 | C327 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=identity_share_of_positive_mass;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `point` | -0.104 | 3 |
 | C328 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=identity_share_of_positive_mass;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `pct_low` | -0.140 | 3 |
 | C329 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=identity_share_of_positive_mass;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `pct_high` | -0.025 | 3 |
@@ -376,6 +398,15 @@ data.
 | C374 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=spearman_mean_abs_attribution;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `point` | -0.061 | 3 |
 | C375 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=spearman_mean_abs_attribution;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `pct_low` | -0.126 | 3 |
 | C376 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=spearman_mean_abs_attribution;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `pct_high` | 0.005 | 3 |
+| C377 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__slur` | 0.026 | 3 |
+| C378 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=validation` | `share_of_positive_mass__slur` | 0.052 | 3 |
+| C379 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=A_anchor` | `share_of_positive_mass__slur` | 0.026 | 3 |
+| C380 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=B_dynabench` | `share_of_positive_mass__slur` | 0.014 | 3 |
+| C381 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=C_hatebert` | `share_of_positive_mass__slur` | 0.012 | 3 |
+| C382 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;member=E_twitter_large` | `share_of_positive_mass__slur` | 0.027 | 3 |
+| C383 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=member_mean` | `share_of_positive_mass__slur` | 0.020 | 3 |
+| C384 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=test` | `share_of_positive_mass__slur` | 0.021 | 3 |
+| C385 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=validation` | `share_of_positive_mass__slur` | 0.019 | 3 |
 | C400 | `results_summary/rq/rq2_rq4_relation_inputs.csv` | `technique=01_LOG-REG_TF-IDF` | `n_fp_with_identity_terms` | 11 | 0 |
 | C401 | `results_summary/rq/rq4_identity_fpr.csv` | `technique=01_LOG-REG_TF-IDF` | `fpr_with_identity_terms` | 0.164 | 3 |
 | C402 | `results_summary/rq/rq2_rq4_relation_inputs.csv` | `technique=01_LOG-REG_TF-IDF` | `n_fp_without_identity_terms` | 18 | 0 |
@@ -668,4 +699,6 @@ data.
 | C817 | `results_summary/foundation/split_label_distribution.csv` | `split=train;label=0` | `split_count` | 2099 | 0 |
 | C818 | `results_summary/foundation/split_label_distribution.csv` | `split=test;label=0` | `split_count` | 450 | 0 |
 | C819 | `results_summary/rq/report_cards/01_LOG-REG_TF-IDF.json` | `-` | `wp7_counterfactual.rows.[population=non_extremist].n_flagged_original` | 11 | 0 |
-| C820 | `results_summary/rq/rq2_lexicon_coverage.csv` | `*` | `sum(n_multi_word_unmatchable)@3` | 0 | 0 |
+| C820 | `results_summary/rq/rq2_lexicon_coverage.csv` | `*` | `sum(n_multi_word_unmatchable)@3` | 48 | 0 |
+| C821 | `results_summary/rq/rq2_lexicon_coverage.csv` | `category=slur` | `n_multi_word_unmatchable` | 9 | 0 |
+| C822 | `results_summary/rq/rq2_lexicon_coverage.csv` | `category=extremist_framing` | `n_multi_word_unmatchable` | 39 | 0 |

@@ -186,9 +186,7 @@
         "top_k": 50
       }
     ],
-    "empty_lexicon_categories": [
-      "slur"
-    ],
+    "empty_lexicon_categories": [],
     "least_agreeing_by_jaccard": "07_TWITTER-ROBERTA_FINE-TUNE",
     "least_agreeing_by_spearman": "06_FASTTEXT-EMB_LOG-REG",
     "most_agreeing_by_jaccard": "01_LOG-REG_TF-IDF",
@@ -208,7 +206,7 @@
         "word": "shoot"
       },
       {
-        "category": "topical",
+        "category": "slur",
         "mean_attribution": 0.201282,
         "support": 2,
         "word": "nigger"

@@ -128,6 +128,13 @@ Conventions:
   Speech in Text. *ACM Computing Surveys* 51(4). DOI 10.1145/3232676.
   *Relation:* the second standard survey. Its discussion of definitions
   supports the scoping in the introduction.
+* **Bassignana, E., Basile, V., Patti, V. (2018).** Hurtlex: A Multilingual
+  Lexicon of Words to Hurt. *Fifth Italian Conference on Computational
+  Linguistics (CLiC-it 2018)*, CEUR Workshop Proceedings Vol-2253, paper 49.
+  Checked against the CEUR-WS volume page (ceur-ws.org/Vol-2253), 2026-11-05.
+  *Relation:* the source of `data/lexicons/slurs.txt` (English 1.2,
+  conservative level, categories `ps` and `om`; CC BY-NC-SA 4.0), which
+  defines the RQ2 slur category.
 * **Founta, A.-M., Djouvas, C., Chatzakou, D., Leontiadis, I., Blackburn, J.,
   Stringhini, G., et al. (2018).** Large Scale Crowdsourcing and
   Characterization of Twitter Abusive Behavior. *ICWSM 2018*.

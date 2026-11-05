@@ -351,9 +351,10 @@ techniques rather than describe one. Read them in `results_summary/rq/`
 (`docs/RESULTS_SCHEMA.md` gives every column).
 
 The categories are the four in `data/lexicons/`: extremist framing, identity
-term, slur and topical. The slur list is empty today, so slurs count as
-topical (`RESEARCH_PLAN.md`, WP3). Each card says so in its RQ2 section, read
-from the lexicons when the card is written.
+term, slur and topical. The lists were frozen at WP3 (2026-11-04; slurs
+from HurtLex, see `data/lexicons/README.md`). If a category's list is empty,
+for example after a lexicon change, the card says so in its RQ2 section,
+read from the lexicons when the card is written.
 
 ## Limits
 
