@@ -202,6 +202,33 @@ class TestProbeRole:
                 imported.add(node.module.split(".")[0])
         assert imported & local_modules == {"notebook_kit"}
 
+    def test_notebook_13_serves_inputs_as_notebook_11_and_the_loaders_do(self):
+        """Notebook 13 reproduces 11's text normalisation; pin it to model_loaders.py."""
+        import re
+
+        import model_loaders as ml
+
+        path = TOOLS_DIR.parent / "notebooks" / f"{PROBE_TECHNIQUE}.ipynb"
+        cells = json.loads(path.read_text())["cells"]
+        source = "\n".join("".join(c["source"]) for c in cells if c["cell_type"] == "code")
+        for name, compiled in (
+            ("URL_RE", ml.ENSEMBLE_URL_RE),
+            ("USER_RE", ml.ENSEMBLE_USER_RE),
+            ("WHITESPACE_RE", ml.ENSEMBLE_WHITESPACE_RE),
+        ):
+            match = re.search(rf'{name} = re\.compile\(r"([^"]+)"\)', source)
+            assert match and match.group(1) == compiled.pattern, name
+        for needle in (
+            'html.unescape',
+            'unicodedata.normalize("NFKC"',
+            'USER_RE.sub("@user"',
+            'URL_RE.sub("http"',
+            "truncation=True, padding=True, max_length=int(spec[\"max_length\"])",
+            "torch.softmax(output.logits.float(), dim=-1)[:, 1]",
+            "torch.softmax(logits.float(), dim=-1)[:, 1]",
+        ):
+            assert needle in source, needle
+
     def test_lexicon_copy_reads_the_identity_list_like_the_tool(self):
         import lexicons
 
