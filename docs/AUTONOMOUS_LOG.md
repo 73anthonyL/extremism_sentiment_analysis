@@ -21,6 +21,35 @@ dataset text to an external API is listed under "Blocked" and not attempted.
   becomes the SHAP pass rule; dropping `--primed` from the CLAUDE.md
   pre-commit list now that notebooks carry outputs.
 
+## 2026-11-04 — Audit chain covers the new analyses (WP8 extension)
+
+Branch `research/audit-new-analyses`, merged into `research/integration`.
+`tools/audit.py run` gains stages for `identity_sensitivity.py` (fpr,
+lexicon-gaps), `same_post_stability.py`, `faithfulness.py` and
+`rq2_rq4_relation.py`. The model-loading stages run only with
+`--with-perturbation` (`--with-counterfactual` kept as an alias); a skip is
+printed and recorded as SKIP, never OK, and a requested perturbation stage
+that skips makes the run exit 2. Report cards gain an RQ2-support
+(faithfulness) section and ambiguous-term sensitivity rows for RQ4 and WP7.
+`lexicon-gaps` now merges by technique instead of overwriting.
+
+Adversarial review found no wrong number on any card but eleven weak
+staleness guards (shared population and Holm family not checked, no locked
+threshold check on the WP7 tables, a doc claiming "not run" after a skip,
+and others). All eleven were fixed with a refusal test each, except that the
+ambiguous-term list itself cannot be re-checked without post text.
+
+Checks: all five pass (404 tests). `audit.py run` on 01 without the flag
+and `audit.py report --all` leave every committed file byte-identical.
+
+Known leftover: the eight committed `identity_counterfactual_test.json`
+files carry an older wording of the `holm_adjusted_p` note; a full
+`--with-perturbation` run rewrites them (numbers unchanged).
+
+Next: bootstrap uncertainty for the descriptive RQ2/RQ3 numbers (category
+shares, same-post single-post share, split agreement, RQ2-RQ4 rho), which
+the plan repeatedly marks "one run per split, no uncertainty estimate".
+
 ## 2026-11-04 — Integrate the five swarm lanes
 
 Branch `research/integration`, cut from `framework/audit-entry-point`
