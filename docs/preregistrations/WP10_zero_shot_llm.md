@@ -46,7 +46,7 @@ written to `external/` only and recorded with `--contains-text`.
 | Parameters | 4.0 B | 3.8 B |
 | Licence | Apache-2.0 (licence file at that revision) | MIT (licence file at that revision) |
 | Gated | No | No |
-| Minimum `transformers` | 4.51 (`qwen3` architecture) | 4.49 (native `phi3` class; no remote code) |
+| Minimum `transformers` | 4.51 (`qwen3` architecture) | 4.51 (native `phi3` class, no remote code; `logits_to_keep`) |
 
 Both licences permit research use, modification and publication of results
 without restriction beyond attribution; neither model is gated, so no
