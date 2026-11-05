@@ -891,5 +891,193 @@ and cite it before submission.
    or hypothesis status for C3 item 6.
 7. Redact slurs in any report-card figure.
 8. Upload and record external assets before submission.
-9. Citations: place the related-work entries (`docs/RELATED_WORK.md`) in the
-    Results prose; none are cited in this draft.
+9. Citations: 55 entries of `docs/RELATED_WORK.md` are now cited
+    author-year and listed under References. Gaps, with no entry in
+    `docs/RELATED_WORK.md` yet: TF-IDF, logistic regression, linear SVMs, the
+    perceptron, FastText embeddings and logit pooling (technique list);
+    the Wilcoxon signed-rank test, Fisher's exact test and the percentile
+    bootstrap (sections 6 to 8); the dataset's collection and labelling
+    source (unverified). Add verified entries there before citing them, and
+    cite the exact `shap` version from `requirements-lock.txt` in the
+    methods section.
+
+## References
+
+Only the entries cited above, copied from `docs/RELATED_WORK.md`, where each
+was checked against a primary record on 2026-11-04.
+
+* **Adebayo, J., Gilmer, J., Muelly, M., Goodfellow, I., Hardt, M., Kim, B.
+  (2018).** Sanity Checks for Saliency Maps. *NeurIPS 2018*.
+  arXiv:1810.03292.
+* **Alain, G., Bengio, Y. (2017).** Understanding intermediate layers using
+  linear classifier probes. *ICLR 2017* (listed by MLAnthology. Whether it
+  was the workshop or main track was not confirmed). arXiv:1610.01644.
+* **Aldera, S., Emam, A., Al-Qurishi, M., Alrubaian, M., Alothaim, A. (2021).**
+  Online Extremism Detection in Textual Content: A Systematic Literature
+  Review. *IEEE Access* 9. DOI 10.1109/ACCESS.2021.3064178.
+* **Antypas, D., Camacho-Collados, J. (2023).** Robust Hate Speech Detection
+  in Social Media: A Cross-Dataset Empirical Evaluation. *WOAH 2023*,
+  pp. 231-242. DOI 10.18653/v1/2023.woah-1.25.
+* **Atanasova, P., Simonsen, J. G., Lioma, C., Augenstein, I. (2020).** A
+  Diagnostic Study of Explainability Techniques for Text Classification.
+  *EMNLP 2020*. ACL Anthology 2020.emnlp-main.263. arXiv:2009.13295.
+* **Attanasio, G., Nozza, D., Hovy, D., Baralis, E. (2022).** Entropy-based
+  Attention Regularization Frees Unintended Bias Mitigation from Lists.
+  *Findings of ACL 2022*. DOI 10.18653/v1/2022.findings-acl.88.
+* **Barbieri, F., Camacho-Collados, J., Espinosa-Anke, L., Neves, L.
+  (2020).** TweetEval: Unified Benchmark and Comparative Evaluation for Tweet
+  Classification. *Findings of EMNLP 2020*.
+  DOI 10.18653/v1/2020.findings-emnlp.148.
+* **Basile, V., Bosco, C., Fersini, E., Nozza, D., Patti, V., Rangel Pardo,
+  F. M., et al. (2019).** SemEval-2019 Task 5: Multilingual Detection of Hate
+  Speech Against Immigrants and Women in Twitter (HatEval). *SemEval 2019*.
+  DOI 10.18653/v1/S19-2007.
+* **Borkan, D., Dixon, L., Sorensen, J., Thain, N., Vasserman, L. (2019).**
+  Nuanced Metrics for Measuring Unintended Bias with Real Data for Text
+  Classification. *Companion Proceedings of WWW 2019*.
+  DOI 10.1145/3308560.3317593. arXiv:1903.04561.
+* **Caselli, T., Basile, V., Mitrović, J., Granitzer, M. (2021).** HateBERT:
+  Retraining BERT for Abusive Language Detection in English. *WOAH 2021*.
+  ACL Anthology 2021.woah-1.3. arXiv:2010.12472.
+* **Davidson, T., Warmsley, D., Macy, M., Weber, I. (2017).** Automated Hate
+  Speech Detection and the Problem of Offensive Language. *ICWSM 2017*.
+  arXiv:1703.04009.
+* **Davidson, T., Bhattacharya, D., Weber, I. (2019).** Racial Bias in Hate
+  Speech and Abusive Language Detection Datasets. *Third Workshop on Abusive
+  Language Online*. DOI 10.18653/v1/W19-3504.
+* **DeYoung, J., Jain, S., Rajani, N. F., Lehman, E., Xiong, C., Socher, R.,
+  et al. (2020).** ERASER: A Benchmark to Evaluate Rationalized NLP Models.
+  *ACL 2020*. ACL Anthology 2020.acl-main.408. arXiv:1911.03429.
+* **Dietterich, T. G. (1998).** Approximate Statistical Tests for Comparing
+  Supervised Classification Learning Algorithms. *Neural Computation* 10(7).
+  DOI 10.1162/089976698300017197.
+* **Ding, S., Koehn, P. (2021).** Evaluating Saliency Methods for Neural
+  Language Models. *NAACL-HLT 2021*. DOI 10.18653/v1/2021.naacl-main.399.
+* **Dixon, L., Li, J., Sorensen, J., Thain, N., Vasserman, L. (2018).**
+  Measuring and Mitigating Unintended Bias in Text Classification. *AIES
+  2018*. DOI 10.1145/3278721.3278729.
+* **Fernandez, M., Asif, M., Alani, H. (2018).** Understanding the Roots of
+  Radicalisation on Twitter. *Proceedings of the 10th ACM Conference on Web
+  Science*. DOI 10.1145/3201064.3201082.
+* **Ferrara, E., Wang, W.-Q., Varol, O., Flammini, A., Galstyan, A. (2016).**
+  Predicting Online Extremism, Content Adopters, and Interaction Reciprocity.
+  *SocInfo 2016*, LNCS. DOI 10.1007/978-3-319-47874-6_3.
+* **Fortuna, P., Nunes, S. (2018).** A Survey on Automatic Detection of Hate
+  Speech in Text. *ACM Computing Surveys* 51(4). DOI 10.1145/3232676.
+* **Founta, A.-M., Djouvas, C., Chatzakou, D., Leontiadis, I., Blackburn, J.,
+  Stringhini, G., et al. (2018).** Large Scale Crowdsourcing and
+  Characterization of Twitter Abusive Behavior. *ICWSM 2018*.
+  arXiv:1802.00393.
+* **Gaikwad, M., Ahirrao, S., Phansalkar, S., Kotecha, K. (2021).** Online
+  Extremism Detection: A Systematic Literature Review With Emphasis on
+  Datasets, Classification Techniques, Validation Methods, and Tools.
+  *IEEE Access* 9. DOI 10.1109/ACCESS.2021.3068313.
+* **Garg, S., Perot, V., Limtiaco, N., Taly, A., Chi, E. H., Beutel, A.
+  (2019).** Counterfactual Fairness in Text Classification through
+  Robustness. *AIES 2019*. DOI 10.1145/3306618.3317950. arXiv:1809.10610.
+* **Hewitt, J., Liang, P. (2019).** Designing and Interpreting Probes with
+  Control Tasks. *EMNLP-IJCNLP 2019*. DOI 10.18653/v1/D19-1275.
+* **Holm, S. (1979).** A Simple Sequentially Rejective Multiple Test
+  Procedure. *Scandinavian Journal of Statistics* 6(2), 65-70. JSTOR 4615733.
+* **Hooker, S., Erhan, D., Kindermans, P.-J., Kim, B. (2019).** A Benchmark
+  for Interpretability Methods in Deep Neural Networks (ROAR). *NeurIPS 2019*
+  (Advances in Neural Information Processing Systems 32), 9737-9748.
+  arXiv:1806.10758.
+* **Jacovi, A., Goldberg, Y. (2020).** Towards Faithfully Interpretable NLP
+  Systems: How Should We Define and Evaluate Faithfulness? *ACL 2020*.
+  ACL Anthology 2020.acl-main.386. arXiv:2004.03685.
+* **Janzing, D., Minorics, L., Blöbaum, P. (2020).** Feature relevance
+  quantification in explainable AI: A causal problem. *AISTATS 2020*, PMLR
+  108, 2907-2916. arXiv:1910.13413.
+* **Kaushik, D., Hovy, E., Lipton, Z. C. (2020).** Learning the Difference
+  that Makes a Difference with Counterfactually-Augmented Data. *ICLR 2020*.
+  arXiv:1909.12434.
+* **Kennedy, B., Jin, X., Mostafazadeh Davani, A., Dehghani, M., Ren, X.
+  (2020).** Contextualizing Hate Speech Classifiers with Post-hoc
+  Explanation. *ACL 2020*. ACL Anthology 2020.acl-main.483.
+  arXiv:2005.02439.
+* **Kokalj, E., Škrlj, B., Lavrač, N., Pollak, S., Robnik-Šikonja, M.
+  (2021).** BERT meets Shapley: Extending SHAP Explanations to
+  Transformer-based Classifiers. *EACL Hackashop on News Media Content
+  Analysis and Automated Report Generation*, pp. 16-21. ACL Anthology
+  2021.hackashop-1.3.
+* **Krishna, S., Han, T., Gu, A., Wu, S., Jabbari, S., Lakkaraju, H.
+  (2024).** The Disagreement Problem in Explainable Machine Learning: A
+  Practitioner's Perspective. *Transactions on Machine Learning Research*
+  (2024). OpenReview jESY2WTZCe. arXiv:2202.01602.
+* **Kumar, I. E., Venkatasubramanian, S., Scheidegger, C., Friedler, S.
+  (2020).** Problems with Shapley-value-based explanations as feature
+  importance measures. *ICML 2020*, PMLR 119. arXiv:2002.11097.
+* **Liu, Y., Ott, M., Goyal, N., Du, J., Joshi, M., Chen, D., et al.
+  (2019).** RoBERTa: A Robustly Optimized BERT Pretraining Approach.
+  arXiv preprint arXiv:1907.11692.
+* **Liu, E. Z., Haghgoo, B., Chen, A. S., Raghunathan, A., Koh, P. W.,
+  Sagawa, S., et al. (2021).** Just Train Twice: Improving Group Robustness
+  without Training Group Information (JTT). *ICML 2021*, PMLR 139.
+  arXiv:2107.09044.
+* **Lundberg, S. M., Lee, S.-I. (2017).** A Unified Approach to Interpreting
+  Model Predictions (SHAP). *NeurIPS 2017* (Advances in Neural Information
+  Processing Systems 30). arXiv:1705.07874.
+* **Mathew, B., Saha, P., Yimam, S. M., Biemann, C., Goyal, P.,
+  Mukherjee, A. (2021).** HateXplain: A Benchmark Dataset for Explainable
+  Hate Speech Detection. *AAAI 2021*, 35(17), 14867-14875.
+  DOI 10.1609/aaai.v35i17.17745. arXiv:2012.10289.
+* **McNemar, Q. (1947).** Note on the Sampling Error of the Difference
+  Between Correlated Proportions or Percentages. *Psychometrika* 12(2).
+  DOI 10.1007/BF02295996.
+* **Owen, G. (1977).** Values of Games with a Priori Unions. *Lecture Notes in Economics and
+  Mathematical Systems*, pp. 76-88. DOI 10.1007/978-3-642-45494-3_7.
+* **Prabhakaran, V., Hutchinson, B., Mitchell, M. (2019).** Perturbation
+  Sensitivity Analysis to Detect Unintended Model Biases. *EMNLP-IJCNLP
+  2019*. DOI 10.18653/v1/D19-1578.
+* **Ribeiro, M. T., Wu, T., Guestrin, C., Singh, S. (2020).** Beyond
+  Accuracy: Behavioral Testing of NLP Models with CheckList. *ACL 2020*.
+  DOI 10.18653/v1/2020.acl-main.442.
+* **Röttger, P., Vidgen, B., Nguyen, D., Waseem, Z., Margetts, H.,
+  Pierrehumbert, J. (2021).** HateCheck: Functional Tests for Hate Speech
+  Detection Models. *ACL-IJCNLP 2021*. DOI 10.18653/v1/2021.acl-long.4.
+* **Sagawa, S., Koh, P. W., Hashimoto, T. B., Liang, P. (2020).**
+  Distributionally Robust Neural Networks for Group Shifts: On the
+  Importance of Regularization for Worst-Case Generalization (Group DRO).
+  *ICLR 2020*. arXiv:1911.08731.
+* **Saif, H., Dickinson, T., Kastler, L., Fernandez, M., Alani, H. (2017).**
+  A Semantic Graph-Based Approach for Radicalisation Detection on Social
+  Media. *ESWC 2017*, LNCS. DOI 10.1007/978-3-319-58068-5_35.
+* **Sap, M., Card, D., Gabriel, S., Choi, Y., Smith, N. A. (2019).** The
+  Risk of Racial Bias in Hate Speech Detection. *ACL 2019*.
+  DOI 10.18653/v1/P19-1163.
+* **Sap, M., Gabriel, S., Qin, L., Jurafsky, D., Smith, N. A., Choi, Y.
+  (2020).** Social Bias Frames: Reasoning about Social and Power
+  Implications of Language. *ACL 2020*. DOI 10.18653/v1/2020.acl-main.486.
+* **Schmidt, A., Wiegand, M. (2017).** A Survey on Hate Speech Detection
+  using Natural Language Processing. *SocialNLP Workshop (EACL 2017)*.
+  DOI 10.18653/v1/W17-1101.
+* **Shapley, L. S. (1953).** A Value for n-Person Games. In *Contributions
+  to the Theory of Games II* (Annals of Mathematics Studies 28).
+  DOI 10.1515/9781400881970-018.
+* **Slack, D., Hilgard, S., Jia, E., Singh, S., Lakkaraju, H. (2020).**
+  Fooling LIME and SHAP: Adversarial Attacks on Post hoc Explanation Methods.
+  *AIES 2020*. DOI 10.1145/3375627.3375830.
+* **Sundararajan, M., Najmi, A. (2020).** The Many Shapley Values for Model
+  Explanation. *ICML 2020*, PMLR 119. arXiv:1908.08474.
+* **Torregrosa, J., Bello-Orgaz, G., Martínez-Cámara, E., Del Ser, J.,
+  Camacho, D. (2023).** A survey on extremism analysis using natural language
+  processing: definitions, literature review, trends and challenges.
+  *Journal of Ambient Intelligence and Humanized Computing* 14(8),
+  9869-9905 (published online 2022).
+  DOI 10.1007/s12652-021-03658-z.
+* **Turpin, M., Michael, J., Perez, E., Bowman, S. R. (2023).** Language
+  Models Don't Always Say What They Think: Unfaithful Explanations in
+  Chain-of-Thought Prompting. *NeurIPS 2023*. arXiv:2305.04388.
+* **Vidgen, B., Derczynski, L. (2020).** Directions in abusive language
+  training data, a systematic review: Garbage in, garbage out. *PLOS ONE*
+  15(12). DOI 10.1371/journal.pone.0243300.
+* **Vidgen, B., Thrush, T., Waseem, Z., Kiela, D. (2021).** Learning from
+  the Worst: Dynamically Generated Datasets to Improve Online Hate Detection.
+  *ACL 2021*. DOI 10.18653/v1/2021.acl-long.132.
+* **Waseem, Z., Hovy, D. (2016).** Hateful Symbols or Hateful People?
+  Predictive Features for Hate Speech Detection on Twitter. *NAACL Student
+  Research Workshop*. DOI 10.18653/v1/N16-2013.
+* **Zampieri, M., Malmasi, S., Nakov, P., Rosenthal, S., Farra, N.,
+  Kumar, R. (2019).** Predicting the Type and Target of Offensive Posts in
+  Social Media (OLID). *NAACL 2019*. DOI 10.18653/v1/N19-1144.
