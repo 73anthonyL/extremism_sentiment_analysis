@@ -22,7 +22,8 @@ analysis of its own; every number comes from a tool described in
 | At least one whole-model word-level SHAP run on test posts | `results_summary/<TECHNIQUE>/attributions/<run_id>.csv` + `<run_id>.json`, `split: test`, `member: null` | yes | `attributions.load_run` |
 | At least one whole-model word-level SHAP run on validation posts | as above, `split: validation` | yes | `attributions.load_run` |
 | Coefficients over words, for a linear model | `attributions/coefficients.csv` (`word, coefficient`) | no; if present it must be valid | `validate_shap.load_coefficients` |
-| A restorable `predict_proba_texts` | `external/<TECHNIQUE>/weights/` (untracked) | no; needed only for the identity counterfactual and curated examples | `model_loaders.detect_family`, then verified against the test artifact |
+| A restorable `predict_proba_texts` | `external/<TECHNIQUE>/weights/` (untracked) | no; needed only for `--with-perturbation` (the identity counterfactuals and the faithfulness test) and curated examples | `model_loaders.detect_family`, then verified against the test artifact |
+| Per-post attributions of the whole-model runs (`row_id, position, token, attribution`) | `external/<TECHNIQUE>/attributions_local/<run_id>.csv` (untracked; written by `nk.export_attribution_run`) | no; needed only for the faithfulness test and the same-post tables | each tool re-aggregates the file and refuses it unless it reproduces the committed word table |
 
 Without the two attribution runs a technique cannot take part in RQ2 to RQ4,
 whatever its accuracy, and `check-contract` says so.
@@ -34,17 +35,22 @@ whatever its accuracy, and `check-contract` says so.
 paper's families: its McNemar pairs go to
 `rq/rq1_mcnemar_pairs_outside_comparison.csv` and its word-agreement pairs to
 `rq/rq2_word_agreement_pairs_outside_comparison.csv`, each Holm-corrected over
-its own pairs only; its counterfactual rows are a Holm family of their own; and
+its own pairs only; its counterfactual rows (WP7 and the ambiguous-term
+sensitivity) and its faithfulness rows are each a Holm family of their own; and
 it is left out of every rendered table in `README.md` and the docs. Its own
-rows in the per-technique tables (category shares, RQ3 stability, RQ4 FPR) are
-added, which changes no other technique's numbers. Its card says it is outside
-the comparison.
+rows in the per-technique tables (category shares, RQ3 stability, RQ4 FPR, the
+ambiguous-term FPR, the lexicon-gap candidates) are added, which changes no
+other technique's numbers. Two analyses have no outside family and skip it:
+`same_post_stability.py` defines the common post set over the comparison, and
+`rq2_rq4_relation.py` ranks the comparison techniques only. Its card says it
+is outside the comparison.
 
 Setting `in_comparison: true` adds the technique to the paper's comparison, and
 that changes other techniques' results. The Holm family grows (from 28 pairs
 for eight techniques to 36 for nine), so pairs near alpha can flip in the other
 cards. The error-overlap and shared-top-word counts change too, and so do the
-counterfactual Holm p values. Only do it as a decision recorded in
+counterfactual and faithfulness Holm p values, the common post set of the
+same-post tables and the RQ2-RQ4 rank relation. Only do it as a decision recorded in
 `docs/RESEARCH_PLAN.md`. Then recheck the prose claims that quote these
 numbers, because `render_tables.py --check` cannot see them:
 `RESEARCH_PLAN.md` section 3 (the McNemar bullet, "Seven of 28 pairs", and
@@ -144,26 +150,69 @@ one that fails, naming it:
 3. `categorize_attributions.py --technique T`
 4. `compare_reliance.py`
 5. `identity_fpr.py --technique T`
-6. `mcnemar_pairs.py`
-7. `word_agreement.py`
-8. `identity_counterfactual.py --technique T`, only with `--with-counterfactual`
-   (pass `--device` and `--sequential-checkpoints` through for large ensembles)
-9. `refresh_manifest`: when the chain wrote files into the technique folder
-   (coefficient checks, category shares, identity-FPR and counterfactual
-   JSONs) and a `run_manifest.json` exists, the manifest is refreshed for
-   them. The folder matched its manifest at stage 1, so only tool outputs are
-   recorded. When nothing changed the manifest is left alone.
-10. `render_tables.py --write`, whose stage line says which regions it rewrote
-11. `audit.py report` for every technique, because a technique in the
+6. `identity_sensitivity.py fpr --technique T`: RQ4 again without the
+   non-extremist posts whose only identity matches are ambiguous words
+   (colour words, interjections; the list is declared in the tool, the
+   lexicon is unchanged). Tells you whether the RQ4 ratio rests on posts
+   that may not mention a group at all.
+7. `mcnemar_pairs.py`
+8. `word_agreement.py`
+9. `identity_sensitivity.py lexicon-gaps --technique T`: words in the
+   technique's top 50 that look like identity references but are not in the
+   identity lexicon (plurals, hashtags, group nouns). A list for human review
+   before trusting the RQ2 identity share; nothing is added to the lexicon.
+10. `same_post_stability.py`: support, category shares and test-versus-
+    validation agreement recomputed on the posts every comparison technique
+    explained, so a 450-post run and a 200-post run are compared on the same
+    posts. Skipped, with the reason, when any comparison technique's per-post
+    files are absent, and for a technique outside the comparison.
+11. `identity_counterfactual.py --technique T` (WP7)
+12. `identity_sensitivity.py counterfactual --technique T`: the WP7 removal on
+    the posts that keep an unambiguous identity match.
+13. `faithfulness.py --technique T`: deletes each post's top-k words by
+    positive attribution and compares the drop in p(extremist) with deleting as
+    many random words. Tells you whether the RQ2 word list names words the
+    model needs, which every cross-model RQ2 claim assumes. Skipped, with the
+    reason, when the technique's or any comparison technique's per-post test
+    file is absent (the `shared` population is the posts they all explained),
+    or when the whole-model test run is not named `shap-partition_test_seed30`.
+14. `rq2_rq4_relation.py`: Spearman between the comparison techniques' RQ2
+    identity share and RQ4 FPR ratio, with exact permutation p. Skipped for a
+    technique outside the comparison, and while the WP7 or same-post table
+    lacks a comparison technique (the relation table is then stale, and the
+    stage line says so).
+15. `refresh_manifest`: when the chain wrote files into the technique folder
+    (coefficient checks, category shares, identity-FPR, counterfactual and
+    faithfulness JSONs) and a `run_manifest.json` exists, the manifest is
+    refreshed for them. The folder matched its manifest at stage 1, so only
+    tool outputs are recorded. When nothing changed the manifest is left alone.
+16. `render_tables.py --write`, whose stage line says which regions it rewrote
+17. `audit.py report` for every technique, because a technique in the
     comparison changes the others' RQ1 and RQ2 rows.
 
+Stages 11 to 13 restore the predictor from `external/<TECHNIQUE>/` and
+re-score edited test posts, so they run only with `--with-perturbation`
+(`--with-counterfactual` is an alias); without it they print `SKIP ... not
+requested`. With it, `check-contract` must find a restorable predictor. They
+run one after another, one model in memory at a time; pass `--device` and
+`--sequential-checkpoints` through for large ensembles. Re-scoring frozen
+models at their locked thresholds selects nothing, so it is a perturbation
+analysis, not a second test evaluation.
+
 Any error in a stage, including an unexpected exception, stops the chain with
-`STOPPED at stage <name>`.
+`STOPPED at stage <name>`. A stage whose inputs are absent does not fail and
+does not pass: it prints `SKIP  <name>: <reason>`, and the last line lists
+every skipped stage. A table such a stage would have written is left as it
+was; the report card then says "not run" for faithfulness and WP7.
 
 The chain is deterministic: on the committed state, `run --technique
 01_LOG-REG_TF-IDF` rewrites every table, coefficient check and card byte for
-byte. The coefficient checks cover every whole-model run of 01 and 06 (test and
-validation); all four are committed.
+byte. With `--with-perturbation` every table and card is reproduced too; the
+one difference is the `holm_adjusted_p` note in
+`identity_counterfactual_test.json`, whose wording the tool changed after the
+committed WP7 runs (the numbers are identical). The coefficient checks cover
+every whole-model run of 01 and 06 (test and validation); all four are
+committed.
 
 ### If the SHAP check fails
 
@@ -210,9 +259,13 @@ python3 -m pytest tools/tests/ -q
 
 `report` reads committed files only. It refuses to write any card when an RQ
 table has no row for a technique, a pair table does not pair it with every
-other technique in the comparison, or `coefficients.csv` exists without a
-check file for each whole-model run. Each means the inputs are stale; rerun
-the chain rather than reporting a partial card.
+other technique in the comparison, `coefficients.csv` exists without a check
+file for each whole-model run, the ambiguous-term FPR table's `full_lexicon`
+row differs from `rq4_identity_fpr.csv`, or `faithfulness_test.json` and the
+technique's rows in `rq2_faithfulness.csv` do not both exist and agree (or
+were computed at a threshold other than the locked one). Each means the inputs
+are stale; rerun the chain rather than reporting a partial card. A technique
+with neither faithfulness file reads "not run".
 
 ## Reading a report card
 
@@ -237,15 +290,35 @@ numbers in `<TECHNIQUE>.json`. Each section names the file it was read from.
   with every other technique: Spearman over shared words, and Jaccard over the
   top-50 positive words. The most and least agreeing techniques are given for
   each metric, since the two can disagree.
+* **RQ2 support (faithfulness).** If the deletion test was run: per k, on the
+  `shared` posts, the mean drop in p(extremist) when the top-k words are
+  deleted, the same for k random words, their difference (the margin), the
+  margin on flagged posts, the share of posts where top-k beats random, the
+  drop over the summed SHAP of the deleted words, and the Holm-adjusted
+  Wilcoxon p; the card names the Holm family. A positive margin with a small
+  p means the word list names words the model needs, not that the model is
+  right to need them. The all-post means are capped by how close the model's
+  probabilities sit to 0, so compare techniques on the flagged-post margin,
+  and only descriptively. Otherwise "not run".
 * **RQ3.** Agreement between the whole-model runs on different post samples
   (the card names the splits).
   Low overlap means per-word claims about this model are fragile.
 * **RQ4.** False-positive rate on non-extremist test posts with and without an
   identity term, the ratio, Fisher's exact p and the group sizes. This is a
-  correlation.
+  correlation. A second line gives the same figures after dropping the posts
+  whose only identity matches are ambiguous words; if the ratio holds there,
+  it does not rest on colour words or interjections.
 * **WP7.** If the counterfactual was run: the mean drop in p(extremist) when
   identity terms are removed, the flips at the locked threshold, and the Holm
-  p values. This is the intervention behind RQ4. Otherwise "not run".
+  p values. This is the intervention behind RQ4. Rows marked `unambiguous
+  match` repeat it on the posts that keep an unambiguous identity match
+  (their Holm family is the sensitivity table's own rows). Otherwise "not
+  run".
+
+The lexicon-gap candidates, the same-post tables and the RQ2-RQ4 relation
+are not on the card: the first is a review list, the other two compare
+techniques rather than describe one. Read them in `results_summary/rq/`
+(`docs/RESULTS_SCHEMA.md` gives every column).
 
 The categories are the four in `data/lexicons/`: extremist framing, identity
 term, slur and topical. The slur list is empty today, so slurs count as
