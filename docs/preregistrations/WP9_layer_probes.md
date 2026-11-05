@@ -74,8 +74,8 @@ Each post gets three binary targets.
   `data/lexicons/identity_terms.txt` in the post text, with RQ4's matching
   rule (`tools/lexicons.py::phrase_pattern`: case-insensitive, non-word
   boundaries, multi-word entries kept, every entry including the ambiguous
-  ones, as in RQ4's primary analysis). The kit carries a copy of that rule,
-  pinned to the tool by a test on every dataset post.
+  ones, as in RQ4's primary analysis). `tools/probe_kit.py` carries a copy of
+  that rule, pinned to the tool by a test on every dataset post.
 * `control_word_type`: a control task after Hewitt and Liang (2019), adapted
   from tokens to posts. Each lower-cased word type (the kit's word split on
   `\W+`) gets a pseudo-random bit from SHA-256 of `"30|<word>"`. A post's
@@ -171,8 +171,8 @@ test posts with `identity_term_present`, split by label
 
 ## Outputs
 
-Text-free tables written by the notebook through the kit
-(`nk.export_probe_tables`), and checked locally by
+Text-free tables written by the notebook through the probe kit
+(`tools/probe_kit.py::export_probe_tables`), and checked locally by
 `tools/layer_probes_report.py --check`:
 
 * `results_summary/rq/rq3_layer_probes.csv`: model run x layer x task x

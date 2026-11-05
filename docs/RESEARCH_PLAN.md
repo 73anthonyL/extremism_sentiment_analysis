@@ -761,6 +761,29 @@ non-extremist population is small (23 posts, 2 to 7 flagged), so flip
 counts there are descriptive. Word-level models score a target unseen in
 training like a deletion. Post-level labels, text-only features.
 
+### WP9. Layer-wise probes on the transformers (Kaggle GPU). Written 2026-11-05; not run.
+
+Preregistered in `docs/preregistrations/WP9_layer_probes.md` before the
+notebook was written. `notebooks/13_TRANSFORMER-LAYER-PROBES.ipynb` loads
+07, the 12 runs of 11's admitted pool (A, B, C, E x seeds 17, 30, 73) and
+the pretrained checkpoints they started from, checks that the fine-tuned
+weights reproduce the committed probabilities (validation before any probe,
+test before any test number), and probes the mean-pooled states of every
+layer for the label, identity-term presence and a word-type control. Probes
+are L2 logistic regressions whose C is chosen by cross-validation inside
+train; validation selects nothing and test is opened once. Outputs:
+per-layer AUC and accuracy with bootstrap intervals, selectivity and
+fine-tuned-minus-base contrasts with paired intervals (RQ3), and a
+final-layer identity-direction ablation against random directions with Holm
+over 07 and 11 pooled (RQ4). The notebook role `probe` was added to the kit
+and the checker, with its helpers in `tools/probe_kit.py`;
+`tools/layer_probes_report.py` checks and summarises the tables locally.
+
+*Author action.* Run notebook 13 on a Kaggle GPU (instructions in its first
+cell; the 07 and 11 weights must be uploaded as Kaggle datasets first, which
+decision 11 already requires), unzip its outputs, then
+`layer_probes_report.py --check` and `--write`.
+
 ### WP6. Write the paper
 
 Sections map one-to-one onto the research questions:
