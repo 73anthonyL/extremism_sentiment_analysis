@@ -475,8 +475,14 @@ committed.
 
 1. Populate `data/lexicons/slurs.txt` from a published, citable slur lexicon
    (record the source and licence in `data/lexicons/README.md`). Entries
-   that also appear in `identity_terms.txt` are removed from the identity
-   list, since the first-match order gives `slur` precedence anyway.
+   of the source that are neutral identity references already in
+   `identity_terms.txt` are removed from the slur list and stay identity
+   terms. (This step first said the reverse: remove them from the identity
+   list, since `slur` takes precedence. Changed at the freeze, 2026-11-04,
+   because HurtLex's slur categories contain neutral words such as `gay` and
+   `queer`; dropping them from the identity list would remove neutral
+   mentions of those groups from RQ4, which measures false positives on
+   exactly such mentions.)
 2. Review `identity_terms.txt` (96 entries) for coverage of the communities
    the dataset actually mentions. Use `identity_fpr_terms_test.csv` counts,
    which carry no text, to find high-support terms.

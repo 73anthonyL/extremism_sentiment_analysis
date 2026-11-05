@@ -1,4 +1,119 @@
-# Slur lexicon. Intentionally empty: populate from a published, citable slur
-# list (and record the source here) so the RQ2 'slur' category and the RQ4
-# analysis rest on a documented lexicon rather than an ad-hoc one.
-# One entry per line, case-insensitive.
+# Slur lexicon (RQ2 category `slur`). Derived from HurtLex.
+#
+# Source: HurtLex, English lexicon version 1.2, file lexica/EN/1.2/hurtlex_EN.tsv
+#   https://github.com/valeriobasile/hurtlex
+#   repository commit d4d5cf1199c09868486f978fcea58af0e8936a1e (2025-10-10);
+#   the EN 1.2 file was last changed in commit 10ae72a4 (2020-01-27);
+#   sha256 of the source file:
+#   a734820a63c87994781d182692e6dc7ec262c402016971a7fa31946ced0d470c
+# Citation: Elisa Bassignana, Valerio Basile, Viviana Patti. Hurtlex: A
+#   Multilingual Lexicon of Words to Hurt. In Proceedings of the Fifth Italian
+#   Conference on Computational Linguistics (CLiC-it 2018), CEUR-WS Vol-2253,
+#   paper 49. http://ceur-ws.org/Vol-2253/paper49.pdf
+# Licence: HurtLex is distributed under CC BY-NC-SA 4.0
+#   (https://creativecommons.org/licenses/by-nc-sa/4.0/). This file is an
+#   adaptation of it and is distributed under the same licence, separately
+#   from the rest of this repository. Changes: selected and filtered as below,
+#   lower-cased, de-duplicated.
+#
+# Selection (see data/lexicons/README.md for the reasons):
+#   category ps (negative stereotypes, ethnic slurs) or om (homosexuality),
+#   level conservative: 191 distinct lemmas. 133 removed, 58 kept.
+#
+# Removed, by reason (kept here so the derivation can be repeated):
+# - already a neutral entry of identity_terms.txt (stays an identity term):
+#   gay; queer
+# - neutral or descriptive group reference, not a slur:
+#   asiaticus luridus; gayest; gays; homophile; homophilia; homophilic;
+#   homosexual; japanese-mestizo; ladino; mestico; mesticos; mestiso;
+#   mestizaje; mestizo; mestizos; mixed origin; mongolid; queer-identified;
+#   queers; sinoid
+# - generic insult (intelligence, character, class or conduct) not aimed at a
+#   group, including cognitive-disability insults (disability is not a
+#   category of the identity lexicon):
+#   barbarian; barbarians; barbaric; barbarically; barbarous; barbarously;
+#   barbarousness; barberian; boob; booby; boor; ceorle; changeling;
+#   changelings; chump; churl; churls; clod; coo yon; coo-yon; cooyon; cretin;
+#   destroyer; dimwit; dolt; doofus; dope; dumbbell; dummy; dunder headed;
+#   dunder heads; dunderheaded; dunderheads; eejit; fall guy; fool; galoot;
+#   gawk; goon; gull; half-wit; idiocies; idiocity; idiocy; idiot; idiotes;
+#   idiotic; idioticness; idiotism; idiots; idoit; imbecile; livid; lout;
+#   lubber; lummox; lump; mark; moron; moronic; moronism; mug; namby-pamby;
+#   nitwit; oaf; patsy; peasant; pinhead; putz; retard; ruiner; savage;
+#   simple; simpleton; soft touch; stumblebum; stupidhead; sucker; tike; tyke;
+#   undoer; uprooter; vandal; waster
+# - everyday sense dominates (a name, object, animal or other meaning), so a
+#   word-level match would mostly not be a slur:
+#   chicken; fairy; goth; hun; jerry; nance; pansy; pouf; queen; spade; twink;
+#   twinkie
+# - not a usable lemma (an organisation, a phrase about slurs, a crime term,
+#   or an unidentified string):
+#   birin; child molester; hnrrep; homophobic slurs; league for civil
+#   education; n word; paederast; pederast; shman; society for individual
+#   rights; th. metzger; that's gay.; the karls; the n word; the n-word
+#
+# One entry per line, case-insensitive. Hyphenated and multi-word entries
+# match post text (RQ4 tools) but not a word-level attribution artifact (RQ2).
+# Frozen at WP3 (2026-11-04); see the version note in README.md.
+
+# HurtLex ps: ethnic and racial slurs
+boche
+chernozhopyi
+coon
+darkey
+darkie
+darky
+half breed
+half breeds
+half cast
+half-breed
+half-breeds
+half-cast
+half-caste
+halfbreed
+halfbreeds
+halfcast
+jigaboo
+kraut
+krauthead
+krauts
+mongloid
+mongloids
+mongoloid
+mongoloids
+ni66a
+niga
+nigga
+niggah
+niggar
+niggas
+niggaz
+nigger
+nigger-lover
+niggers
+niggiz
+niggre
+nigra
+nikker
+pikey
+pikie
+quarter-caste
+черножопый
+
+# HurtLex om: slurs about sexual orientation
+beanqueen
+fag
+fagala
+faggedy
+faggot
+faggotry
+faggoty
+faggy
+fagot
+fayg
+ghey
+homo
+pidor
+poof
+poove
+queerio
