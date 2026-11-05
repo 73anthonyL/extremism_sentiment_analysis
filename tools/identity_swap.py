@@ -17,7 +17,8 @@ exactly three distinct targets.
 
 Population: test posts with at least one match of a swapped source. Every
 operation edits the same spans (the swapped-source matches); matches of
-excluded entries stay in place. Case follows the matched text.
+excluded entries, and any source match that overlaps a slur or
+extremist-framing match ("anti-muslim"), stay in place. Case follows the matched text.
 
 * swap        variant k replaces every span by target_k of its source; p is
               the mean over the three variants. The primary operation.
@@ -223,13 +224,8 @@ def check_swap_map(rows, lexicons, sections, ambiguous=AMBIGUOUS_IDENTITY_TERMS)
         swapped[source] = {"category": row["category"], "form": row["form"],
                            "group": row["group"], "targets": targets}
 
-    missing = [t for t in identity if t not in swapped and t not in excluded]
-    if missing:
-        raise IdentitySwapError(f"swap map: identity entries without a row: {missing}")
-    not_excluded = sorted(ambiguous & set(swapped))
-    if not_excluded:
-        raise IdentitySwapError(f"swap map: ambiguous entries must be excluded: {not_excluded}")
-
+    # Per-target checks run before the completeness check, so a target that has
+    # no row at all is refused as a target rather than as a missing entry.
     for source, spec in swapped.items():
         for target in spec["targets"]:
             if target not in identity_set:
@@ -239,20 +235,27 @@ def check_swap_map(rows, lexicons, sections, ambiguous=AMBIGUOUS_IDENTITY_TERMS)
                 raise IdentitySwapError(
                     f"swap map: target '{target}' of '{source}' is in section {sections.get(target)!r}, "
                     f"not {spec['category']!r}; a swap must not cross categories")
-            if target in ambiguous or target in excluded:
-                raise IdentitySwapError(f"swap map: target '{target}' of '{source}' is ambiguous or excluded")
-            if target not in swapped:
+            if target in ambiguous:
+                raise IdentitySwapError(f"swap map: target '{target}' of '{source}' is ambiguous")
+            if target in excluded:
+                raise IdentitySwapError(f"swap map: target '{target}' of '{source}' is an excluded entry")
+            target_spec = swapped.get(target)
+            if target_spec is None:
                 raise IdentitySwapError(f"swap map: target '{target}' of '{source}' has no swapped row")
-            if swapped[target]["form"] != spec["form"]:
+            if target_spec["form"] != spec["form"]:
                 raise IdentitySwapError(
-                    f"swap map: target '{target}' ({swapped[target]['form']}) changes the form of "
+                    f"swap map: target '{target}' ({target_spec['form']}) changes the form of "
                     f"'{source}' ({spec['form']})")
-            if target == source or swapped[target]["group"] == spec["group"]:
+            if target == source or target_spec["group"] == spec["group"]:
                 raise IdentitySwapError(f"swap map: target '{target}' names the same group as '{source}'")
             for category, pattern in other_patterns.items():
                 if pattern is not None and pattern.search(target):
                     raise IdentitySwapError(
                         f"swap map: target '{target}' is matched by the {category} lexicon")
+
+    missing = [t for t in identity if t not in swapped and t not in excluded]
+    if missing:
+        raise IdentitySwapError(f"swap map: identity entries without a row: {missing}")
     return swapped, excluded
 
 
@@ -271,6 +274,47 @@ def match_case(matched, word):
     if matched[:1].isupper():
         return word[:1].upper() + word[1:]
     return word
+
+
+class SwapSpans:
+    """Swapped-source matches that do not overlap a slur or extremist-framing match.
+
+    Several framing entries contain an identity source ("anti-muslim",
+    "anti-immigrant", "jew-ish"). The identity pattern would match the source
+    inside them, and editing it would also edit the framing term. Such spans
+    are skipped: they stay in the text under every operation and do not put a
+    post into the population. Exposes the re.Pattern methods the tool uses.
+    """
+
+    def __init__(self, pattern, blocked=None):
+        self.pattern = pattern
+        self.blocked = blocked
+
+    def finditer(self, text):
+        spans = [m.span() for m in self.blocked.finditer(text)] if self.blocked is not None else []
+        for match in self.pattern.finditer(text):
+            start, end = match.span()
+            if not any(start < b_end and b_start < end for b_start, b_end in spans):
+                yield match
+
+    def search(self, text):
+        return next(self.finditer(text), None)
+
+    def sub(self, replace, text):
+        pieces, last = [], 0
+        for match in self.finditer(text):
+            pieces += [text[last:match.start()], replace(match)]
+            last = match.end()
+        return "".join(pieces) + text[last:]
+
+
+def swap_spans(swap_map, lexicons=None):
+    """SwapSpans for the swapped sources, blocked by the slur and framing lexicons."""
+    pattern = phrase_pattern(list(swap_map))
+    if pattern is None:
+        raise IdentitySwapError("swap map has no swapped source")
+    blocked_entries = [e for c, entries in (lexicons or {}).items() if c != "identity_term" for e in entries]
+    return SwapSpans(pattern, phrase_pattern(blocked_entries))
 
 
 def edit_text(text, pattern, replace):
@@ -309,11 +353,13 @@ def sources_in(text, pattern):
 # ---------------------------------------------------------------------------
 # Population
 # ---------------------------------------------------------------------------
-def build_population(technique, processed, probs, swap_map):
-    """Test rows with at least one swapped-source match (in memory only)."""
-    pattern = phrase_pattern(list(swap_map))
-    if pattern is None:
-        raise IdentitySwapError("swap map has no swapped source")
+def build_population(technique, processed, probs, swap_map, lexicons=None):
+    """Test rows with at least one editable swapped-source match (in memory only).
+
+    `lexicons` supplies the slur and framing entries whose matches block an
+    overlapping span; without it no span is blocked.
+    """
+    pattern = swap_spans(swap_map, lexicons)
     merged = merge_with_dataset(technique, probs, processed)
     has_source = merged["text"].map(lambda t: pattern.search(t) is not None)
     population = merged.loc[has_source, ["row_id", "text", "y_true", "y_prob"]]
@@ -540,13 +586,14 @@ def write_directions(payloads, path=None):
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
-def run(techniques, processed, swap_map, args, profile=None, map_sha256=None, excluded=None):
+def run(techniques, processed, swap_map, args, profile=None, map_sha256=None, excluded=None,
+        lexicons=None):
     """Analyse every technique in memory. Raises on the first fatal error; writes nothing."""
     payloads = []
     for technique in techniques:
         try:
             probs = load_technique_probs(technique, SPLIT)
-            population, pattern = build_population(technique, processed, probs, swap_map)
+            population, pattern = build_population(technique, processed, probs, swap_map, lexicons)
             counts = population_counts(population)
             if args.dry_run_population:
                 print(f"{technique}: swap population {len(population)} "
@@ -595,7 +642,7 @@ def main(argv=None):
         profile = term_profile(processed, swap_map)
         techniques = args.technique if args.technique else [d.name for d in technique_dirs()]
         payloads = run(techniques, processed, swap_map, args, profile=profile,
-                       map_sha256=map_digest(), excluded=excluded)
+                       map_sha256=map_digest(), excluded=excluded, lexicons=lexicons)
     except (IdentitySwapError, IdentityCounterfactualError, AttributionArtifactError) as error:
         print(f"ERROR: {error}; nothing was written", file=sys.stderr)
         return 1

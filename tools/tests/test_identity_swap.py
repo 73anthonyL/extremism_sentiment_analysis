@@ -124,10 +124,59 @@ class TestMapRefusals:
         with pytest.raises(IdentitySwapError, match="target 'muslim' of 'refugee'.*must not cross categories"):
             check_swap_map(rows, lexicons, SECTIONS, ambiguous={"white"})
 
-    def test_row_category_disagreeing_with_the_lexicon_section_is_refused(self):
-        rows = _with(_good_rows(), "jewish", category="ethnicity_nationality")
-        with pytest.raises(IdentitySwapError, match="must not cross categories"):
+    def test_row_category_disagreeing_with_the_source_section_is_refused(self):
+        # Every target is in the row's claimed category, so only the source-section check can refuse.
+        rows = _with(_good_rows(), "refugee", category="religion", form="person", group="refugee",
+                     target_1="muslim", target_2="christian", target_3="hindu", note="")
+        with pytest.raises(IdentitySwapError, match="'refugee' is in lexicon section 'migration', not 'religion'"):
             check_swap_map(rows, LEXICONS, SECTIONS, ambiguous={"white"})
+
+    def test_excluded_row_with_targets_is_refused(self):
+        rows = _with(_good_rows(), "refugee", target_1="muslim")
+        with pytest.raises(IdentitySwapError, match="excluded 'refugee' must have no targets"):
+            check_swap_map(rows, LEXICONS, SECTIONS, ambiguous={"white"})
+
+    def test_empty_group_is_refused(self):
+        rows = _with(_good_rows(), "jewish", group="")
+        with pytest.raises(IdentitySwapError, match="'jewish' has no group"):
+            check_swap_map(rows, LEXICONS, SECTIONS, ambiguous={"white"})
+
+    def test_ambiguous_source_that_is_never_a_target_is_refused(self):
+        # 'jewish' is swapped but no row targets it, so only the source check can refuse it.
+        with pytest.raises(IdentitySwapError, match="'jewish' is ambiguous and may not be swapped"):
+            check_swap_map(_good_rows(), LEXICONS, SECTIONS, ambiguous={"white", "jewish"})
+
+    def test_ambiguous_excluded_target_is_refused_as_ambiguous(self):
+        rows = _with(_good_rows(), "white", category="religion")
+        sections = dict(SECTIONS, white="religion")
+        rows = _with(rows, "jewish", target_3="white")
+        with pytest.raises(IdentitySwapError, match="target 'white' of 'jewish' is ambiguous"):
+            check_swap_map(rows, LEXICONS, sections, ambiguous={"white"})
+
+    @staticmethod
+    def _gender_setup():
+        lexicons = copy.deepcopy(LEXICONS)
+        lexicons["identity_term"] += ["gay", "lesbian", "bisexual", "woman"]
+        sections = dict(SECTIONS, gay="gender_sexuality", lesbian="gender_sexuality",
+                        bisexual="gender_sexuality", woman="gender_sexuality")
+        rows = _good_rows() + [
+            _row("gender_sexuality", "identity", "gay", "gay", ("lesbian", "bisexual", "woman")),
+            _row("gender_sexuality", "identity", "lesbian", "lesbian", ("gay", "bisexual", "woman")),
+            _row("gender_sexuality", "identity", "bisexual", "bisexual", ("gay", "lesbian", "woman")),
+            _row("gender_sexuality", "excluded", "", "woman", note="no admissible target"),
+        ]
+        return lexicons, sections, rows
+
+    def test_excluded_target_is_refused_cleanly(self):
+        lexicons, sections, rows = self._gender_setup()
+        with pytest.raises(IdentitySwapError, match="target 'woman' of 'gay' is an excluded entry"):
+            check_swap_map(rows, lexicons, sections, ambiguous={"white"})
+
+    def test_target_without_any_row_is_refused_cleanly(self):
+        lexicons, sections, rows = self._gender_setup()
+        rows = [r for r in rows if r["source"] != "woman"]
+        with pytest.raises(IdentitySwapError, match="target 'woman' of 'gay' has no swapped row"):
+            check_swap_map(rows, lexicons, sections, ambiguous={"white"})
 
     def test_form_change_is_refused(self):
         rows = _with(_good_rows(), "buddhist", form="person_plural")
@@ -164,6 +213,37 @@ SWAP_MAP = {
     "refugees": {"category": "migration", "form": "person_plural", "group": "refugee",
                  "targets": ["immigrants", "foreigners", "migrants"]},
 }
+
+
+class TestFramingOverlap:
+    LEX = {"slur": [], "extremist_framing": ["anti-muslim", "jew-ish"], "identity_term": []}
+    MAP = {"muslim": {"category": "religion", "form": "person", "group": "islam",
+                      "targets": ["christian", "hindu", "buddhist"]},
+           "jew": {"category": "religion", "form": "person", "group": "judaism",
+                   "targets": ["muslim", "christian", "hindu"]}}
+
+    def test_spans_inside_framing_matches_are_never_edited(self):
+        spans = isw.swap_spans(self.MAP, self.LEX)
+        text = "an anti-muslim jew-ish rant about a muslim"
+        assert [m.group(0) for m in spans.finditer(text)] == ["muslim"]
+        assert swap_text(text, spans, self.MAP, 0) == "an anti-muslim jew-ish rant about a christian"
+        assert remove_text(text, spans) == "an anti-muslim jew-ish rant about a"
+        assert substitute_text(text, spans, "group") == "an anti-muslim jew-ish rant about a group"
+        # Without the blocking lexicons the framing term itself would be rewritten.
+        unblocked = isw.swap_spans(self.MAP)
+        assert swap_text(text, unblocked, self.MAP, 0).startswith("an anti-christian")
+
+    def test_post_whose_only_source_is_inside_framing_is_not_in_the_population(self, make_probs):
+        from probs_artifact import load_probs
+
+        probs = load_probs(make_probs("11_T")["test"])
+        processed = _dataset()
+        processed.loc[processed["text"] == IDENTITY_TEXT, "text"] = "an anti-muslim note"
+        probs["y_prob"] = 0.5
+        population, _ = build_population("11_T", processed, probs, self.MAP, self.LEX)
+        assert population.empty
+        population, _ = build_population("11_T", processed, probs, self.MAP)
+        assert len(population) == 140
 
 
 class TestEditedText:
