@@ -23,6 +23,31 @@ dataset text to an external API is listed under "Blocked" and not attempted.
   becomes the SHAP pass rule; dropping `--primed` from the CLAUDE.md
   pre-commit list now that notebooks carry outputs.
 
+## 2026-11-04 — Citations in the Results draft
+
+Branch `paper/citations`, merged into `research/integration`. 55 author-year
+citations placed in `docs/paper/RESULTS_DRAFT.md`, all from the verified
+`docs/RELATED_WORK.md`, with a References section; no number or claim
+binding changed. Missing references (the classical techniques themselves,
+Wilcoxon, Fisher, the bootstrap, the dataset source, TimeLMs) are
+TODO(author) notes rather than invented entries.
+
+Adversarial review checked each citation against the paper itself and
+found five overstated or inverted uses, now rewritten: Hooker et al. argue
+against non-retrained deletion (now cited as the limitation, not as an
+endorsed shortcut); Ding and Koehn test saliency consistency, not
+cross-sample rank stability; Davidson et al. 2019 is dialect bias; the
+hate-latest checkpoints are cited to Antypas and Camacho-Collados. It also
+caught a wrong description of our own method in the draft and in
+RELATED_WORK.md: the SHAP masker replaces masked words with "...", it does
+not delete them. Nine minor wordings fixed.
+
+Checks: all five pass (529 tests); check_claims OK (632).
+
+Next: remaining local, decision-free work is thin. Candidates: faithfulness
+on the validation split for the classical techniques (CPU), and refreshing
+the stale `holm_adjusted_p` notes in the eight WP7 JSONs.
+
 ## 2026-11-04 — Decisions brief; lexicon coverage artifact
 
 `docs/DECISIONS_NEEDED.md` (branch `docs/decisions-brief`): the twelve open
