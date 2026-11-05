@@ -165,6 +165,31 @@ class TestCounterfactual:
             write_cf_table(rows, path=foreign, results_dir=tmp_path)
 
 
+    def test_holm_families_and_flip_rate(self, tmp_path):
+        """The three Holm families are computed over the right rows and the flip rate from the counts."""
+        rows = []
+        for t, technique in enumerate(("01_A", "02_B")):
+            for label, name in ((0, "non_extremist"), (1, "extremist")):
+                for k, op in enumerate(("remove", "remove_unambiguous")):
+                    row = {c: 0.0 for c in isens.CF_ROW_COLUMNS}
+                    row.update(technique=technique, split="test", population=name, y_true=label,
+                               operation=op, n_flagged_original=20, n_flip_pos_to_neg=5 - k,
+                               n_flip_neg_to_pos=0, wilcoxon_p=0.5,
+                               mcnemar_exact_p=0.001 * (1 + t + 2 * label + 4 * k))
+                    rows.append(row)
+        table = pd.read_csv(write_cf_table(rows, path=tmp_path / "cf.csv", results_dir=tmp_path))
+        # Both techniques are in one family: 8 rows, 4 remove rows, 2 extremist remove rows.
+        by = table.set_index(["technique", "population", "operation"])
+        r = by.loc[("01_A", "extremist", "remove")]
+        assert r["flagged_flip_rate"] == pytest.approx(5 / 20)
+        assert by.loc[("01_A", "extremist", "remove_unambiguous"), "flagged_flip_rate"] == pytest.approx(4 / 20)
+        assert r["mcnemar_p_holm"] == pytest.approx(0.003 * 6)                   # rank 3 of 8
+        assert r["mcnemar_p_holm_remove"] == pytest.approx(0.003 * 2)            # rank 3 of 4
+        assert r["mcnemar_p_holm_remove_extremist"] == pytest.approx(0.003 * 2)  # rank 1 of 2
+        assert table.loc[table["operation"] == "remove_unambiguous", "mcnemar_p_holm_remove"].isna().all()
+        assert table.loc[table["y_true"] == 0, "mcnemar_p_holm_remove_extremist"].isna().all()
+
+
 class TestLexiconGaps:
     def test_rules(self):
         terms = ["white", "gay", "islam", "refugees", "woman"]

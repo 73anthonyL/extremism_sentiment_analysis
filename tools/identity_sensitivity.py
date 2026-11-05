@@ -25,9 +25,19 @@ counterfactual  the WP7 remove counterfactual on the restricted population
                 as identity_counterfactual.py:
                   remove              every identity match is deleted (as WP7)
                   remove_unambiguous  only the unambiguous matches are deleted
-                Holm adjustment is over every comparison row of the sensitivity
-                table (techniques x populations x operations), the same family
-                size as the WP7 table.
+                Holm is reported over three families, because the choice is
+                a judgement and no single one is "the WP7 family":
+                  mcnemar_p_holm                    every row (techniques x
+                      populations x both operations, 32 rows). Same SIZE as
+                      WP7, different makeup: WP7 is remove + substitute, here
+                      remove and remove_unambiguous are nearly the same edit,
+                      so their p values are correlated and this family is
+                      conservative for the remove question.
+                  mcnemar_p_holm_remove             remove rows only (16)
+                  mcnemar_p_holm_remove_extremist   extremist remove rows (8)
+                flagged_flip_rate (n_flip_pos_to_neg / n_flagged_original) is
+                the per-flagged-post effect size, to read next to the p value:
+                a smaller population lowers power without changing it.
 lexicon-gaps    for each technique's whole-model test attribution run, the
                 top-K attributed words that look like identity references but
                 are not in the identity lexicon, as a candidate list for WP3.
@@ -158,7 +168,13 @@ CF_ROW_COLUMNS = (
     "mcnemar_exact_p",
     "verification_max_abs_diff",
 )
-CF_TABLE_COLUMNS = CF_ROW_COLUMNS + ("wilcoxon_p_holm", "mcnemar_p_holm")
+CF_TABLE_COLUMNS = CF_ROW_COLUMNS + (
+    "flagged_flip_rate",
+    "wilcoxon_p_holm",
+    "mcnemar_p_holm",
+    "mcnemar_p_holm_remove",
+    "mcnemar_p_holm_remove_extremist",
+)
 
 GAP_COLUMNS = ("technique", "run_id", "top_k", "rank", "word", "rule", "related_entry",
                "other_lexicon_category", "mean_abs_attribution", "support")
@@ -315,7 +331,11 @@ def counterfactual_sensitivity(technique, model, population, pattern, unambiguou
 
 
 def write_cf_table(rows, path=None, results_dir=None):
-    """Merge rows by technique into the sensitivity table and recompute Holm per family."""
+    """Merge rows by technique into the sensitivity table; derive the flip rate and the Holm columns.
+
+    Every derived column is recomputed from CF_ROW_COLUMNS, so the table can be
+    rebuilt from its own row columns without re-scoring any model.
+    """
     from identity_counterfactual import _holm_column
 
     path = Path(RQ4_IDENTITY_COUNTERFACTUAL_SENSITIVITY_CSV if path is None else path)
@@ -328,11 +348,20 @@ def write_cf_table(rows, path=None, results_dir=None):
         new = pd.concat([existing, new], ignore_index=True)
     new = new.sort_values(["technique", "y_true", "operation"]).reset_index(drop=True)
     family = new["technique"].map(lambda t: "" if in_comparison(t, results_dir) else t)
-    new["wilcoxon_p_holm"] = np.nan
-    new["mcnemar_p_holm"] = np.nan
+    flagged = new["n_flagged_original"].astype(float)
+    new["flagged_flip_rate"] = (new["n_flip_pos_to_neg"] / flagged.where(flagged > 0)).round(6)
+    for column in ("wilcoxon_p_holm", "mcnemar_p_holm", "mcnemar_p_holm_remove",
+                   "mcnemar_p_holm_remove_extremist"):
+        new[column] = np.nan
+    is_remove = new["operation"] == "remove"
+    is_extremist = new["y_true"] == POSITIVE_LABEL
     for _, index in new.groupby(family, sort=False).groups.items():
         new.loc[index, "wilcoxon_p_holm"] = _holm_column(new.loc[index, "wilcoxon_p"])
         new.loc[index, "mcnemar_p_holm"] = _holm_column(new.loc[index, "mcnemar_exact_p"])
+        for column, mask in (("mcnemar_p_holm_remove", is_remove),
+                             ("mcnemar_p_holm_remove_extremist", is_remove & is_extremist)):
+            sub = new.index.isin(index) & mask.to_numpy()
+            new.loc[sub, column] = _holm_column(new.loc[sub, "mcnemar_exact_p"])
     path.parent.mkdir(parents=True, exist_ok=True)
     new[list(CF_TABLE_COLUMNS)].to_csv(path, index=False, float_format="%.6g")
     return path
