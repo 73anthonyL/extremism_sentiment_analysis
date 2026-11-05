@@ -195,11 +195,13 @@ Other facts that shape the order of work:
   the 168 words in any top-50 belong to one technique only. The word
   TF-IDF models agree with each other (Spearman 0.90, top-50 Jaccard 0.67)
   and the two transformers with each other (0.76, 0.54); across families
-  agreement is 0.2 to 0.3. About half of the transformers' top-50 words
-  occur in a single explained post, against a quarter to two fifths for
-  the classical models, on 200 versus 450 posts; a same-post comparison
-  from the external per-post files is the next step before that
-  difference is claimed.
+  agreement is 0.2 to 0.3. On their own runs, 56% (07) and 52% (11) of the
+  transformers' top-50 positive words occur in a single explained post,
+  against 22 to 40% for the classical models, but on 200 versus 450 posts.
+  On the same 200 test posts (`rq2_same_post_support.csv`) the classical
+  shares rise to 32 to 52%: char TF-IDF (04) reaches 52% and FastText (06)
+  48%, while the word TF-IDF models (01, 02, 03, 05) stay 12 to 24 points
+  below 07. One run per split, no uncertainty estimate.
 * **The identity counterfactual exists** (WP7, 2026-11-04).
   `tools/identity_counterfactual.py` re-scores the 150 test posts that
   contain an identity-lexicon match (67 non-extremist, 83 extremist) with
@@ -219,8 +221,64 @@ Other facts that shape the order of work:
   22 of 74 for 11 (Holm-adjusted McNemar p = 0.016 and 1.5e-5); no
   classical drop survives Holm. Identity terms therefore count as evidence
   of extremism whatever the label, and removing them trades false positives
-  for recall. Substitution with a control panel is a sensitivity check;
-  the per-model counts, the panel and the limits are under WP7.
+  for recall. Substitution with a control panel is a sensitivity check; the
+  per-model counts, the panel and the limits are under WP7. On the 59
+  extremist posts that keep an unambiguous identity match, only the 11 drop
+  stays Holm-significant (see the sensitivity bullet below).
+* **The SHAP attributions pass a deletion test** (2026-11-04).
+  `tools/faithfulness.py` deletes each test post's top-k words by positive
+  attribution toward extremist (k = 1, 3, 5, 10) and compares the drop in
+  p(extremist) with deleting as many random words (5 seeds), using each
+  restored predictor at its locked threshold (largest difference from the
+  committed probabilities 1.9e-3). On the 196 to 200 test posts every
+  technique explained, top-k deletion lowers p(extremist) more than random
+  deletion for all eight techniques at every k (Holm-adjusted Wilcoxon p <=
+  7.6e-21 over the 32 rows). Deletion recovers 0.46 to 0.80 of the summed
+  SHAP of the deleted words. For 07 and 11 the effect sits in the flagged
+  posts. Their median paired difference is 0.001 to 0.010 and 0.005 to
+  0.024, against 0.034 to 0.177 for 01, 02 and 04 to 06. On flagged posts at
+  k = 1 their margin over random is 0.231 and 0.204, against 0.016 to 0.091
+  for the classical techniques. No cross-technique test was run, so these
+  differences are descriptive. The test shows that SHAP finds the words the
+  models need, not that the models are right to need them
+  (`rq2_faithfulness.csv`).
+* **RQ4 and WP7 are robust to ambiguous identity words, except for 07's
+  significance** (2026-11-04). `tools/identity_sensitivity.py` sets aside 13
+  ambiguous lexicon entries (white, black, man, men, boy, boys, girl, girls,
+  english, native, trans, asylum, indian); the lexicon is unchanged.
+  Excluding the 14 non-extremist and 24 extremist test posts whose only
+  matches are those words, every FPR ratio stays above 1 (1.61 to 5.02, 53
+  identity-term negatives). The same three techniques have Fisher p < 0.05
+  (04 0.031, 05 0.017, 11 0.0056). 03 falls to 1.61 (p = 0.49) and 06 to
+  1.83 (p = 0.33); at this n that is not evidence that the effect is absent.
+  On the 59 extremist posts that keep an unambiguous match, removal unflags
+  15 of 51 flagged posts for 11 (Holm p = 0.002 over 32 rows) and 10 of 48
+  for 07 (raw p = 0.012, Holm p = 0.33). 07's rate, about 21%, equals its
+  full-population rate (15 of 71); with fewer discordant pairs the test
+  loses power. 07's result is therefore the same effect size, not
+  significant at the reduced n. Removing only the unambiguous matches
+  unflags 11 of 51 for 11 (Holm p = 0.030) and 6 of 48 for 07. Only 11's
+  recall loss is Holm-significant under every family tried. No non-extremist
+  flip survives Holm (`rq4_identity_fpr_sensitivity.csv`,
+  `rq4_identity_counterfactual_sensitivity.csv`).
+* **The RQ2-to-RQ4 relation is computed** (WP5, 2026-11-04; provisional until WP3
+  freezes the lexicons). `tools/rq2_rq4_relation.py` ranks the eight
+  techniques by test identity-term share of positive mass and by RQ4 FPR
+  ratio: Spearman 0.83 (exact permutation p = 0.017; |rho| >= 0.73 is needed
+  for p <= 0.05; leave-one-out 0.74 to 0.96). Under section 5 this is
+  descriptive at n = 8. It does not show that identity reliance goes with
+  identity-term false positives. Identity share against FPR on identity-term
+  negatives is -0.22, and the ratio ordering follows low FPR on the other
+  negatives (05: 4 of 213, 11: 6 of 213). The WP7 removal shift shows no
+  relation to the ratio (rho 0.06). Among the six classical techniques the
+  correlation is 0.60 (p = 0.24).
+* **Transformer attributions agree less across post samples.** On the same
+  200 posts, the test-versus-validation Spearman of mean absolute
+  attribution is 0.43 (07) and 0.49 (11), against 0.62 to 0.74 for the
+  classical techniques. Top-50 Jaccard by absolute attribution does not
+  separate them from FastText (07 0.18, 11 0.22, 06 0.19; the others 0.32 to
+  0.47) (`rq3_same_post_split_agreement.csv`). One run per split, so
+  descriptive.
 * **The framework has one entry point** (WP8, 2026-11-04).
   `tools/audit.py` checks a technique against the contract
   (`check-contract`), runs the documented tool chain in order and stops at
@@ -258,18 +316,26 @@ Other facts that shape the order of work:
   folders (weights, per-post predictions and attributions; 6.2 GB for 11)
   are still in the Kaggle outputs and have not been uploaded to a Kaggle
   Dataset, so no manifest lists them.
-* **All twelve notebooks are primed** (WP0). Each follows one template, loads
-  `tools/notebook_kit.py`, and passes `tools/check_notebook.py --primed`.
-  Their outputs are empty until rerun; the earlier outputs are at tag
-  `notebooks-pre-priming`.
+* **Every notebook follows the primed template** (WP0). Each loads
+  `tools/notebook_kit.py` and passes `tools/check_notebook.py`. 00 to 07 and
+  11 carry their Kaggle outputs. 08 to 10 are empty (closed lines). 12 is
+  primed and not yet run. The earlier outputs, which contained text, are at
+  tag `notebooks-pre-priming`.
 * **Notebook 11 already fine-tunes the lineages RQ3 needs.** Its admitted
   members are `cardiffnlp/twitter-roberta-base-hate-latest`,
   `cardiffnlp/twitter-roberta-large-hate-latest`,
   `facebook/roberta-hate-speech-dynabench-r4-target`, and `GroNLP/hateBERT`;
   `microsoft/deberta-v3-base` was excluded by the prespecified 0.84
   validation floor. Per-member attribution runs from notebook 11 cover the
-  hate-speech and Twitter lineages. What is missing is a **plain RoBERTa
-  control** with no domain pretraining.
+  hate-speech and Twitter lineages. The plain RoBERTa control is written but
+  not run. `notebooks/12_ROBERTA-BASE_FINE-TUNE.ipynb` uses 07's recipe with
+  only the checkpoint changed; its head starts from the seed, while 07's
+  checkpoint brings a pretrained two-class head. It passes
+  `check_notebook.py --primed` and has no result folder yet. Adding it grows
+  the RQ1 Holm family from 28 to 36 pairs. 01 vs 11 (Holm p 0.049 now) stays
+  significant only if all eight new pairs are themselves Holm-significant
+  (with equal raw p, below about 0.0017). Otherwise it rises to at most
+  0.067 and the significant count falls from 7 to 6.
 * **The slur lexicon is empty** (`data/lexicons/slurs.txt`). Until it is
   populated, every slur is counted as topical or as extremist framing, which
   biases RQ2 and hides the slur-versus-identity distinction RQ3 turns on.
@@ -443,6 +509,8 @@ tools with adversarial tests:
   tables (`rq1_error_overlap.csv`, `rq1_shared_errors.csv`).
 * `tools/rq2_rq4_relation.py`: the rank correlation between each technique's
   RQ2 identity-term share and its RQ4 FPR ratio, from the two `rq/` tables.
+  Done 2026-11-04 (`rq2_rq4_relation.csv`); re-run after WP3 freezes the
+  lexicons.
 
 *Done when.* All five rendered regions are populated for every technique,
 `render_tables.py --check` passes, and the two new tools have tests that
@@ -524,6 +592,10 @@ than 0.10 from the base rate of 0.376, or if its 01 coefficient has
 |coef| > 0.5. The panel words occur in 10, 7 and 5 training posts, with
 extremist shares of 0.40, 0.43 and 0.40 and coefficients +0.17, -0.18 and
 -0.49 (ranks 1510, 3001 and 4225 of 4692). The JSON records all of these.
+Under substitution the extremist recall drop is Holm-significant for 01, 04,
+05 and 06 (11 lost each, Holm p = 0.029) and not for 07 (1.0) or 11 (0.094),
+so the recall cost of an identity-term edit is not specific to the
+transformers.
 
 * The first version substituted "people", which is not a neutral control.
   It occurs in 219 extremist and 116 non-extremist dataset posts. 63% of
@@ -623,7 +695,9 @@ replaces the earlier evaluation rather than adding one. Notebook 12 is the
 only new test unlock this plan authorises. WP7 re-scores edited test texts
 with frozen models at their locked thresholds. That is a perturbation
 analysis, not a test evaluation: it selects no threshold, model or
-configuration and does not count against this budget.
+configuration and does not count against this budget. `tools/faithfulness.py`
+and `tools/identity_sensitivity.py counterfactual` likewise re-score perturbed
+test texts with frozen models; they select nothing.
 
 **Lexicons.** Frozen after WP3. If a reviewer's question forces a change,
 the change is made once, RQ2 and RQ4 are re-run in full, and both versions of
