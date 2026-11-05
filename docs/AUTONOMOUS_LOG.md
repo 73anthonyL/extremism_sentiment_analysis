@@ -14,6 +14,39 @@ Remaining author actions: run notebook 12, the WP9 probe notebook and the
 WP10 open-weight LLM notebook on Kaggle; upload external assets before
 submission.
 
+## 2026-11-05 — WP3: lexicons frozen (HurtLex slurs; aliens added then dropped)
+
+Branch `research/wp3-lexicon-freeze`, merged into `research/integration`.
+`data/lexicons/slurs.txt` now holds 58 entries from HurtLex EN 1.2
+(conservative level, ethnic slurs and sexual-orientation slurs; CC BY-NC-SA
+4.0, attributed in the file, the lexicon README and a third-party notice in
+LICENSE). 133 of the 191 HurtLex lemmas were removed in five documented
+classes; no slur entry overlaps the identity or framing lists. Lexicon
+coverage now counts every entry the SHAP masker splits (48 unmatchable,
+mostly punctuated framing entries). A guardrail test pins the three lists to
+the freeze note's sha256s.
+
+`aliens` (the only gap word with support >= 3) was added and then dropped by
+author decision on 2026-11-05: it came from 06's own test attribution list
+and always appears as "illegal aliens". Dropping it restores every identity
+result byte for byte. Rule added: no lexicon term on test-split evidence.
+
+What changed in the findings: slur reliance is now measurable but thin (one
+racial slur from two posts in most top-50 lists; transformers have the
+largest slur shares, passing the preregistered two-run rule but not the
+bootstrap check, so no ordering is claimed); the RQ2 hypothesis that
+classical models lean more on identity terms and slurs is not supported.
+RQ4: three techniques have unadjusted Fisher p < 0.05, none after Holm.
+
+Adversarial review re-ran the whole chain and found it byte-identical; it
+caught an undercounted coverage figure, an RQ2 sentence at odds with
+section 5, and the aliens issue. All fixed.
+
+Checks: all pass (598 tests); check_claims OK (665); coverage OK.
+
+Next: push to PR #23. Remaining work needs the author: Kaggle runs of
+notebooks 12, 13 and 14 and the external-asset upload.
+
 ## 2026-11-05 — WP9 and WP10 notebooks written (primed, for Kaggle)
 
 Branches `notebooks/wp10-llm` and `notebooks/wp9-probes`, merged into
