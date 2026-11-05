@@ -251,7 +251,7 @@ Conventions:
   which checks a weaker property before any cross-model claim: sign
   agreement with the LR coefficients on the top-K words (at least 90
   percent) and Spearman rank correlation with them (at least 0.8). The exact
-  identity does not hold for our probability-output LR with word deletion.
+  identity does not hold for our probability-output LR with word masking.
 * **SHAP library documentation, `shap.PartitionExplainer` and
   `shap.maskers.Text`.** https://shap.readthedocs.io (checked 2026-11-04).
   *Relation:* software reference for the Partition explainer and the text
@@ -333,8 +333,9 @@ Conventions:
   quantification in explainable AI: A causal problem. *AISTATS 2020*, PMLR
   108, 2907-2916. arXiv:1910.13413.
   *Relation:* argues for interventional rather than conditional removal of
-  features. Our masker deletes words (an interventional choice), which the
-  methods section should state.
+  features. Our masker replaces masked words with a fixed token ("..."), a
+  fixed-baseline intervention rather than a conditional expectation, which
+  the methods section should state.
 * **Krishna, S., Han, T., Gu, A., Wu, S., Jabbari, S., Lakkaraju, H.
   (2024).** The Disagreement Problem in Explainable Machine Learning: A
   Practitioner's Perspective. *Transactions on Machine Learning Research*

@@ -15,7 +15,8 @@ without its claim fails. Footnotes give the artifact paths. Numbers that are
 protocol constants rather than results (top-50, k in {1, 3, 5, 10}, alpha
 0.05, the 14-row McNemar rule of thumb from the plan, section and technique
 numbers) are not claims. The bracketed labels are claim ids, not
-citations.
+citations. Citations are author-year in parentheses and are listed under
+References at the end; every one is an entry of `docs/RELATED_WORK.md`.
 
 Items that need an author decision or a result that does not exist yet are
 marked **TODO(author)**. All category-level results (RQ2, RQ3 and the
@@ -25,7 +26,9 @@ lexicons: the slur list is empty today, so slurs are counted as topical.
 Scope, stated once for every section below: labels are post-level and
 features are text-only. The classifiers detect extremist content in a single
 post. They do not detect accounts, intent or radicalization over time, and
-nothing here supports a claim about those.
+nothing here supports a claim about those. This differs from work that also
+uses user and network signals (Ferrara et al., 2016) or models user-level
+radicalisation influence (Fernandez et al., 2018).
 
 Technique names used throughout: 01 word TF-IDF + logistic regression (LR);
 02 word TF-IDF + linear SVM; 03 word TF-IDF + single-layer perceptron (SLP);
@@ -33,7 +36,19 @@ Technique names used throughout: 01 word TF-IDF + logistic regression (LR);
 06 FastText embeddings + LR; 07 fine-tuned Twitter-RoBERTa (one seed);
 11 a logit-pooled ensemble of four fine-tuned transformer members, each of
 which is itself the average of three seeds. 01 to 06 are "classical", 07 and
-11 "transformer". The data are 2999 [C814] posts on one frozen split (2099 [C817]
+11 "transformer". The classical techniques use the feature families
+surveyed by Schmidt and Wiegand (2017) (word and character n-grams,
+embeddings); character n-grams on tweets go back at least to Waseem and
+Hovy (2016). 07 fine-tunes cardiffnlp's twitter-roberta-base-hate-latest
+checkpoint, whose model card cites Antypas and Camacho-Collados (2023).
+The Twitter-RoBERTa lineage itself goes back to TweetEval (Barbieri et al.,
+2020). **TODO(author):** the hate-latest checkpoints are fine-tuned from the
+TimeLMs `twitter-roberta-*-2022-154m` checkpoints; consider citing Loureiro
+et al. 2022 (TimeLMs) after adding a verified entry to
+`docs/RELATED_WORK.md`. **TODO(author):**
+`docs/RELATED_WORK.md` has no entry for TF-IDF, logistic regression, linear
+SVMs, the perceptron, FastText embeddings or logit pooling; add references
+there before citing them. The data are 2999 [C814] posts on one frozen split (2099 [C817]
 training posts); the test split has 450 [C818] posts (280 [C815] non-extremist,
 170 [C816] extremist) and is evaluated once per technique.[^data]
 
@@ -47,8 +62,9 @@ training posts); the test split has 450 [C818] posts (280 [C815] non-extremist,
 Table 1 gives the test metrics at each technique's validation-locked
 threshold. Accuracy runs from 0.831 [C016] (04) to 0.909 [C036] (11). We call one
 technique more accurate than another only when the exact McNemar test on
-discordant posts is significant after Holm correction over all 28 [C057]
-pairs.[^rq1]
+discordant posts (McNemar, 1947), the test Dietterich (1998) recommends
+when each learner is trained once, is significant
+after Holm correction (Holm, 1979) over all 28 [C057] pairs.[^rq1]
 
 **Table 1.** Test metrics (one evaluation per technique).[^t1]
 
@@ -110,7 +126,10 @@ is 17 [C093]).[^err]
 
 RQ1 reading. The ensemble is more accurate than every classical technique on
 this split; 07 is more accurate than 04 and than no other technique. Every
-other ordering in Table 1 is descriptive. **TODO(author):** adding notebook
+other ordering in Table 1 is descriptive, and all of them hold for this one
+split; cross-dataset evaluation of hate-speech detectors (Antypas and
+Camacho-Collados, 2023) is the setting in which they would have to be
+re-examined. **TODO(author):** adding notebook
 12 (plain RoBERTa control) adds 12's pairs to the Holm family. 01 vs 11
 (Holm p 0.049 [C061]) then stays significant only if every new pair is itself
 Holm-significant (RESEARCH_PLAN section 3). Rerun `mcnemar_pairs.py` and
@@ -122,9 +141,22 @@ update Table 2 and this paragraph after 12 runs.
 
 ### 6.1 The attribution pipeline recovers known coefficients
 
-Before any cross-model claim, the SHAP pipeline (partition explainer over a
-word-level text masker, one method for every technique) was checked against
-the coefficients of the word-level logistic regression (01). The
+Before any cross-model claim, the SHAP pipeline (Lundberg and Lee, 2017;
+a partition explainer over a word-level text masker, one method for every
+technique) was checked against the coefficients of the word-level logistic
+regression (01). The Partition explainer computes Owen values (Owen, 1977),
+applied recursively over the masker's hierarchy and approximated under the
+max_evals budget, not exact Shapley values (Shapley, 1953). One masker and
+one explainer are fixed for every technique because different value
+functions give different "Shapley values" (Sundararajan and Najmi, 2020).
+The masker replaces masked words with a fixed token ("..."), a
+fixed-baseline intervention rather than a conditional expectation (Janzing
+et al., 2020; Sundararajan and Najmi, 2020). A word-level masker also puts
+classical and subword transformer attributions on the same vocabulary,
+following the adaptation of SHAP to BERT inputs by Kokalj et al. (2021).
+The check is motivated by SHAP's linear-model result (Lundberg and Lee,
+2017), whose exact identity does not hold for a probability-output LR with
+word masking, so a weaker property is tested. The
 preregistered bars are Spearman of at least 0.80 [C190] between mean
 attribution and coefficient, and top-50 sign agreement of at least
 0.90 [C191]. 01 reaches Spearman 0.873 [C100] on the test run and 0.865 [C101] on the
@@ -134,7 +166,9 @@ words seen in at least two explained posts the correlations are 0.932 [C104] and
 coefficients act on embedding dimensions rather than words, reaches
 0.745 [C106] and 0.757 [C107] with sign agreement 1.00 [C109]; it does not pass
 (passed: false [C108]) and is reported as the calibration point, as
-planned.[^wp2]
+planned.[^wp2] This check is related to, but distinct from, the model- and
+label-randomization sanity checks of Adebayo et al. (2018), which were not
+run.
 
 [^wp2]: `results_summary/01_LOG-REG_TF-IDF/attributions/shap-partition_{test,validation}_seed30__coefficient_check.json`;
     `results_summary/06_FASTTEXT-EMB_LOG-REG/attributions/shap-partition_{test,validation}_seed30__coefficient_check.json`.
@@ -142,7 +176,14 @@ planned.[^wp2]
 ### 6.2 The attributions name words the models need
 
 A deletion test checks that each technique's top-attributed words matter to
-that technique. For each test post, the k words with the highest positive
+that technique. It is close to ERASER's comprehensiveness, the probability
+change when the top-k tokens are removed (DeYoung et al., 2020). Without
+retraining, part of the probability drop can come from the edited text
+being off the training distribution, which remove-and-retrain (Hooker et
+al., 2019) controls for and this test does not. Comparing against random
+deletion of the same number of words (the baseline below) partly controls
+for it, since both arms edit the post by the same amount. For
+each test post, the k words with the highest positive
 attribution toward extremist are deleted and the drop in p(extremist) is
 compared with deleting k random words of the same post (5 [C257] seeds). On
 the posts all eight techniques explained, top-k deletion lowers
@@ -175,7 +216,9 @@ Their median paired difference is 0.001 [C253] to 0.010 [C254] (07) and 0.005 [C
 0.024 [C256] (11) across k, while their margin on flagged posts at k = 1
 (0.231 [C239] and 0.204 [C245]) is above every classical technique's (0.016 [C258] to
 0.091 [C259]). The test shows that the attributions find words the models use,
-not that the models are right to use them.
+not that the models are right to use them. **TODO(author):** `docs/RELATED_WORK.md` has no entry for the
+Wilcoxon signed-rank test, Fisher's exact test or the percentile bootstrap,
+all used below; add references there before citing them.
 
 ### 6.3 Category shares
 
@@ -249,7 +292,13 @@ Jaccard 0.67 [C164]), as do char and word+char TF-IDF (Spearman 0.85 [C167]) and
 the two transformers (0.76 [C165] and 0.54 [C166]). Across families agreement is
 low: 07 against the six classical techniques gives Spearman 0.21 [C168] to
 0.28 [C169], and 11 gives 0.26 [C170] to 0.32 [C171]. FastText agrees little even
-with the word TF-IDF LR (0.17 [C172]).[^agree]
+with the word TF-IDF LR (0.17 [C172]).[^agree] This is disagreement between
+models under one explainer. Disagreement between explanation methods on
+the same model is documented separately (Krishna et al., 2024), and the
+cross-family figures should be read next to that baseline. The closest
+cross-architecture precedent (Atanasova et al., 2020) varied both the
+explainer and the neural architecture in order to evaluate the explainers;
+here the explainer is fixed and the model families vary.
 
 [^agree]: `results_summary/rq/rq2_shared_top_words.csv`,
     `results_summary/rq/rq2_word_agreement_pairs.csv`
@@ -281,7 +330,10 @@ comparison is descriptive.[^support]
 RQ2 reading. The deletion test supports reading the word tables as what each
 model uses. The models share a small core of words (a racial slur, "kill",
 "genocide") and otherwise rely on different words, and the split runs along
-feature family. Category-level conclusions wait for WP3.
+feature family. Category-level conclusions wait for WP3. The lexicon
+shares measure a plausibility-style alignment with curated word lists, and
+the deletion test measures faithfulness; the first does not stand in for
+the second (Jacovi and Goldberg, 2020).
 
 ---
 
@@ -290,8 +342,12 @@ feature family. Category-level conclusions wait for WP3.
 ### 7.1 Pretraining lineage and pooling
 
 Table 5 compares the single Twitter-RoBERTa (07), the four members of the
-ensemble's primary pool, their mean, and the pooled ensemble (11). The
-members do not share 07's training recipe, so Table 5 is not a controlled
+ensemble's primary pool, their mean, and the pooled ensemble (11). Member A,
+member E and 07 start from cardiffnlp's Twitter-RoBERTa hate-latest
+checkpoints (Antypas and Camacho-Collados, 2023); member B from a model
+trained on dynamically generated hate data (Vidgen et al., 2021); and
+member C from HateBERT, BERT retrained for abusive language (Caselli et al.,
+2021). The members do not share 07's training recipe, so Table 5 is not a controlled
 lineage comparison:
 
 * 07 is one seed (30 [C711]) at learning rate 2e-5 [C710], starting from
@@ -363,8 +419,8 @@ excludes zero (the bounds nearest zero are -0.020 [C336] against 03 and 0.028 [C
 against 04). These intervals cover post sampling only.[^rq3a]
 
 The lineage question itself is not answered yet. The hypothesis contrasts
-hate-speech pretraining with a plain RoBERTa control, and that control has
-not run. **TODO(author):** run notebook 12 (`12_ROBERTA-BASE_FINE-TUNE`,
+hate-speech pretraining with a plain RoBERTa control (Liu et al., 2019),
+and that control has not run. **TODO(author):** run notebook 12 (`12_ROBERTA-BASE_FINE-TUNE`,
 07's recipe with only the checkpoint changed), then rerun the RQ3 chain and
 replace Table 5. **TODO(author):** decide whether the member loop also
 explains the validation split, which would give members an across-run SD
@@ -372,8 +428,11 @@ explains the validation split, which would give members an across-run SD
 
 ### 7.2 Stability across post samples
 
-Each technique has two whole-model runs over different posts (test and
-validation). Table 6 gives their agreement on the same post count (200 per
+Ding and Koehn (2021) test whether saliency stays consistent across a
+distilled model and under input substitution. Table 6 measures a
+different, aggregate notion: whether a technique's word-level ranking,
+averaged over posts, is reproduced on a different sample of posts. Each technique has two whole-model runs over
+different posts (test and validation). Table 6 gives their agreement on the same post count (200 per
 split).
 
 **Table 6.** Test-versus-validation agreement of word attributions on 200
@@ -419,6 +478,13 @@ post samples. The pretraining-lineage comparison waits for notebook 12.
 
 ### 8.1 Correlation: false-positive rates with and without identity terms
 
+Toxicity classifiers are known to over-flag benign text that names identity
+groups (Dixon et al., 2018), and hate-speech benchmarks label whether the
+target is a group (Zampieri et al., 2019) or are built around named target
+groups (Basile et al., 2019). Table 7 compares false-positive rates with
+and without identity terms in the spirit of Dixon et al. (2018), on real
+posts rather than templates, with extremism labels at each locked
+threshold.
 Of the 280 [C465] non-extremist test posts, 67 [C464] contain at least one
 identity-lexicon match (83 [C466] extremist posts do).[^rq4n] Every technique
 has a higher false-positive rate on those 67 [C464] than on the other
@@ -426,7 +492,15 @@ has a higher false-positive rate on those 67 [C464] than on the other
 exact p is below 0.05 for 04, 05 and 11 only. With so few such posts, only
 large ratios are detectable, so a non-significant ratio is not evidence that
 the effect is absent. The identity matches come from the lexicon, so these
-rates are provisional until WP3.
+rates are provisional until WP3. That the point estimate exceeds 1 for
+every technique, classical or transformer, is consistent with the bias
+being learned from the training data rather than introduced by one
+architecture, as Davidson et al. (2019) found for dialect bias across five
+abuse datasets; only three of the eight ratios reach unadjusted Fisher
+p < 0.05.
+Threshold-free subgroup and BPSN/BNSP AUCs (Borkan et al., 2019) would
+complement these rates and can be computed from the committed
+probabilities; they are not reported here.
 
 [^rq4n]: `results_summary/rq/rq4_identity_fpr.csv`,
     `results_summary/rq/rq2_rq4_relation_inputs.csv`.
@@ -465,7 +539,15 @@ the techniques.
 ### 8.2 Intervention: editing the identity term
 
 The correlation does not show that the identity term causes the false
-positive. WP7 edits every identity-lexicon match in the 150 [C623] test posts
+positive, and neither does a SHAP attribution on its own: Shapley-based
+attributions do not answer what would have to change to change the outcome
+(Kumar et al., 2020), and perturbation explainers query the model off the
+data distribution (Slack et al., 2020), as our masked texts are. WP7 is
+therefore an input-level intervention in the line of perturbation
+sensitivity analysis (Prabhakaran et al., 2019). Its substitution arm,
+which swaps the identity term for a neutral group noun, is the direct
+analogue of counterfactual token fairness (Garg et al., 2019) and an
+invariance test in the sense of CheckList (Ribeiro et al., 2020). WP7 edits every identity-lexicon match in the 150 [C623] test posts
 that have one and re-scores the edited posts with each technique's restored
 predictor at its locked threshold. Before scoring, each restored predictor
 reproduces the committed test probabilities to within 0.0016 [C621]. This
@@ -565,12 +647,20 @@ A flip shows that one perturbation moved one post across the locked
 threshold. That is threshold-local necessity, not proof that the term causes
 the error. Deletion also changes TF-IDF normalization and character n-grams
 across the join, the panel words are rare in training, and the lexicon
-covers only the identity terms it lists.
+covers only the identity terms it lists. The models are not retrained
+after the edit. Without retraining, part of the probability drop can come
+from the edited text being off the training distribution, which
+remove-and-retrain (Hooker et al., 2019) controls for and WP7 does not.
+Unlike remove-and-retrain and the deletion test of section 6.2, WP7's edit
+set comes from the identity lexicon, not from attribution rank.
 
 ### 8.3 Does RQ2 reliance predict RQ4 false positives?
 
 This section is descriptive and, because both sides depend on the lexicons,
-provisional until WP3. Ranking the eight techniques by RQ2 identity-term
+provisional until WP3. The closest precedent for linking post-hoc
+attribution to identity-term over-reliance in hate classifiers is Kennedy
+et al. (2020); the difference here is the comparison across model families
+and the intervention of section 8.2. Ranking the eight techniques by RQ2 identity-term
 share (Table 4) and by FPR ratio (Table 7) gives Spearman rho = 0.83 [C630] at
 n = 8 [C631] (leave-one-out 0.74 [C634] to 0.95 [C635]; Holm p over the two
 preregistered rows 0.034 [C655], from which no inference is drawn at this n).
@@ -623,7 +713,10 @@ ordering of reliance and false positives is not established.
 
 Each item cites the evidence above; "avenue" names what would address it.
 None of these is a claim that the task is new: extremism and hate-speech
-detection are established research areas. The aim is to say where the
+detection are established research areas, with reviews and surveys of
+extremism detection (Gaikwad et al., 2021; Aldera et al., 2021; Torregrosa
+et al., 2023) and surveys of hate-speech detection (Schmidt and Wiegand,
+2017; Fortuna and Nunes, 2018). The aim is to say where the
 remaining difficulty sits.
 
 1. **Small test splits hide real differences.** With 450 [C818] test posts,
@@ -634,8 +727,11 @@ remaining difficulty sits.
 2. **Some errors are shared by every model.** 12 [C089] test posts are wrong
    for all eight techniques, 11 [C090] of them extremist. They point at label
    ambiguity, or at signal the text does not contain, which fits the
-   post-level, text-only limitation. Avenue: multi-annotator labels with
-   reported agreement. **TODO(author):** a qualitative read of these posts
+   post-level, text-only limitation. Label ambiguity is a known problem:
+   hate and offensive language are hard to separate (Davidson et al., 2017),
+   and definitions of extremism vary (Torregrosa et al., 2023). Avenue:
+   multi-annotator labels with reported agreement, as in large crowdsourced
+   annotation studies (Founta et al., 2018). **TODO(author):** a qualitative read of these posts
    by the authors (outside the repository; no text may be committed).
 3. **Identity terms are hard to separate from what surrounds them.** Every
    technique has a higher FPR on benign posts with identity terms (Table 7).
@@ -643,29 +739,42 @@ remaining difficulty sits.
    noun lowers p(extremist) about as much as deleting it. For the
    transformers, deleting it costs recall but substituting it does not, so
    the edit, not only the term, may drive the effect (section 8.2). Avenue:
-   counterfactual data augmentation or identity-balanced training,
-   evaluated with substitution as well as deletion and with the
-   recall-cost reporting used here.
+   counterfactual data augmentation (Kaushik et al., 2020) or
+   identity-balanced training such as data rebalancing (Dixon et al., 2018)
+   or worst-group training (Sagawa et al., 2020), evaluated with
+   substitution as well as deletion and with the recall-cost reporting used
+   here. This paper audits and does not retrain.
 4. **Transformer explanations are faithful on the posts they flag but
    unstable across samples.** The deletion test holds for every technique,
    and for the transformers its effect is concentrated in flagged posts
    (Table 3); yet their word rankings agree least across post samples
    (Spearman, Table 6). Per-word claims about transformers are fragile.
-   Avenue: report explanation stability and deletion faithfulness as
-   standard metrics.
+   Avenue: report explanation stability across post samples, saliency
+   consistency (Ding and Koehn, 2021) and deletion faithfulness (DeYoung et
+   al., 2020) as standard metrics.
 5. **Lexicons do not cover the vocabulary.** The topical category takes
    0.81 [C158] to 1.00 [C159] of positive mass, the framing lexicon matches almost
    none of the top words, the slur list is empty, and 14 [C703] distinct
    words that look like identity references are missing from the identity
    list (most on thin support). Category-level claims depend on curation.
-   Avenue: hand-annotated top words rather than lexicons alone.
+   Avenue: hand-annotated top words rather than lexicons alone, on the
+   model of the human rationales in HateXplain (Mathew et al., 2021), or
+   group-robust training that does not need group labels (Liu et al., 2021)
+   or an identity-term list (Attanasio et al., 2022).
 6. **Context matters.** Quotation, reporting and counter-speech can use the
    same words as extremist posts, and a word-level attribution cannot
-   separate them. No artifact here measures this. **TODO(author):** either
+   separate them. Prior work reaches past surface words with semantic graph
+   features (Saif et al., 2017) or annotations of implied statements about
+   groups (Sap et al., 2020), and HateCheck's functional tests include
+   non-hateful identity mentions, counter-speech and quotation (Röttger et
+   al., 2021). No artifact here measures this. **TODO(author):** either
    support this item with evidence (for example a labelled sample of
    counter-speech among the false positives, kept outside the repository)
-   or present it as a hypothesis. Avenue: layer-wise probes (WP9) and LLM
-   self-explanations (WP10). **TODO(author):** WP9 needs a Kaggle GPU run;
+   or present it as a hypothesis. Avenue: a HateCheck-style curated set
+   (Röttger et al., 2021), layer-wise probes (WP9; Alain and Bengio, 2017)
+   checked against control tasks (Hewitt and Liang, 2019), and LLM
+   self-explanations (WP10), whose stated reasons can be unfaithful (Turpin
+   et al., 2023). **TODO(author):** WP9 needs a Kaggle GPU run;
    WP10 needs an author decision on sending dataset text to a hosted model
    (an open-weight local model avoids it). Neither result exists.
 
@@ -771,12 +880,19 @@ The perturbation stages cannot be reproduced by a reader until they are.
 Labels are post-level and features text-only; one dataset and one frozen
 split; a small test split; category shares depend on lexicons that are not
 yet frozen; SHAP over subword models is aggregated to words with a
-word-level masker; the bootstrap intervals cover post sampling only, not
+word-level masker (Kokalj et al., 2021); the pipeline check compares
+against known coefficients, and the randomization sanity checks of Adebayo
+et al. (2018) were not run; the identity lexicon does not capture
+dialect-correlated false positives (Sap et al., 2019); the bootstrap intervals cover post sampling only, not
 SHAP seeds or other splits; transformer runs explain fewer posts per split
 than the classical runs (the same-post tables control for this where
 stated); the transformers in RQ3 differ in more than pretraining. The
 framework audits detectors of extremist content in single posts and is not a
-deployment recommendation.
+deployment recommendation. How abuse datasets are built and documented
+limits what any result on them shows (Vidgen and Derczynski, 2020).
+**TODO(author):** no peer-reviewed source for the dataset's collection and
+labelling was found (`docs/RELATED_WORK.md`, "Items not verified"); confirm
+and cite it before submission.
 
 [^cov]: `results_summary/rq/rq2_lexicon_coverage.csv`.
 
@@ -795,5 +911,193 @@ deployment recommendation.
    or hypothesis status for C3 item 6.
 7. Redact slurs in any report-card figure.
 8. Upload and record external assets before submission.
-9. Citations: place the related-work entries (`docs/RELATED_WORK.md`) in the
-    Results prose; none are cited in this draft.
+9. Citations: 55 entries of `docs/RELATED_WORK.md` are now cited
+    author-year and listed under References. Gaps, with no entry in
+    `docs/RELATED_WORK.md` yet: TF-IDF, logistic regression, linear SVMs, the
+    perceptron, FastText embeddings and logit pooling (technique list);
+    the Wilcoxon signed-rank test, Fisher's exact test and the percentile
+    bootstrap (sections 6 to 8); the dataset's collection and labelling
+    source (unverified). Add verified entries there before citing them, and
+    cite the exact `shap` version from `requirements-lock.txt` in the
+    methods section.
+
+## References
+
+Only the entries cited above, copied from `docs/RELATED_WORK.md`, where each
+was checked against a primary record on 2026-11-04.
+
+* **Adebayo, J., Gilmer, J., Muelly, M., Goodfellow, I., Hardt, M., Kim, B.
+  (2018).** Sanity Checks for Saliency Maps. *NeurIPS 2018*.
+  arXiv:1810.03292.
+* **Alain, G., Bengio, Y. (2017).** Understanding intermediate layers using
+  linear classifier probes. *ICLR 2017* (listed by MLAnthology. Whether it
+  was the workshop or main track was not confirmed). arXiv:1610.01644.
+* **Aldera, S., Emam, A., Al-Qurishi, M., Alrubaian, M., Alothaim, A. (2021).**
+  Online Extremism Detection in Textual Content: A Systematic Literature
+  Review. *IEEE Access* 9. DOI 10.1109/ACCESS.2021.3064178.
+* **Antypas, D., Camacho-Collados, J. (2023).** Robust Hate Speech Detection
+  in Social Media: A Cross-Dataset Empirical Evaluation. *WOAH 2023*,
+  pp. 231-242. DOI 10.18653/v1/2023.woah-1.25.
+* **Atanasova, P., Simonsen, J. G., Lioma, C., Augenstein, I. (2020).** A
+  Diagnostic Study of Explainability Techniques for Text Classification.
+  *EMNLP 2020*. ACL Anthology 2020.emnlp-main.263. arXiv:2009.13295.
+* **Attanasio, G., Nozza, D., Hovy, D., Baralis, E. (2022).** Entropy-based
+  Attention Regularization Frees Unintended Bias Mitigation from Lists.
+  *Findings of ACL 2022*. DOI 10.18653/v1/2022.findings-acl.88.
+* **Barbieri, F., Camacho-Collados, J., Espinosa-Anke, L., Neves, L.
+  (2020).** TweetEval: Unified Benchmark and Comparative Evaluation for Tweet
+  Classification. *Findings of EMNLP 2020*.
+  DOI 10.18653/v1/2020.findings-emnlp.148.
+* **Basile, V., Bosco, C., Fersini, E., Nozza, D., Patti, V., Rangel Pardo,
+  F. M., et al. (2019).** SemEval-2019 Task 5: Multilingual Detection of Hate
+  Speech Against Immigrants and Women in Twitter (HatEval). *SemEval 2019*.
+  DOI 10.18653/v1/S19-2007.
+* **Borkan, D., Dixon, L., Sorensen, J., Thain, N., Vasserman, L. (2019).**
+  Nuanced Metrics for Measuring Unintended Bias with Real Data for Text
+  Classification. *Companion Proceedings of WWW 2019*.
+  DOI 10.1145/3308560.3317593. arXiv:1903.04561.
+* **Caselli, T., Basile, V., Mitrović, J., Granitzer, M. (2021).** HateBERT:
+  Retraining BERT for Abusive Language Detection in English. *WOAH 2021*.
+  ACL Anthology 2021.woah-1.3. arXiv:2010.12472.
+* **Davidson, T., Warmsley, D., Macy, M., Weber, I. (2017).** Automated Hate
+  Speech Detection and the Problem of Offensive Language. *ICWSM 2017*.
+  arXiv:1703.04009.
+* **Davidson, T., Bhattacharya, D., Weber, I. (2019).** Racial Bias in Hate
+  Speech and Abusive Language Detection Datasets. *Third Workshop on Abusive
+  Language Online*. DOI 10.18653/v1/W19-3504.
+* **DeYoung, J., Jain, S., Rajani, N. F., Lehman, E., Xiong, C., Socher, R.,
+  et al. (2020).** ERASER: A Benchmark to Evaluate Rationalized NLP Models.
+  *ACL 2020*. ACL Anthology 2020.acl-main.408. arXiv:1911.03429.
+* **Dietterich, T. G. (1998).** Approximate Statistical Tests for Comparing
+  Supervised Classification Learning Algorithms. *Neural Computation* 10(7).
+  DOI 10.1162/089976698300017197.
+* **Ding, S., Koehn, P. (2021).** Evaluating Saliency Methods for Neural
+  Language Models. *NAACL-HLT 2021*. DOI 10.18653/v1/2021.naacl-main.399.
+* **Dixon, L., Li, J., Sorensen, J., Thain, N., Vasserman, L. (2018).**
+  Measuring and Mitigating Unintended Bias in Text Classification. *AIES
+  2018*. DOI 10.1145/3278721.3278729.
+* **Fernandez, M., Asif, M., Alani, H. (2018).** Understanding the Roots of
+  Radicalisation on Twitter. *Proceedings of the 10th ACM Conference on Web
+  Science*. DOI 10.1145/3201064.3201082.
+* **Ferrara, E., Wang, W.-Q., Varol, O., Flammini, A., Galstyan, A. (2016).**
+  Predicting Online Extremism, Content Adopters, and Interaction Reciprocity.
+  *SocInfo 2016*, LNCS. DOI 10.1007/978-3-319-47874-6_3.
+* **Fortuna, P., Nunes, S. (2018).** A Survey on Automatic Detection of Hate
+  Speech in Text. *ACM Computing Surveys* 51(4). DOI 10.1145/3232676.
+* **Founta, A.-M., Djouvas, C., Chatzakou, D., Leontiadis, I., Blackburn, J.,
+  Stringhini, G., et al. (2018).** Large Scale Crowdsourcing and
+  Characterization of Twitter Abusive Behavior. *ICWSM 2018*.
+  arXiv:1802.00393.
+* **Gaikwad, M., Ahirrao, S., Phansalkar, S., Kotecha, K. (2021).** Online
+  Extremism Detection: A Systematic Literature Review With Emphasis on
+  Datasets, Classification Techniques, Validation Methods, and Tools.
+  *IEEE Access* 9. DOI 10.1109/ACCESS.2021.3068313.
+* **Garg, S., Perot, V., Limtiaco, N., Taly, A., Chi, E. H., Beutel, A.
+  (2019).** Counterfactual Fairness in Text Classification through
+  Robustness. *AIES 2019*. DOI 10.1145/3306618.3317950. arXiv:1809.10610.
+* **Hewitt, J., Liang, P. (2019).** Designing and Interpreting Probes with
+  Control Tasks. *EMNLP-IJCNLP 2019*. DOI 10.18653/v1/D19-1275.
+* **Holm, S. (1979).** A Simple Sequentially Rejective Multiple Test
+  Procedure. *Scandinavian Journal of Statistics* 6(2), 65-70. JSTOR 4615733.
+* **Hooker, S., Erhan, D., Kindermans, P.-J., Kim, B. (2019).** A Benchmark
+  for Interpretability Methods in Deep Neural Networks (ROAR). *NeurIPS 2019*
+  (Advances in Neural Information Processing Systems 32), 9737-9748.
+  arXiv:1806.10758.
+* **Jacovi, A., Goldberg, Y. (2020).** Towards Faithfully Interpretable NLP
+  Systems: How Should We Define and Evaluate Faithfulness? *ACL 2020*.
+  ACL Anthology 2020.acl-main.386. arXiv:2004.03685.
+* **Janzing, D., Minorics, L., Blöbaum, P. (2020).** Feature relevance
+  quantification in explainable AI: A causal problem. *AISTATS 2020*, PMLR
+  108, 2907-2916. arXiv:1910.13413.
+* **Kaushik, D., Hovy, E., Lipton, Z. C. (2020).** Learning the Difference
+  that Makes a Difference with Counterfactually-Augmented Data. *ICLR 2020*.
+  arXiv:1909.12434.
+* **Kennedy, B., Jin, X., Mostafazadeh Davani, A., Dehghani, M., Ren, X.
+  (2020).** Contextualizing Hate Speech Classifiers with Post-hoc
+  Explanation. *ACL 2020*. ACL Anthology 2020.acl-main.483.
+  arXiv:2005.02439.
+* **Kokalj, E., Škrlj, B., Lavrač, N., Pollak, S., Robnik-Šikonja, M.
+  (2021).** BERT meets Shapley: Extending SHAP Explanations to
+  Transformer-based Classifiers. *EACL Hackashop on News Media Content
+  Analysis and Automated Report Generation*, pp. 16-21. ACL Anthology
+  2021.hackashop-1.3.
+* **Krishna, S., Han, T., Gu, A., Wu, S., Jabbari, S., Lakkaraju, H.
+  (2024).** The Disagreement Problem in Explainable Machine Learning: A
+  Practitioner's Perspective. *Transactions on Machine Learning Research*
+  (2024). OpenReview jESY2WTZCe. arXiv:2202.01602.
+* **Kumar, I. E., Venkatasubramanian, S., Scheidegger, C., Friedler, S.
+  (2020).** Problems with Shapley-value-based explanations as feature
+  importance measures. *ICML 2020*, PMLR 119. arXiv:2002.11097.
+* **Liu, Y., Ott, M., Goyal, N., Du, J., Joshi, M., Chen, D., et al.
+  (2019).** RoBERTa: A Robustly Optimized BERT Pretraining Approach.
+  arXiv preprint arXiv:1907.11692.
+* **Liu, E. Z., Haghgoo, B., Chen, A. S., Raghunathan, A., Koh, P. W.,
+  Sagawa, S., et al. (2021).** Just Train Twice: Improving Group Robustness
+  without Training Group Information (JTT). *ICML 2021*, PMLR 139.
+  arXiv:2107.09044.
+* **Lundberg, S. M., Lee, S.-I. (2017).** A Unified Approach to Interpreting
+  Model Predictions (SHAP). *NeurIPS 2017* (Advances in Neural Information
+  Processing Systems 30). arXiv:1705.07874.
+* **Mathew, B., Saha, P., Yimam, S. M., Biemann, C., Goyal, P.,
+  Mukherjee, A. (2021).** HateXplain: A Benchmark Dataset for Explainable
+  Hate Speech Detection. *AAAI 2021*, 35(17), 14867-14875.
+  DOI 10.1609/aaai.v35i17.17745. arXiv:2012.10289.
+* **McNemar, Q. (1947).** Note on the Sampling Error of the Difference
+  Between Correlated Proportions or Percentages. *Psychometrika* 12(2).
+  DOI 10.1007/BF02295996.
+* **Owen, G. (1977).** Values of Games with a Priori Unions. *Lecture Notes in Economics and
+  Mathematical Systems*, pp. 76-88. DOI 10.1007/978-3-642-45494-3_7.
+* **Prabhakaran, V., Hutchinson, B., Mitchell, M. (2019).** Perturbation
+  Sensitivity Analysis to Detect Unintended Model Biases. *EMNLP-IJCNLP
+  2019*. DOI 10.18653/v1/D19-1578.
+* **Ribeiro, M. T., Wu, T., Guestrin, C., Singh, S. (2020).** Beyond
+  Accuracy: Behavioral Testing of NLP Models with CheckList. *ACL 2020*.
+  DOI 10.18653/v1/2020.acl-main.442.
+* **Röttger, P., Vidgen, B., Nguyen, D., Waseem, Z., Margetts, H.,
+  Pierrehumbert, J. (2021).** HateCheck: Functional Tests for Hate Speech
+  Detection Models. *ACL-IJCNLP 2021*. DOI 10.18653/v1/2021.acl-long.4.
+* **Sagawa, S., Koh, P. W., Hashimoto, T. B., Liang, P. (2020).**
+  Distributionally Robust Neural Networks for Group Shifts: On the
+  Importance of Regularization for Worst-Case Generalization (Group DRO).
+  *ICLR 2020*. arXiv:1911.08731.
+* **Saif, H., Dickinson, T., Kastler, L., Fernandez, M., Alani, H. (2017).**
+  A Semantic Graph-Based Approach for Radicalisation Detection on Social
+  Media. *ESWC 2017*, LNCS. DOI 10.1007/978-3-319-58068-5_35.
+* **Sap, M., Card, D., Gabriel, S., Choi, Y., Smith, N. A. (2019).** The
+  Risk of Racial Bias in Hate Speech Detection. *ACL 2019*.
+  DOI 10.18653/v1/P19-1163.
+* **Sap, M., Gabriel, S., Qin, L., Jurafsky, D., Smith, N. A., Choi, Y.
+  (2020).** Social Bias Frames: Reasoning about Social and Power
+  Implications of Language. *ACL 2020*. DOI 10.18653/v1/2020.acl-main.486.
+* **Schmidt, A., Wiegand, M. (2017).** A Survey on Hate Speech Detection
+  using Natural Language Processing. *SocialNLP Workshop (EACL 2017)*.
+  DOI 10.18653/v1/W17-1101.
+* **Shapley, L. S. (1953).** A Value for n-Person Games. In *Contributions
+  to the Theory of Games II* (Annals of Mathematics Studies 28).
+  DOI 10.1515/9781400881970-018.
+* **Slack, D., Hilgard, S., Jia, E., Singh, S., Lakkaraju, H. (2020).**
+  Fooling LIME and SHAP: Adversarial Attacks on Post hoc Explanation Methods.
+  *AIES 2020*. DOI 10.1145/3375627.3375830.
+* **Sundararajan, M., Najmi, A. (2020).** The Many Shapley Values for Model
+  Explanation. *ICML 2020*, PMLR 119. arXiv:1908.08474.
+* **Torregrosa, J., Bello-Orgaz, G., Martínez-Cámara, E., Del Ser, J.,
+  Camacho, D. (2023).** A survey on extremism analysis using natural language
+  processing: definitions, literature review, trends and challenges.
+  *Journal of Ambient Intelligence and Humanized Computing* 14(8),
+  9869-9905 (published online 2022).
+  DOI 10.1007/s12652-021-03658-z.
+* **Turpin, M., Michael, J., Perez, E., Bowman, S. R. (2023).** Language
+  Models Don't Always Say What They Think: Unfaithful Explanations in
+  Chain-of-Thought Prompting. *NeurIPS 2023*. arXiv:2305.04388.
+* **Vidgen, B., Derczynski, L. (2020).** Directions in abusive language
+  training data, a systematic review: Garbage in, garbage out. *PLOS ONE*
+  15(12). DOI 10.1371/journal.pone.0243300.
+* **Vidgen, B., Thrush, T., Waseem, Z., Kiela, D. (2021).** Learning from
+  the Worst: Dynamically Generated Datasets to Improve Online Hate Detection.
+  *ACL 2021*. DOI 10.18653/v1/2021.acl-long.132.
+* **Waseem, Z., Hovy, D. (2016).** Hateful Symbols or Hateful People?
+  Predictive Features for Hate Speech Detection on Twitter. *NAACL Student
+  Research Workshop*. DOI 10.18653/v1/N16-2013.
+* **Zampieri, M., Malmasi, S., Nakov, P., Rosenthal, S., Farra, N.,
+  Kumar, R. (2019).** Predicting the Type and Target of Offensive Posts in
+  Social Media (OLID). *NAACL 2019*. DOI 10.18653/v1/N19-1144.
