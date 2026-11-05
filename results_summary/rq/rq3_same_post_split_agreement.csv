@@ -1,0 +1,17 @@
+technique,post_set,run_id_test,run_id_validation,n_posts_test,n_posts_validation,top_k,n_shared_words,jaccard_top_k_positive,jaccard_top_k_abs,spearman_mean_abs_attribution
+01_LOG-REG_TF-IDF,own,shap-partition_test_seed30,shap-partition_validation_seed30,450,450,50,1115,0.587302,0.388889,0.710612
+01_LOG-REG_TF-IDF,common,shap-partition_test_seed30,shap-partition_validation_seed30,200,200,50,608,0.449275,0.333333,0.703705
+02_LIN-SVM_TF-IDF,own,shap-partition_test_seed30,shap-partition_validation_seed30,450,450,50,1115,0.408451,0.298701,0.688725
+02_LIN-SVM_TF-IDF,common,shap-partition_test_seed30,shap-partition_validation_seed30,200,200,50,608,0.408451,0.333333,0.711174
+03_SLP_TF-IDF,own,shap-partition_test_seed30,shap-partition_validation_seed30,450,450,50,1115,0.388889,0.369863,0.675655
+03_SLP_TF-IDF,common,shap-partition_test_seed30,shap-partition_validation_seed30,200,200,50,608,0.388889,0.315789,0.694968
+04_CHAR-TF-IDF_LIN-SVM,own,shap-partition_test_seed30,shap-partition_validation_seed30,450,450,50,1115,0.408451,0.408451,0.686175
+04_CHAR-TF-IDF_LIN-SVM,common,shap-partition_test_seed30,shap-partition_validation_seed30,200,200,50,608,0.333333,0.333333,0.705283
+05_WORD-CHAR-TF-IDF_LIN-SVM,own,shap-partition_test_seed30,shap-partition_validation_seed30,450,450,50,1115,0.666667,0.612903,0.687889
+05_WORD-CHAR-TF-IDF_LIN-SVM,common,shap-partition_test_seed30,shap-partition_validation_seed30,200,200,50,608,0.5625,0.470588,0.743283
+06_FASTTEXT-EMB_LOG-REG,own,shap-partition_test_seed30,shap-partition_validation_seed30,450,450,50,1115,0.25,0.25,0.543181
+06_FASTTEXT-EMB_LOG-REG,common,shap-partition_test_seed30,shap-partition_validation_seed30,200,200,50,608,0.190476,0.190476,0.616356
+07_TWITTER-ROBERTA_FINE-TUNE,own,shap-partition_test_seed30,shap-partition_validation_seed30,200,200,50,608,0.204819,0.176471,0.426815
+07_TWITTER-ROBERTA_FINE-TUNE,common,shap-partition_test_seed30,shap-partition_validation_seed30,200,200,50,608,0.204819,0.176471,0.426815
+11_MULTI-CHECKPOINT_LOGIT-POOL,own,shap-partition_test_seed30,shap-partition_validation_seed30,200,200,50,608,0.219512,0.219512,0.488128
+11_MULTI-CHECKPOINT_LOGIT-POOL,common,shap-partition_test_seed30,shap-partition_validation_seed30,200,200,50,608,0.219512,0.219512,0.488128
