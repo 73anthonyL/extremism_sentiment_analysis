@@ -101,6 +101,10 @@ extremism_sentiment_analysis/
 │   ├── compare_reliance.py       # RQ3: pretraining and ensembling vs reliance; stability
 │   ├── identity_fpr.py           # RQ4: false positives on posts with identity terms
 │   ├── identity_counterfactual.py  # RQ4: re-scores those posts with the identity terms removed
+│   ├── identity_sensitivity.py   # RQ4 and WP7 without ambiguous identity words; lexicon-gap candidates
+│   ├── faithfulness.py           # RQ2: deletion test of the SHAP word rankings (needs external weights)
+│   ├── same_post_stability.py    # RQ2/RQ3 on the posts every technique explained (needs per-post files)
+│   ├── rq2_rq4_relation.py       # rank relation of identity reliance and identity-term FPR ratio
 │   ├── run_manifest.py           # reconciles committed files with external assets
 │   ├── validate_results_folder.py
 │   ├── render_tables.py          # regenerates every doc results table
@@ -184,7 +188,14 @@ python3 tools/categorize_attributions.py --all                  # RQ2
 python3 tools/compare_reliance.py                               # RQ3
 python3 tools/identity_fpr.py --all                              # RQ4
 python3 tools/identity_counterfactual.py --all                   # RQ4 counterfactual (needs external weights)
+python3 tools/identity_sensitivity.py fpr                        # RQ4 without ambiguous identity words
+python3 tools/faithfulness.py --technique 01_LOG-REG_TF-IDF      # RQ2 deletion test (needs external weights)
+python3 tools/same_post_stability.py                             # RQ2/RQ3 on common posts (needs per-post files)
+python3 tools/rq2_rq4_relation.py                                # RQ2 x RQ4 rank relation
 ```
+
+`python3 tools/audit.py run --technique <T>` runs all of these in order for
+one technique; add `--with-perturbation` for the stages that load a model.
 
 Notebooks are committed with their cell outputs on purpose, so a reader can
 follow them. `scan_text_leakage.py` is what keeps a post, a text hash, or a
