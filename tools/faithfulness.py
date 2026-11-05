@@ -8,16 +8,19 @@ assumption with ERASER-style deletion (comprehensiveness; DeYoung et al.
 EXTREMIST and measure how far the probability falls, against deleting the
 same number of words at random from the same post.
 
-Inputs, per technique:
+Inputs, per technique and split (--split, default test; validation is the
+replication on a second post sample):
 
-* the per-post token attributions of the whole-model test run,
-  external/<TECHNIQUE>/attributions_local/shap-partition_test_seed30.csv
+* the per-post token attributions of the split's whole-model run,
+  external/<TECHNIQUE>/attributions_local/shap-partition_<split>_seed30.csv
   (row_id, position, token, attribution). The file must rebuild the committed
   word table results_summary/<TECHNIQUE>/attributions/<run_id>.csv with the
-  kit's own aggregation (split_beeswarms.table_difference), its row ids must
-  be rows of the committed test artifact, and each post's tokens, joined,
-  must reproduce the dataset text exactly. Otherwise the technique is refused.
-* its committed test probability artifact and locked threshold, and
+  kit's own aggregation (split_beeswarms.table_difference), that run's
+  sidecar must name the same split, its row ids must be rows of the committed
+  probability artifact of that split, and each post's tokens, joined, must
+  reproduce the dataset text exactly. Otherwise the technique is refused.
+* its committed probability artifact of the same split (an artifact of any
+  other split is refused) and its locked threshold, and
 * its predictor restored from external/<TECHNIQUE> by model_loaders.
 
 The restored predictor scores the original texts of the explained posts in
@@ -51,12 +54,14 @@ Per technique x population x k:
 * wilcoxon_p         paired two-sided Wilcoxon signed-rank test of the
                      per-post top-k drop against that post's mean random drop,
 * wilcoxon_p_holm    Holm over every comparison row of the same population in
-                     the cross-technique table; a technique outside the
-                     comparison forms its own family per population.
-                     `shared` is the primary family (32 rows). `explained`
-                     is secondary: for the transformers it is the same posts,
-                     so the two families overlap and are not corrected
-                     jointly (64 tests in all).
+                     the cross-technique table of the same split; a technique
+                     outside the comparison forms its own family per
+                     population. `shared` is the primary family (32 rows).
+                     `explained` is secondary: for the transformers it is the
+                     same posts, so the two families overlap and are not
+                     corrected jointly (64 tests in all). The families are
+                     per split: the validation table is corrected on its own
+                     and never jointly with the test table.
 
 Table-only columns, derived from a row's committed means (--rebuild-table
 recomputes them without loading a model):
@@ -67,12 +72,13 @@ recomputes them without loading a model):
 * drop_minus_random_flagged  the margin on posts flagged at the locked
                      threshold, the comparison least affected by calibration.
 
-Populations: `explained` is every test post the technique explained (all 450
-for the classical notebooks, a 200-post seeded sample for the transformers).
-`shared` is the posts every technique in the comparison explained, which is
-the population to compare techniques on: same posts, same labels. Within it
-n_posts still varies by technique (196-200 in the committed run), because a
-post with no positive token for that technique is left out.
+Populations, both defined within the split: `explained` is every post of the
+split the technique explained (all 450 for the classical notebooks, a 200-post
+seeded sample for the transformers). `shared` is the posts of that split every
+technique in the comparison explained, which is the population to compare
+techniques on: same posts, same labels. Within it n_posts still varies by
+technique (196-200 in the committed test run), because a post with no positive
+token for that technique is left out.
 
 Reading. Attributions are SHAP values of P(EXTREMIST) under word masking with
 the mask token; deletion is a different perturbation (the word and its
@@ -96,18 +102,22 @@ fraction of the random drop itself.
 
 Re-scoring frozen models at their locked thresholds is a perturbation
 analysis, not a test evaluation: no threshold, model or configuration is
-selected from it.
+selected from it. The validation run does not touch the test split at all.
 
 Text, tokens and row ids are held in memory only. Outputs carry counts,
 means and p-values, and the writer refuses a payload carrying a row id.
 
 Outputs:
-    results_summary/<TECHNIQUE>/faithfulness_test.json
-    results_summary/rq/rq2_faithfulness.csv
+    results_summary/<TECHNIQUE>/faithfulness_<split>.json
+    results_summary/rq/rq2_faithfulness.csv              (test)
+    results_summary/rq/rq2_faithfulness_validation.csv   (validation; a sibling
+        table, so the test table's readers, claims and Holm families are unchanged)
 
 USAGE
 -----
     python3 tools/faithfulness.py --technique 01_LOG-REG_TF-IDF
+    python3 tools/faithfulness.py --technique 01_LOG-REG_TF-IDF --split validation
+    python3 tools/faithfulness.py --rebuild-table [--split validation]
     python3 tools/faithfulness.py --technique 11_MULTI-CHECKPOINT_LOGIT-POOL \\
         --device mps --sequential-checkpoints
 """
@@ -146,11 +156,14 @@ from repo_paths import (  # noqa: E402
     REPO_ROOT,
     RESULTS_DIR,
     RQ2_FAITHFULNESS_CSV,
+    RQ2_FAITHFULNESS_VALIDATION_CSV,
     comparison_technique_dirs,
     in_comparison,
 )
 
-SPLIT = "test"
+SPLIT = "test"  # the default split; the paper's primary faithfulness table
+SPLITS = ("test", "validation")
+TABLE_PATHS = {"test": RQ2_FAITHFULNESS_CSV, "validation": RQ2_FAITHFULNESS_VALIDATION_CSV}
 K_VALUES = (1, 3, 5, 10)
 N_RANDOM_SEEDS = 5
 RANDOM_SEEDS = tuple(RANDOM_SEED + i for i in range(N_RANDOM_SEEDS))
@@ -204,6 +217,17 @@ class FaithfulnessError(RuntimeError):
     pass
 
 
+def check_split(split):
+    if split not in SPLITS:
+        raise FaithfulnessError(f"split must be one of {SPLITS}, not {split!r}")
+    return split
+
+
+def table_path(split=SPLIT):
+    """The cross-technique table of one split."""
+    return TABLE_PATHS[check_split(split)]
+
+
 # ---------------------------------------------------------------------------
 # Deletion sets and deleted text
 # ---------------------------------------------------------------------------
@@ -235,46 +259,56 @@ def delete_tokens(tokens, positions):
 # ---------------------------------------------------------------------------
 # Posts
 # ---------------------------------------------------------------------------
-def local_path(technique, external_root=EXTERNAL_ROOT):
-    return Path(external_root) / technique / LOCAL_SUBDIR / f"{run_id(SPLIT)}.csv"
+def local_path(technique, external_root=EXTERNAL_ROOT, split=SPLIT):
+    return Path(external_root) / technique / LOCAL_SUBDIR / f"{run_id(check_split(split))}.csv"
 
 
-def explained_row_ids(technique, external_root=EXTERNAL_ROOT):
-    path = local_path(technique, external_root)
+def explained_row_ids(technique, external_root=EXTERNAL_ROOT, split=SPLIT):
+    path = local_path(technique, external_root, split)
     if not path.is_file():
         raise FaithfulnessError(f"{technique}: no per-post attributions at {path}")
     return set(pd.read_csv(path, usecols=["row_id"])["row_id"].astype(str))
 
 
-def shared_row_ids(external_root=EXTERNAL_ROOT, results_dir=None):
-    """Posts every comparison technique explained; refuses when one technique's file is missing."""
+def shared_row_ids(external_root=EXTERNAL_ROOT, results_dir=None, split=SPLIT):
+    """Posts of `split` every comparison technique explained; refuses when one technique's file is missing."""
     techniques = [d.name for d in comparison_technique_dirs(results_dir)]
     if not techniques:
         raise FaithfulnessError("no technique in the comparison")
     shared = None
     for technique in techniques:
-        ids = explained_row_ids(technique, external_root)
+        ids = explained_row_ids(technique, external_root, split)
         shared = ids if shared is None else shared & ids
     if not shared:
         raise FaithfulnessError("the comparison techniques share no explained post")
     return shared, techniques
 
 
-def build_posts(technique, posts, processed, probs):
+def build_posts(technique, posts, processed, probs, split=SPLIT):
     """Join per-post tokens to text, label and committed probability (in memory only).
 
-    Refuses row ids outside the committed artifact and token lists that do not
-    concatenate to the dataset text, since deletion edits that concatenation.
+    Refuses an artifact of another split, row ids outside the committed
+    artifact, and token lists that do not concatenate to the dataset text,
+    since deletion edits that concatenation.
     """
+    check_split(split)
     if not posts:
         raise FaithfulnessError(f"{technique}: no explained post")
+    if "split" in probs.columns:
+        other = sorted(set(probs["split"].astype(str)) - {split})
+        if other:
+            raise FaithfulnessError(
+                f"{technique}: the probability artifact holds split(s) {other}, not {split}; a {split} run "
+                f"is verified only against the committed {split} artifact"
+            )
     merged = merge_with_dataset(technique, probs, processed).set_index("row_id")
     rows = []
     n_mismatch = 0
     for row_id, tokens, values in posts:
         if row_id not in merged.index:
             raise FaithfulnessError(
-                f"{technique}: an explained post is not a row of the committed {SPLIT} artifact"
+                f"{technique}: an explained post is not a row of the committed {split} artifact; "
+                "the per-post file was explained on another split"
             )
         if len(tokens) != len(values) or not len(tokens):
             raise FaithfulnessError(f"{technique}: a post has no tokens or mismatched values")
@@ -299,15 +333,24 @@ def build_posts(technique, posts, processed, probs):
 
 
 def load_posts(technique, processed, external_root=EXTERNAL_ROOT, results_dir=None,
-               probs=None, tolerance=DEFAULT_TABLE_TOLERANCE):
-    """Read and check the per-post file of the whole-model test run."""
+               probs=None, tolerance=DEFAULT_TABLE_TOLERANCE, split=SPLIT):
+    """Read and check the per-post file of the split's whole-model run."""
+    check_split(split)
     base = RESULTS_DIR if results_dir is None else Path(results_dir)
-    label = f"{technique} {SPLIT}"
+    label = f"{technique} {split}"
     try:
-        posts = read_posts(local_path(technique, external_root), label)
-        committed_path = base / technique / ATTRIBUTIONS_SUBDIR / f"{run_id(SPLIT)}.csv"
+        posts = read_posts(local_path(technique, external_root, split), label)
+        committed_path = base / technique / ATTRIBUTIONS_SUBDIR / f"{run_id(split)}.csv"
         if not committed_path.is_file():
             raise FaithfulnessError(f"{label}: no committed word table at {committed_path}")
+        sidecar_path = committed_path.with_suffix(".json")
+        if sidecar_path.is_file():
+            with open(sidecar_path) as handle:
+                sidecar_split = json.load(handle).get("split")
+            if sidecar_split != split:
+                raise FaithfulnessError(
+                    f"{label}: the committed run {sidecar_path.name} names split {sidecar_split!r}, not {split!r}"
+                )
         committed = pd.read_csv(committed_path, keep_default_na=False)
         difference = table_difference(posts, committed, label)
     except SplitBeeswarmsError as error:
@@ -317,8 +360,8 @@ def load_posts(technique, processed, external_root=EXTERNAL_ROOT, results_dir=No
             f"{label}: the per-post file does not reproduce the committed word table "
             f"(max |diff| {difference:.2g}, tolerance {tolerance:g})"
         )
-    probs = load_technique_probs(technique, SPLIT) if probs is None else probs
-    return build_posts(technique, posts, processed, probs), difference
+    probs = load_technique_probs(technique, split) if probs is None else probs
+    return build_posts(technique, posts, processed, probs, split), difference
 
 
 # ---------------------------------------------------------------------------
@@ -378,7 +421,7 @@ def score_plan(model, posts, plan):
     return original, out
 
 
-def verify_original(technique, original, committed, tolerance=DEFAULT_TOLERANCE):
+def verify_original(technique, original, committed, tolerance=DEFAULT_TOLERANCE, split=SPLIT):
     differences = np.abs(np.asarray(original, dtype=float) - np.asarray(committed, dtype=float))
     result = {
         "n_rows": int(len(differences)),
@@ -389,7 +432,7 @@ def verify_original(technique, original, committed, tolerance=DEFAULT_TOLERANCE)
     }
     if not result["passed"]:
         raise FaithfulnessError(
-            f"{technique}: the restored model disagrees with the committed test probabilities "
+            f"{technique}: the restored model disagrees with the committed {split} probabilities "
             f"(max |diff| {result['max_abs_diff']:.4f} over {result['n_rows']} explained posts, "
             f"tolerance {tolerance}); its attributions do not describe this predictor"
         )
@@ -492,8 +535,10 @@ def recorded_device(model, requested):
 # One technique
 # ---------------------------------------------------------------------------
 def analyze(technique, model, posts, threshold, shared_ids, model_family=None, device=None,
-            k_values=K_VALUES, seeds=RANDOM_SEEDS, tolerance=DEFAULT_TOLERANCE, table_diff=None):
+            k_values=K_VALUES, seeds=RANDOM_SEEDS, tolerance=DEFAULT_TOLERANCE, table_diff=None,
+            split=SPLIT):
     """Score every deletion, verify the originals, and build the rows."""
+    check_split(split)
     restored_threshold = getattr(model, "threshold", None)
     if restored_threshold is not None and not math.isclose(float(restored_threshold), float(threshold)):
         raise FaithfulnessError(f"{technique}: restored threshold {restored_threshold} != committed {threshold}")
@@ -501,7 +546,7 @@ def analyze(technique, model, posts, threshold, shared_ids, model_family=None, d
         raise FaithfulnessError(f"{technique}: no explained post")
     plan = deletion_plan(posts, k_values, seeds)
     original, scored = score_plan(model, posts, plan)
-    verification = verify_original(technique, original, posts["y_prob"], tolerance)
+    verification = verify_original(technique, original, posts["y_prob"], tolerance, split)
 
     p_original = posts["y_prob"].to_numpy(dtype=float)
     in_shared = posts["row_id"].isin(shared_ids).to_numpy()
@@ -516,7 +561,7 @@ def analyze(technique, model, posts, threshold, shared_ids, model_family=None, d
             row = {
                 "technique": technique,
                 "model_family": model_family,
-                "split": SPLIT,
+                "split": split,
                 "population": population,
                 "threshold": float(threshold),
                 "n_posts_explained": int(mask.sum()),
@@ -532,8 +577,8 @@ def analyze(technique, model, posts, threshold, shared_ids, model_family=None, d
     return {
         "technique": technique,
         "model_family": model_family,
-        "split": SPLIT,
-        "run_id": run_id(SPLIT),
+        "split": split,
+        "run_id": run_id(split),
         "threshold": float(threshold),
         "device": device,
         "k_values": list(k_values),
@@ -549,7 +594,7 @@ def analyze(technique, model, posts, threshold, shared_ids, model_family=None, d
         "p_original_source": "committed probability artifact",
         "word_table_max_diff": _round(table_diff) if table_diff is not None else None,
         "verification": _round(verification),
-        "holm_adjusted_p": f"see {RQ2_FAITHFULNESS_CSV.name} (family: every comparison row of the same "
+        "holm_adjusted_p": f"see {table_path(split).name} (family: every comparison row of the same "
                            "population, or this technique's own rows of it when it is outside the comparison)",
         "rows": rows,
     }
@@ -606,12 +651,23 @@ def derive_columns(table):
     return table
 
 
-def write_table(payloads, path=None, results_dir=None, replace=False):
-    """Merge rows into the cross-technique table and recompute Holm per family.
+def write_table(payloads, path=None, results_dir=None, replace=False, split=None):
+    """Merge rows into the cross-technique table of one split and recompute Holm per family.
 
-    replace=True ignores any existing table (used by --rebuild-table, which
-    passes every committed payload).
+    Every payload and row must be of that split (by default the payloads' own,
+    which must agree); the table at `path` (default: the split's table) must
+    hold only that split. replace=True ignores any existing table (used by
+    --rebuild-table, which passes every committed payload).
     """
+    splits = {p.get("split") for p in payloads} | {row.get("split") for p in payloads for row in p["rows"]}
+    if split is None:
+        if len(splits) != 1:
+            raise FaithfulnessError(f"the payloads mix splits {sorted(map(str, splits))}; one table per split")
+        split = next(iter(splits))
+    check_split(split)
+    if splits - {split}:
+        raise FaithfulnessError(f"a payload or row is of split {sorted(map(str, splits - {split}))}, "
+                                f"not {split}; one table per split")
     for payload in payloads:
         check_text_free(payload)
         missing = [c for row in payload["rows"] for c in ROW_COLUMNS if c not in row]
@@ -619,7 +675,7 @@ def write_table(payloads, path=None, results_dir=None, replace=False):
             raise FaithfulnessError(f"{payload.get('technique')}: rows lack {sorted(set(missing))}")
         if any(row["technique"] != payload.get("technique") for row in payload["rows"]):
             raise FaithfulnessError(f"{payload.get('technique')}: a row names another technique")
-    path = Path(RQ2_FAITHFULNESS_CSV if path is None else path)
+    path = Path(table_path(split) if path is None else path)
     new = pd.DataFrame([row for p in payloads for row in p["rows"]])[list(ROW_COLUMNS)]
     if path.exists() and not replace:
         # round_trip: pandas' default float parser can be one ulp off, and a Holm product that
@@ -627,6 +683,8 @@ def write_table(payloads, path=None, results_dir=None, replace=False):
         existing = pd.read_csv(path, float_precision="round_trip")
         if list(existing.columns) != list(TABLE_COLUMNS):
             raise FaithfulnessError(f"{path.name}: columns differ from this version of the tool; rerun every technique")
+        if set(existing["split"].astype(str)) - {split}:
+            raise FaithfulnessError(f"{path.name} holds rows of another split than {split}; one table per split")
         existing = existing[~existing["technique"].isin(new["technique"])][list(ROW_COLUMNS)]
         new = pd.concat([existing, new], ignore_index=True)
     new = new.sort_values(["population", "technique", "k"]).reset_index(drop=True)
@@ -641,22 +699,23 @@ def write_table(payloads, path=None, results_dir=None, replace=False):
     return path
 
 
-def rebuild_table(results_dir=None, path=None):
-    """Rewrite the table from every committed faithfulness JSON; no model is loaded."""
+def rebuild_table(results_dir=None, path=None, split=SPLIT):
+    """Rewrite one split's table from every committed faithfulness JSON of it; no model is loaded."""
+    check_split(split)
     base = RESULTS_DIR if results_dir is None else Path(results_dir)
     payloads = []
-    for json_path in sorted(base.glob(f"*/{FAITHFULNESS_FILENAME.format(split=SPLIT)}")):
+    for json_path in sorted(base.glob(f"*/{FAITHFULNESS_FILENAME.format(split=split)}")):
         with open(json_path) as handle:
             payload = json.load(handle)
         if payload.get("technique") != json_path.parent.name:
             raise FaithfulnessError(f"{json_path.parent.name}: its {json_path.name} names "
                                     f"technique {payload.get('technique')!r}")
-        if payload.get("split") != SPLIT:
+        if payload.get("split") != split:
             raise FaithfulnessError(f"{json_path.parent.name}: {json_path.name} has split {payload.get('split')!r}")
         payloads.append(payload)
     if not payloads:
-        raise FaithfulnessError(f"no {FAITHFULNESS_FILENAME.format(split=SPLIT)} under {base}")
-    return write_table(payloads, path, results_dir, replace=True), len(payloads)
+        raise FaithfulnessError(f"no {FAITHFULNESS_FILENAME.format(split=split)} under {base}")
+    return write_table(payloads, path, results_dir, replace=True, split=split), len(payloads)
 
 
 # ---------------------------------------------------------------------------
@@ -664,18 +723,21 @@ def rebuild_table(results_dir=None, path=None):
 # ---------------------------------------------------------------------------
 def run(techniques, processed, args, external_root=EXTERNAL_ROOT):
     """Analyse every technique in memory. Raises on the first error; writes nothing."""
-    shared_ids, shared_from = shared_row_ids(external_root)
-    print(f"shared population: {len(shared_ids)} test posts explained by all {len(shared_from)} comparison techniques")
+    split = getattr(args, "split", SPLIT)
+    shared_ids, shared_from = shared_row_ids(external_root, split=split)
+    print(f"shared population: {len(shared_ids)} {split} posts explained by all {len(shared_from)} "
+          "comparison techniques")
     payloads = []
     for technique in techniques:
         try:
-            posts, table_diff = load_posts(technique, processed, external_root)
+            posts, table_diff = load_posts(technique, processed, external_root, split=split)
             threshold = load_threshold(technique)
             family = read_best_config(technique).get("model_family")
             model = load_technique(technique, Path(external_root) / technique, device=args.device,
                                    resident=not args.sequential_checkpoints)
             payload = analyze(technique, model, posts, threshold, shared_ids, model_family=family,
-                              device=recorded_device(model, args.device), table_diff=table_diff)
+                              device=recorded_device(model, args.device), table_diff=table_diff,
+                              split=split)
         except (ProbsArtifactError, ModelLoadError, IdentityFPRError) as error:
             raise FaithfulnessError(f"{technique}: {error}") from error
         payload["shared_population_from"] = shared_from
@@ -694,6 +756,8 @@ def main(argv=None):
                         help="repeatable; run one model at a time on a small machine")
     parser.add_argument("--rebuild-table", action="store_true",
                         help="rewrite the cross-technique table from the committed JSONs; loads no model")
+    parser.add_argument("--split", choices=SPLITS, default=SPLIT,
+                        help="whole-model run to test: test (default) or validation, the replication sample")
     parser.add_argument("--device", default="auto")
     parser.add_argument("--sequential-checkpoints", action="store_true",
                         help="load pooled-ensemble checkpoints one at a time (resident=False)")
@@ -702,7 +766,7 @@ def main(argv=None):
         if args.technique:
             parser.error("--rebuild-table takes no --technique")
         try:
-            table, n = rebuild_table()
+            table, n = rebuild_table(split=args.split)
         except FaithfulnessError as error:
             print(f"ERROR: {error}; nothing was written", file=sys.stderr)
             return 1
@@ -720,7 +784,7 @@ def main(argv=None):
             check_text_free(payload)
         for payload in payloads:
             write_outputs(payload)
-        table = write_table(payloads)
+        table = write_table(payloads, split=args.split)
     except FaithfulnessError as error:
         print(f"ERROR: {error}; nothing was written", file=sys.stderr)
         return 1
