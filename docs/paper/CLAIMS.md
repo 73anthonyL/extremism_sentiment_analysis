@@ -7,24 +7,33 @@ also checks that the draft cites every id and cites no id missing here.
 Update a row whenever the draft's number changes, and rerun the checker
 after any tool regenerates an artifact.
 
+Binding: the draft writes each claimed number as `value [Cnnn]`, and the
+checker refuses the draft if the value printed beside an id differs from
+the value in this table, if an id is unbound, or if an id appears in any
+other form.
+
 Format (the checker's docstring is the reference):
 
 * `artifact`: repository-relative path to a committed CSV or JSON file.
-* `selector`: for a CSV, `key=value;key=value` (raw strings, all must hold)
-  or `*` for every row; for a JSON file, `-`.
-* `column`: a CSV column (the selector must then pick exactly one row), an
-  aggregate over the selected rows (`count()`, `min(col)`, `max(col)`,
-  `sum(col)`), or for JSON a dotted path where `[key=value]` picks one list
-  element.
-* `value`: the number as the draft writes it.
-* `decimals`: the rounding the draft uses. An integer d means within
-  0.5 x 10^-d, `sN` means N significant figures, `-` an exact string
-  (booleans case-insensitive).
+* `selector`: for a CSV, `key=value` or `key!=value` conditions joined by
+  `;` (raw strings, all must hold; each named value must occur in its
+  column; the selection must not be empty), or `*` for every row; for a
+  JSON file, `-`.
+* `column`: a CSV column (the selection must then be exactly one row);
+  `count()`; or `min(col)@N`, `max(col)@N`, `sum(col)@N`, `nunique(col)@N`,
+  where N is the number of rows the selection must match. For JSON, a dotted
+  path of keys, list indices and `[key=value]` (exactly one match).
+* `value`: the number or string as the draft writes it.
+* `decimals`: must agree with how `value` is written. An integer d means d
+  digits after the point and a tolerance of 0.5 x 10^-d; `sN` means N
+  significant figures; `-` an exact string (booleans case-insensitive),
+  never for a number.
 
-Id blocks follow the draft: C001 to C092 RQ1, C100 to C257 RQ2, C300 to
-C376 RQ3, C400 to C654 RQ4 and WP7, C700 to C702 lexicon gaps (C3), C800 to
-C819 framework card and data. C3 otherwise reuses the ids of the sections it
-cites.
+Id blocks: C001 to C096 RQ1; C100 to C275 RQ2 (C260 to C275 are across-run
+SDs); C300 to C376 RQ3 shares and stability; C400 to C474 RQ4 FPR; C500 to
+C670 WP7 and the RQ2-RQ4 relation; C700 to C704 lexicon gaps; C710 to C740
+training recipes of 07 and the members of 11; C800 to C819 framework card and
+data.
 
 | id | artifact | selector | column | value | decimals |
 |---|---|---|---|---|---|
@@ -115,11 +124,15 @@ cites.
 | C085 | `results_summary/rq/rq1_mcnemar_pairs.csv` | `technique_a=06_FASTTEXT-EMB_LOG-REG;technique_b=07_TWITTER-ROBERTA_FINE-TUNE` | `accuracy_gap_rows` | -25 | 0 |
 | C086 | `results_summary/rq/rq1_mcnemar_pairs.csv` | `technique_a=06_FASTTEXT-EMB_LOG-REG;technique_b=07_TWITTER-ROBERTA_FINE-TUNE` | `n_discordant` | 83 | 0 |
 | C087 | `results_summary/rq/rq1_mcnemar_pairs.csv` | `technique_a=06_FASTTEXT-EMB_LOG-REG;technique_b=07_TWITTER-ROBERTA_FINE-TUNE` | `holm_p` | 0.17 | 2 |
-| C088 | `results_summary/rq/rq1_mcnemar_pairs.csv` | `technique_a=01_LOG-REG_TF-IDF;technique_b=04_CHAR-TF-IDF_LIN-SVM` | `accuracy_gap_rows` | 11 | 0 |
+| C088 | `results_summary/rq/rq1_mcnemar_pairs.csv` | `technique_b!=07_TWITTER-ROBERTA_FINE-TUNE;technique_b!=11_MULTI-CHECKPOINT_LOGIT-POOL` | `max(accuracy_gap_rows)@15` | 11 | 0 |
 | C089 | `results_summary/rq/rq1_shared_errors.csv` | `n_techniques_wrong=8` | `n_posts` | 12 | 0 |
 | C090 | `results_summary/rq/rq1_shared_errors.csv` | `n_techniques_wrong=8` | `n_positive_posts` | 11 | 0 |
 | C091 | `results_summary/rq/rq1_shared_errors.csv` | `n_techniques_wrong=0` | `n_posts` | 308 | 0 |
 | C092 | `results_summary/rq/rq1_error_overlap.csv` | `technique=06_FASTTEXT-EMB_LOG-REG` | `n_errors_unique` | 17 | 0 |
+| C093 | `results_summary/rq/rq1_error_overlap.csv` | `*` | `max(n_errors_unique)@8` | 17 | 0 |
+| C094 | `results_summary/rq/rq1_mcnemar_pairs.csv` | `technique_b!=07_TWITTER-ROBERTA_FINE-TUNE;technique_b!=11_MULTI-CHECKPOINT_LOGIT-POOL` | `min(accuracy_gap_rows)@15` | -11 | 0 |
+| C095 | `results_summary/rq/rq1_mcnemar_pairs.csv` | `technique_a=04_CHAR-TF-IDF_LIN-SVM;technique_b=05_WORD-CHAR-TF-IDF_LIN-SVM` | `accuracy_gap_rows` | -11 | 0 |
+| C096 | `results_summary/rq/rq1_mcnemar_pairs.csv` | `technique_a=01_LOG-REG_TF-IDF;technique_b=04_CHAR-TF-IDF_LIN-SVM` | `accuracy_gap_rows` | 11 | 0 |
 | C100 | `results_summary/01_LOG-REG_TF-IDF/attributions/shap-partition_test_seed30__coefficient_check.json` | `-` | `spearman_mean_attribution_vs_coefficient` | 0.873 | 3 |
 | C101 | `results_summary/01_LOG-REG_TF-IDF/attributions/shap-partition_validation_seed30__coefficient_check.json` | `-` | `spearman_mean_attribution_vs_coefficient` | 0.865 | 3 |
 | C102 | `results_summary/01_LOG-REG_TF-IDF/attributions/shap-partition_test_seed30__coefficient_check.json` | `-` | `top_k_sign_agreement` | 1.00 | 2 |
@@ -178,8 +191,8 @@ cites.
 | C155 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;role=whole;split=test` | `share_of_positive_mass__topical` | 0.810 | 3 |
 | C156 | `results_summary/rq/rq3_stability.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `std_share_of_positive_mass__identity_term` | 0.002 | 3 |
 | C157 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;split=test;post_set=own;category=identity_term;measure=share_of_positive_mass` | `boot_sd` | 0.033 | 3 |
-| C158 | `results_summary/rq/rq3_reliance_comparison.csv` | `role=whole;split=test` | `min(share_of_positive_mass__topical)` | 0.81 | 2 |
-| C159 | `results_summary/rq/rq3_reliance_comparison.csv` | `role=whole;split=test` | `max(share_of_positive_mass__topical)` | 1.00 | 2 |
+| C158 | `results_summary/rq/rq3_reliance_comparison.csv` | `role=whole;split=test` | `min(share_of_positive_mass__topical)@8` | 0.81 | 2 |
+| C159 | `results_summary/rq/rq3_reliance_comparison.csv` | `role=whole;split=test` | `max(share_of_positive_mass__topical)@8` | 1.00 | 2 |
 | C160 | `results_summary/rq/rq2_shared_top_words.csv` | `n_in_top_k=8` | `count()` | 3 | 0 |
 | C161 | `results_summary/rq/rq2_shared_top_words.csv` | `n_in_top_k=1` | `count()` | 73 | 0 |
 | C162 | `results_summary/rq/rq2_shared_top_words.csv` | `*` | `count()` | 168 | 0 |
@@ -188,10 +201,10 @@ cites.
 | C165 | `results_summary/rq/rq2_word_agreement_pairs.csv` | `technique_a=07_TWITTER-ROBERTA_FINE-TUNE;technique_b=11_MULTI-CHECKPOINT_LOGIT-POOL` | `spearman_mean_attribution` | 0.76 | 2 |
 | C166 | `results_summary/rq/rq2_word_agreement_pairs.csv` | `technique_a=07_TWITTER-ROBERTA_FINE-TUNE;technique_b=11_MULTI-CHECKPOINT_LOGIT-POOL` | `jaccard_top_k_positive` | 0.54 | 2 |
 | C167 | `results_summary/rq/rq2_word_agreement_pairs.csv` | `technique_a=04_CHAR-TF-IDF_LIN-SVM;technique_b=05_WORD-CHAR-TF-IDF_LIN-SVM` | `spearman_mean_attribution` | 0.85 | 2 |
-| C168 | `results_summary/rq/rq2_word_agreement_pairs.csv` | `technique_b=07_TWITTER-ROBERTA_FINE-TUNE` | `min(spearman_mean_attribution)` | 0.21 | 2 |
-| C169 | `results_summary/rq/rq2_word_agreement_pairs.csv` | `technique_b=07_TWITTER-ROBERTA_FINE-TUNE` | `max(spearman_mean_attribution)` | 0.28 | 2 |
-| C170 | `results_summary/rq/rq2_word_agreement_pairs.csv` | `technique_a=03_SLP_TF-IDF;technique_b=11_MULTI-CHECKPOINT_LOGIT-POOL` | `spearman_mean_attribution` | 0.26 | 2 |
-| C171 | `results_summary/rq/rq2_word_agreement_pairs.csv` | `technique_a=05_WORD-CHAR-TF-IDF_LIN-SVM;technique_b=11_MULTI-CHECKPOINT_LOGIT-POOL` | `spearman_mean_attribution` | 0.32 | 2 |
+| C168 | `results_summary/rq/rq2_word_agreement_pairs.csv` | `technique_b=07_TWITTER-ROBERTA_FINE-TUNE` | `min(spearman_mean_attribution)@6` | 0.21 | 2 |
+| C169 | `results_summary/rq/rq2_word_agreement_pairs.csv` | `technique_b=07_TWITTER-ROBERTA_FINE-TUNE` | `max(spearman_mean_attribution)@6` | 0.28 | 2 |
+| C170 | `results_summary/rq/rq2_word_agreement_pairs.csv` | `technique_b=11_MULTI-CHECKPOINT_LOGIT-POOL;technique_a!=07_TWITTER-ROBERTA_FINE-TUNE` | `min(spearman_mean_attribution)@6` | 0.26 | 2 |
+| C171 | `results_summary/rq/rq2_word_agreement_pairs.csv` | `technique_b=11_MULTI-CHECKPOINT_LOGIT-POOL;technique_a!=07_TWITTER-ROBERTA_FINE-TUNE` | `max(spearman_mean_attribution)@6` | 0.32 | 2 |
 | C172 | `results_summary/rq/rq2_word_agreement_pairs.csv` | `technique_a=01_LOG-REG_TF-IDF;technique_b=06_FASTTEXT-EMB_LOG-REG` | `spearman_mean_attribution` | 0.17 | 2 |
 | C173 | `results_summary/rq/rq2_top_word_support.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE` | `share_single_post_top_k_positive` | 0.56 | 2 |
 | C174 | `results_summary/rq/rq2_top_word_support.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `share_single_post_top_k_positive` | 0.52 | 2 |
@@ -210,6 +223,8 @@ cites.
 | C187 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=share_single_post_top_k_positive;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=05_WORD-CHAR-TF-IDF_LIN-SVM` | `pct_low` | 0.02 | 2 |
 | C188 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=share_single_post_top_k_positive;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=04_CHAR-TF-IDF_LIN-SVM` | `pct_low` | -0.10 | 2 |
 | C189 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=share_single_post_top_k_positive;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=04_CHAR-TF-IDF_LIN-SVM` | `pct_high` | 0.14 | 2 |
+| C190 | `results_summary/01_LOG-REG_TF-IDF/attributions/shap-partition_test_seed30__coefficient_check.json` | `-` | `thresholds.min_spearman` | 0.80 | 2 |
+| C191 | `results_summary/01_LOG-REG_TF-IDF/attributions/shap-partition_test_seed30__coefficient_check.json` | `-` | `thresholds.min_sign_agreement` | 0.90 | 2 |
 | C200 | `results_summary/rq/rq2_faithfulness.csv` | `technique=01_LOG-REG_TF-IDF;population=shared;k=1` | `n_posts` | 199 | 0 |
 | C201 | `results_summary/rq/rq2_faithfulness.csv` | `technique=01_LOG-REG_TF-IDF;population=shared;k=1` | `drop_minus_random` | 0.065 | 3 |
 | C202 | `results_summary/rq/rq2_faithfulness.csv` | `technique=01_LOG-REG_TF-IDF;population=shared;k=1` | `median_paired_diff` | 0.045 | 3 |
@@ -258,16 +273,34 @@ cites.
 | C245 | `results_summary/rq/rq2_faithfulness.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=shared;k=1` | `drop_minus_random_flagged` | 0.204 | 3 |
 | C246 | `results_summary/rq/rq2_faithfulness.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=shared;k=1` | `n_flagged` | 72 | 0 |
 | C247 | `results_summary/rq/rq2_faithfulness.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=shared;k=1` | `share_topk_drop_gt_random` | 0.87 | 2 |
-| C248 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared` | `max(wilcoxon_p_holm)` | 7.6e-21 | s2 |
-| C249 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared` | `min(drop_over_attributed_topk)` | 0.46 | 2 |
-| C250 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared` | `max(drop_over_attributed_topk)` | 0.80 | 2 |
+| C248 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared` | `max(wilcoxon_p_holm)@32` | 7.6e-21 | s2 |
+| C249 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared` | `min(drop_over_attributed_topk)@32` | 0.46 | 2 |
+| C250 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared` | `max(drop_over_attributed_topk)@32` | 0.80 | 2 |
 | C251 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared` | `count()` | 32 | 0 |
-| C252 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared` | `max(verification_max_abs_diff)` | 0.0019 | 4 |
-| C253 | `results_summary/rq/rq2_faithfulness.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=shared` | `min(median_paired_diff)` | 0.001 | 3 |
-| C254 | `results_summary/rq/rq2_faithfulness.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=shared` | `max(median_paired_diff)` | 0.010 | 3 |
-| C255 | `results_summary/rq/rq2_faithfulness.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=shared` | `min(median_paired_diff)` | 0.005 | 3 |
-| C256 | `results_summary/rq/rq2_faithfulness.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=shared` | `max(median_paired_diff)` | 0.024 | 3 |
-| C257 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared` | `max(n_random_seeds)` | 5 | 0 |
+| C252 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared` | `max(verification_max_abs_diff)@32` | 0.0019 | 4 |
+| C253 | `results_summary/rq/rq2_faithfulness.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=shared` | `min(median_paired_diff)@4` | 0.001 | 3 |
+| C254 | `results_summary/rq/rq2_faithfulness.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=shared` | `max(median_paired_diff)@4` | 0.010 | 3 |
+| C255 | `results_summary/rq/rq2_faithfulness.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=shared` | `min(median_paired_diff)@4` | 0.005 | 3 |
+| C256 | `results_summary/rq/rq2_faithfulness.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=shared` | `max(median_paired_diff)@4` | 0.024 | 3 |
+| C257 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared` | `max(n_random_seeds)@32` | 5 | 0 |
+| C258 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared;k=1;technique!=07_TWITTER-ROBERTA_FINE-TUNE;technique!=11_MULTI-CHECKPOINT_LOGIT-POOL` | `min(drop_minus_random_flagged)@6` | 0.016 | 3 |
+| C259 | `results_summary/rq/rq2_faithfulness.csv` | `population=shared;k=1;technique!=07_TWITTER-ROBERTA_FINE-TUNE;technique!=11_MULTI-CHECKPOINT_LOGIT-POOL` | `max(drop_minus_random_flagged)@6` | 0.091 | 3 |
+| C260 | `results_summary/rq/rq3_stability.csv` | `technique=01_LOG-REG_TF-IDF` | `std_share_of_positive_mass__extremist_framing` | 0.000 | 3 |
+| C261 | `results_summary/rq/rq3_stability.csv` | `technique=01_LOG-REG_TF-IDF` | `std_share_of_positive_mass__topical` | 0.006 | 3 |
+| C262 | `results_summary/rq/rq3_stability.csv` | `technique=02_LIN-SVM_TF-IDF` | `std_share_of_positive_mass__extremist_framing` | 0.000 | 3 |
+| C263 | `results_summary/rq/rq3_stability.csv` | `technique=02_LIN-SVM_TF-IDF` | `std_share_of_positive_mass__topical` | 0.015 | 3 |
+| C264 | `results_summary/rq/rq3_stability.csv` | `technique=03_SLP_TF-IDF` | `std_share_of_positive_mass__extremist_framing` | 0.000 | 3 |
+| C265 | `results_summary/rq/rq3_stability.csv` | `technique=03_SLP_TF-IDF` | `std_share_of_positive_mass__topical` | 0.023 | 3 |
+| C266 | `results_summary/rq/rq3_stability.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__extremist_framing` | 0.000 | 3 |
+| C267 | `results_summary/rq/rq3_stability.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__topical` | 0.019 | 3 |
+| C268 | `results_summary/rq/rq3_stability.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__extremist_framing` | 0.000 | 3 |
+| C269 | `results_summary/rq/rq3_stability.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM` | `std_share_of_positive_mass__topical` | 0.003 | 3 |
+| C270 | `results_summary/rq/rq3_stability.csv` | `technique=06_FASTTEXT-EMB_LOG-REG` | `std_share_of_positive_mass__extremist_framing` | 0.001 | 3 |
+| C271 | `results_summary/rq/rq3_stability.csv` | `technique=06_FASTTEXT-EMB_LOG-REG` | `std_share_of_positive_mass__topical` | 0.013 | 3 |
+| C272 | `results_summary/rq/rq3_stability.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE` | `std_share_of_positive_mass__extremist_framing` | 0.015 | 3 |
+| C273 | `results_summary/rq/rq3_stability.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE` | `std_share_of_positive_mass__topical` | 0.018 | 3 |
+| C274 | `results_summary/rq/rq3_stability.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `std_share_of_positive_mass__extremist_framing` | 0.007 | 3 |
+| C275 | `results_summary/rq/rq3_stability.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `std_share_of_positive_mass__topical` | 0.009 | 3 |
 | C300 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__extremist_framing` | 0.030 | 3 |
 | C301 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__identity_term` | 0.070 | 3 |
 | C302 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__topical` | 0.900 | 3 |
@@ -338,8 +371,8 @@ cites.
 | C369 | `results_summary/rq/rq3_bootstrap_split_agreement.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;post_set=common;measure=spearman_mean_abs_attribution` | `pct_low` | 0.405 | 3 |
 | C370 | `results_summary/rq/rq3_bootstrap_split_agreement.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;post_set=common;measure=spearman_mean_abs_attribution` | `pct_high` | 0.538 | 3 |
 | C371 | `results_summary/rq/rq3_bootstrap_split_agreement.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;post_set=common;measure=jaccard_top_k_abs` | `point` | 0.220 | 3 |
-| C372 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=spearman_mean_abs_attribution;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=06_FASTTEXT-EMB_LOG-REG` | `pct_high` | -0.129 | 3 |
-| C373 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=spearman_mean_abs_attribution;technique=11_MULTI-CHECKPOINT_LOGIT-POOL;reference_technique=06_FASTTEXT-EMB_LOG-REG` | `pct_high` | -0.078 | 3 |
+| C372 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=spearman_mean_abs_attribution;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique!=11_MULTI-CHECKPOINT_LOGIT-POOL` | `max(pct_high)@6` | -0.129 | 3 |
+| C373 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=spearman_mean_abs_attribution;technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `max(pct_high)@6` | -0.078 | 3 |
 | C374 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=spearman_mean_abs_attribution;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `point` | -0.061 | 3 |
 | C375 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=spearman_mean_abs_attribution;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `pct_low` | -0.126 | 3 |
 | C376 | `results_summary/rq/rq2_rq3_bootstrap_paired_differences.csv` | `measure=spearman_mean_abs_attribution;technique=07_TWITTER-ROBERTA_FINE-TUNE;reference_technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `pct_high` | 0.005 | 3 |
@@ -518,11 +551,12 @@ cites.
 | C601 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;population=extremist;operation=substitute` | `mcnemar_p_holm` | 0.029 | 3 |
 | C602 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;population=extremist;operation=substitute` | `mcnemar_p_holm` | 0.029 | 3 |
 | C603 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;population=extremist;operation=substitute` | `mcnemar_p_holm` | 0.029 | 3 |
-| C604 | `results_summary/rq/rq4_identity_counterfactual.csv` | `population=extremist;operation=substitute;n_flip_pos_to_neg=11` | `count()` | 4 | 0 |
+| C604 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=01_LOG-REG_TF-IDF;population=extremist;operation=substitute` | `n_flip_pos_to_neg` | 11 | 0 |
 | C605 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=substitute` | `mcnemar_p_holm` | 1.00 | 2 |
 | C606 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=substitute` | `mcnemar_p_holm` | 0.094 | 3 |
 | C607 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=non_extremist;operation=substitute` | `mean_delta` | 0.012 | 3 |
 | C608 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=non_extremist;operation=substitute` | `wilcoxon_p_holm` | 0.24 | 2 |
+| C609 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;population=extremist;operation=substitute` | `n_flip_pos_to_neg` | 11 | 0 |
 | C610 | `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=remove` | `n_flagged_original` | 51 | 0 |
 | C611 | `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=remove` | `n_flip_pos_to_neg` | 15 | 0 |
 | C612 | `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=remove` | `mcnemar_p_holm` | 0.002 | 3 |
@@ -534,13 +568,17 @@ cites.
 | C618 | `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=remove_unambiguous` | `n_flip_pos_to_neg` | 11 | 0 |
 | C619 | `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=remove_unambiguous` | `mcnemar_p_holm` | 0.030 | 3 |
 | C620 | `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=remove_unambiguous` | `n_flip_pos_to_neg` | 6 | 0 |
-| C621 | `results_summary/rq/rq4_identity_counterfactual.csv` | `*` | `max(verification_max_abs_diff)` | 0.0016 | 4 |
+| C621 | `results_summary/rq/rq4_identity_counterfactual.csv` | `*` | `max(verification_max_abs_diff)@32` | 0.0016 | 4 |
 | C622 | `results_summary/rq/rq4_identity_counterfactual.csv` | `*` | `count()` | 32 | 0 |
-| C623 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=01_LOG-REG_TF-IDF;operation=remove` | `sum(n_posts)` | 150 | 0 |
+| C623 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=01_LOG-REG_TF-IDF;operation=remove` | `sum(n_posts)@2` | 150 | 0 |
+| C624 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;population=extremist;operation=substitute` | `n_flip_pos_to_neg` | 11 | 0 |
+| C625 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;population=extremist;operation=substitute` | `n_flip_pos_to_neg` | 11 | 0 |
+| C626 | `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv` | `population=extremist;operation=remove` | `count()` | 8 | 0 |
+| C627 | `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv` | `technique=02_LIN-SVM_TF-IDF;population=extremist;operation=remove` | `mcnemar_p_holm_remove_extremist` | 0.027 | 3 |
+| C628 | `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=remove` | `mcnemar_p_holm_remove_extremist` | 0.070 | 3 |
+| C629 | `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=remove` | `mcnemar_p_holm_remove_extremist` | 4.9e-4 | s2 |
 | C630 | `results_summary/rq/rq2_rq4_relation.csv` | `role=primary` | `spearman_rho` | 0.83 | 2 |
 | C631 | `results_summary/rq/rq2_rq4_relation.csv` | `role=primary` | `n_techniques` | 8 | 0 |
-| C632 | `results_summary/rq/rq2_rq4_relation.csv` | `role=primary` | `permutation_p` | 0.017 | 3 |
-| C633 | `results_summary/rq/rq2_rq4_relation.csv` | `role=primary` | `abs_rho_needed_p05` | 0.73 | 2 |
 | C634 | `results_summary/rq/rq2_rq4_relation.csv` | `role=primary` | `loo_rho_min` | 0.74 | 2 |
 | C635 | `results_summary/rq/rq2_rq4_relation.csv` | `role=primary` | `loo_rho_max` | 0.95 | 2 |
 | C636 | `results_summary/rq/rq2_rq4_relation.csv` | `role=descriptive;x_measure=identity_share_positive_mass;y_measure=fpr_with_identity_terms` | `spearman_rho` | -0.22 | 2 |
@@ -562,9 +600,54 @@ cites.
 | C652 | `results_summary/rq/rq2_rq4_bootstrap_relation.csv` | `quantity=fpr_ratio;technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `pct_high` | 16.1 | 1 |
 | C653 | `results_summary/rq/rq2_rq4_bootstrap_relation.csv` | `quantity=fpr_ratio;technique=05_WORD-CHAR-TF-IDF_LIN-SVM` | `pct_low` | 0.91 | 2 |
 | C654 | `results_summary/rq/rq2_rq4_bootstrap_relation.csv` | `quantity=fpr_ratio;technique=05_WORD-CHAR-TF-IDF_LIN-SVM` | `pct_level` | 0.95 | 2 |
-| C700 | `results_summary/rq/rq2_identity_top_k_sensitivity.csv` | `*` | `sum(n_gap_candidates)` | 27 | 0 |
+| C655 | `results_summary/rq/rq2_rq4_relation.csv` | `role=primary` | `holm_p` | 0.034 | 3 |
+| C656 | `results_summary/rq/rq2_rq4_relation.csv` | `role=sensitivity;x_measure=identity_share_positive_mass_common_posts` | `spearman_rho` | 0.946 | 3 |
+| C657 | `results_summary/rq/rq2_rq4_relation.csv` | `role=sensitivity;x_measure=identity_share_positive_mass_validation` | `spearman_rho` | 0.874 | 3 |
+| C658 | `results_summary/rq/rq2_rq4_bootstrap_relation.csv` | `quantity=spearman_rho;x_measure=identity_share_positive_mass_common_posts;resampled=posts_and_rows` | `boot_median` | 0.52 | 2 |
+| C659 | `results_summary/rq/rq2_rq4_bootstrap_relation.csv` | `quantity=spearman_rho;x_measure=identity_share_positive_mass_common_posts;resampled=posts_and_rows` | `share_reps_rho_above_zero_not_a_p_value` | 0.90 | 2 |
+| C660 | `results_summary/rq/rq4_identity_counterfactual.csv` | `population=non_extremist;operation=remove;technique!=03_SLP_TF-IDF` | `max(wilcoxon_p_holm)@7` | 1.4e-3 | s2 |
+| C661 | `results_summary/rq/rq4_identity_counterfactual.csv` | `population=non_extremist` | `min(mcnemar_p_holm)@16` | 0.33 | 2 |
+| C662 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=substitute` | `wilcoxon_p_holm` | 1.7e-9 | s2 |
+| C663 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=substitute` | `mean_delta` | 0.111 | 3 |
+| C664 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=non_extremist;operation=substitute` | `wilcoxon_p_holm` | 0.92 | 2 |
+| C665 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=substitute` | `mean_delta` | 0.053 | 3 |
+| C666 | `results_summary/rq/rq4_identity_counterfactual.csv` | `population=non_extremist;operation=substitute;technique!=03_SLP_TF-IDF;technique!=07_TWITTER-ROBERTA_FINE-TUNE;technique!=11_MULTI-CHECKPOINT_LOGIT-POOL` | `min(mean_delta)@5` | 0.028 | 3 |
+| C667 | `results_summary/rq/rq4_identity_counterfactual.csv` | `population=non_extremist;operation=substitute;technique!=03_SLP_TF-IDF;technique!=07_TWITTER-ROBERTA_FINE-TUNE;technique!=11_MULTI-CHECKPOINT_LOGIT-POOL` | `max(mean_delta)@5` | 0.045 | 3 |
+| C668 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=substitute` | `wilcoxon_p_holm` | 1.4e-3 | s2 |
+| C669 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=non_extremist;operation=substitute` | `mean_delta` | 0.038 | 3 |
+| C670 | `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv` | `*` | `count()` | 32 | 0 |
+| C700 | `results_summary/rq/rq2_identity_top_k_sensitivity.csv` | `*` | `sum(n_gap_candidates)@8` | 27 | 0 |
 | C701 | `results_summary/rq/rq2_identity_lexicon_gaps_sensitivity.csv` | `*` | `count()` | 27 | 0 |
 | C702 | `results_summary/rq/rq2_identity_top_k_sensitivity.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `n_gap_candidates` | 6 | 0 |
+| C703 | `results_summary/rq/rq2_identity_lexicon_gaps_sensitivity.csv` | `*` | `nunique(word)@27` | 14 | 0 |
+| C704 | `results_summary/rq/rq2_identity_lexicon_gaps_sensitivity.csv` | `low_support=True` | `count()` | 26 | 0 |
+| C710 | `results_summary/07_TWITTER-ROBERTA_FINE-TUNE/best_config.json` | `-` | `hyperparameters.learning_rate` | 2e-5 | s1 |
+| C711 | `results_summary/07_TWITTER-ROBERTA_FINE-TUNE/best_config.json` | `-` | `random_seed` | 30 | 0 |
+| C712 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `hyperparameters.component_run_configs.A_anchor.learning_rate` | 3e-5 | s1 |
+| C713 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `admission.[component=A_anchor].seeds_finished.0` | 17 | 0 |
+| C714 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `admission.[component=A_anchor].seeds_finished.1` | 30 | 0 |
+| C715 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `admission.[component=A_anchor].seeds_finished.2` | 73 | 0 |
+| C716 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `component_resolution.A_anchor.head_policy` | pretrained | - |
+| C717 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `component_resolution.A_anchor.checkpoint` | cardiffnlp/twitter-roberta-base-hate-latest | - |
+| C718 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `hyperparameters.component_run_configs.B_dynabench.learning_rate` | 3e-5 | s1 |
+| C719 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `admission.[component=B_dynabench].seeds_finished.0` | 17 | 0 |
+| C720 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `admission.[component=B_dynabench].seeds_finished.1` | 30 | 0 |
+| C721 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `admission.[component=B_dynabench].seeds_finished.2` | 73 | 0 |
+| C722 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `component_resolution.B_dynabench.head_policy` | pretrained | - |
+| C723 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `component_resolution.B_dynabench.checkpoint` | facebook/roberta-hate-speech-dynabench-r4-target | - |
+| C724 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `hyperparameters.component_run_configs.C_hatebert.learning_rate` | 3e-5 | s1 |
+| C725 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `admission.[component=C_hatebert].seeds_finished.0` | 17 | 0 |
+| C726 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `admission.[component=C_hatebert].seeds_finished.1` | 30 | 0 |
+| C727 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `admission.[component=C_hatebert].seeds_finished.2` | 73 | 0 |
+| C728 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `component_resolution.C_hatebert.head_policy` | fresh | - |
+| C729 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `component_resolution.C_hatebert.checkpoint` | GroNLP/hateBERT | - |
+| C730 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `hyperparameters.component_run_configs.E_twitter_large.learning_rate` | 2e-5 | s1 |
+| C731 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `admission.[component=E_twitter_large].seeds_finished.0` | 17 | 0 |
+| C732 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `admission.[component=E_twitter_large].seeds_finished.1` | 30 | 0 |
+| C733 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `admission.[component=E_twitter_large].seeds_finished.2` | 73 | 0 |
+| C734 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `component_resolution.E_twitter_large.head_policy` | fresh | - |
+| C735 | `results_summary/11_MULTI-CHECKPOINT_LOGIT-POOL/best_config.json` | `-` | `component_resolution.E_twitter_large.checkpoint` | cardiffnlp/twitter-roberta-large-hate-latest | - |
+| C740 | `results_summary/07_TWITTER-ROBERTA_FINE-TUNE/best_config.json` | `-` | `hyperparameters.checkpoint` | cardiffnlp/twitter-roberta-base-hate-latest | - |
 | C800 | `results_summary/rq/report_cards/01_LOG-REG_TF-IDF.json` | `-` | `rq1.test_accuracy` | 0.856 | 3 |
 | C801 | `results_summary/rq/report_cards/01_LOG-REG_TF-IDF.json` | `-` | `rq1.holm_family_size` | 28 | 0 |
 | C802 | `results_summary/rq/report_cards/01_LOG-REG_TF-IDF.json` | `-` | `rq1.pairs.[other_technique=11_MULTI-CHECKPOINT_LOGIT-POOL].row_gap` | -24 | 0 |
