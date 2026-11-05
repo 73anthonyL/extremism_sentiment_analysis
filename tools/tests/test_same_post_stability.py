@@ -13,9 +13,11 @@ sys.path.insert(0, str(TOOLS_DIR))
 from attributions import write_run
 from conftest import base_meta
 from notebook_kit import aggregate_word_attributions
-from same_post_stability import SamePostError, build, concentration
+from categorize_attributions import build_word_index, categorize_frame, category_shares
+from same_post_stability import SamePostError, build, build_all, concentration
 
 VOCAB = [f"w{i}" for i in range(40)]
+LEXICONS = {"slur": ["w1"], "extremist_framing": ["w2", "w3"], "identity_term": ["w4", "w5", "w6"]}
 
 
 def _posts(row_ids, seed):
@@ -174,3 +176,42 @@ class TestRefusals:
         # No per-post file exists for the member run; it must not be asked for.
         support, _ = build(top_k=5, results_dir=results_dir, external_dir=external_dir)
         assert len(support) == 8
+
+
+class TestSamePostCategories:
+    def _committed(self, posts, top_k=5):
+        frame = aggregate_word_attributions([p[0] for p in posts.values()], [p[1] for p in posts.values()])
+        word_index, _ = build_word_index(LEXICONS)
+        shares = category_shares(categorize_frame(frame, word_index, top_k))
+        return shares.assign(technique="01_A", run_id="shap-partition_test_seed30", top_k=top_k)
+
+    def test_common_rows_are_identical_when_attributions_are(self, results_dir, external_dir):
+        _standard(results_dir, external_dir)
+        _, _, categories = build_all(top_k=5, results_dir=results_dir, external_dir=external_dir, lexicons=LEXICONS)
+        common = categories[categories["post_set"] == "common"].set_index(["technique", "split", "category"])
+        assert len(common) == 2 * 2 * 4
+        a = common.xs("01_A", level="technique")["share_of_positive_mass"]
+        b = common.xs("07_T", level="technique")["share_of_positive_mass"]
+        pd.testing.assert_series_equal(a, b, check_names=False)
+        sums = categories.groupby(["technique", "split", "post_set"])["share_of_words"].sum()
+        assert np.allclose(sums, 1.0)
+
+    def test_own_rows_reproducing_the_committed_table_are_accepted(self, results_dir, external_dir):
+        posts = _standard(results_dir, external_dir)
+        build_all(top_k=5, results_dir=results_dir, external_dir=external_dir, lexicons=LEXICONS,
+                  committed_shares=self._committed(posts))
+
+    def test_own_rows_that_differ_from_the_committed_table_are_refused(self, results_dir, external_dir):
+        posts = _standard(results_dir, external_dir)
+        committed = self._committed(posts)
+        committed["share_of_positive_mass"] = committed["share_of_positive_mass"][::-1].to_numpy()
+        committed.loc[0, "share_of_positive_mass"] += 0.25
+        with pytest.raises(SamePostError, match="does not reproduce the committed rq2_category_shares"):
+            build_all(top_k=5, results_dir=results_dir, external_dir=external_dir, lexicons=LEXICONS,
+                      committed_shares=committed)
+
+    def test_two_whole_model_runs_for_one_split_are_refused(self, results_dir, external_dir):
+        classical_test = _standard(results_dir, external_dir)
+        _write(results_dir, external_dir, "01_A", "test", classical_test, run_id="shap-partition_test_seed31")
+        with pytest.raises(SamePostError, match="more than one whole-model test run"):
+            build_all(top_k=5, results_dir=results_dir, external_dir=external_dir, lexicons=LEXICONS)

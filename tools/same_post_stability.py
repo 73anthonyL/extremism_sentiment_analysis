@@ -34,14 +34,25 @@ rq3_same_post_split_agreement.csv
     restricted to the common post set of that split, so every technique is
     compared on the same number of posts.
 
-Both tables are text-free: counts, shares and correlations only, no words, no
-row ids. The tool prints numbers only.
+rq2_same_post_category_shares.csv
+    One row per technique x split x post_set x category: the RQ2 category
+    shares of the top-K words by mean absolute attribution, computed with
+    `categorize_attributions.py`'s own functions and the committed lexicons.
+    The `own` rows must reproduce the committed `rq2_category_shares.csv`
+    (refused otherwise); the `common` rows give every technique's shares on
+    the same posts, so the RQ2-RQ4 relation can be checked without mixing
+    450-post and 200-post runs.
+
+All three tables are text-free: counts, shares and correlations only, no
+words, no row ids. The tool prints numbers only.
 
 Refusals: a whole-model run without its per-post file; a per-post file with
 other columns, non-finite attributions, duplicate or gapped positions, a
 post count different from the sidecar's n_posts_explained, row ids outside
 the run's split, or a re-aggregate that does not match the committed table;
-and post samples that are not nested (the common set must be the whole of the
+more than one whole-model run for a technique and split; own-post category
+shares that do not reproduce the committed RQ2 table; and post samples that
+are not nested (the common set must be the whole of the
 smallest technique's sample, so no technique is trimmed below what it
 explained without that being visible). Member runs of an ensemble are not
 read.
@@ -63,9 +74,13 @@ from scipy.stats import spearmanr
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from attributions import AttributionArtifactError, list_runs, load_run
+from categorize_attributions import build_word_index, categorize_frame, category_shares
+from lexicons import load_lexicons
 from notebook_kit import aggregate_word_attributions
 from repo_paths import (
     EXTERNAL_DIR,
+    RQ2_CATEGORY_SHARES_CSV,
+    RQ2_SAME_POST_CATEGORY_SHARES_CSV,
     RQ2_SAME_POST_SUPPORT_CSV,
     RQ3_SAME_POST_SPLIT_AGREEMENT_CSV,
     SPLIT_ASSIGNMENTS_CSV,
@@ -99,6 +114,25 @@ SUPPORT_COLUMNS = (
     "effective_n_words_positive_mass",
     "share_positive_mass_top_k",
 )
+
+CATEGORY_COLUMNS = (
+    "technique",
+    "run_id",
+    "split",
+    "post_set",
+    "n_posts",
+    "top_k",
+    "category",
+    "n_words",
+    "share_of_words",
+    "abs_mass",
+    "share_of_abs_mass",
+    "positive_mass",
+    "share_of_positive_mass",
+)
+# Own-post category rows are checked against the committed RQ2 table, written with "%.8g".
+CATEGORY_MATCH_RTOL = 1e-6
+CATEGORY_MATCH_ATOL = 1e-9
 
 AGREEMENT_COLUMNS = (
     "technique",
@@ -202,7 +236,10 @@ def load_whole_runs(techniques=None, results_dir=None, external_dir=None, assign
                 continue
             split = meta["split"]
             if split in runs.get(technique, {}):
-                continue  # the lowest run id per split, as in word_agreement.py
+                raise SamePostError(
+                    f"{technique}: more than one whole-model {split} run "
+                    f"({runs[technique][split][0]}, {run_id}); the same-post tables use exactly one"
+                )
             label = f"{technique}/{run_id}"
             posts = read_local(local_path(technique, run_id, external_dir), label)
             if len(posts) != int(meta["n_posts_explained"]):
@@ -310,12 +347,57 @@ def agreement_row(technique, post_set, run_test, run_val, frame_test, frame_val,
     }
 
 
+def category_rows(technique, run_id, split, post_set, n_posts, frame, word_index, top_k):
+    shares = category_shares(categorize_frame(frame, word_index, top_k))
+    shares.insert(0, "top_k", int(top_k))
+    shares.insert(0, "n_posts", int(n_posts))
+    shares.insert(0, "post_set", post_set)
+    shares.insert(0, "split", split)
+    shares.insert(0, "run_id", run_id)
+    shares.insert(0, "technique", technique)
+    return shares[list(CATEGORY_COLUMNS)]
+
+
+def verify_own_categories(categories, committed):
+    """Refuse own-post category shares that differ from the committed RQ2 table for the same run."""
+    if committed is None:
+        return
+    keys = ["technique", "run_id", "top_k", "category"]
+    needed = keys + ["n_words", "share_of_abs_mass", "share_of_positive_mass"]
+    missing = [c for c in needed if c not in committed.columns]
+    if missing:
+        raise SamePostError(f"rq2_category_shares: missing columns {missing}")
+    own = categories[categories["post_set"] == "own"]
+    merged = own.merge(committed[keys + ["share_of_positive_mass", "share_of_abs_mass", "n_words"]],
+                       on=keys, how="left", suffixes=("", "_committed"), indicator=True)
+    present = merged[merged["_merge"] == "both"]
+    for column in ("share_of_positive_mass", "share_of_abs_mass"):
+        if not np.allclose(present[column], present[f"{column}_committed"],
+                           rtol=CATEGORY_MATCH_RTOL, atol=CATEGORY_MATCH_ATOL):
+            raise SamePostError(f"own-post {column} does not reproduce the committed rq2_category_shares.csv")
+    if (present["n_words"] != present["n_words_committed"]).any():
+        raise SamePostError("own-post category word counts do not reproduce the committed rq2_category_shares.csv")
+
+
 def build(top_k=DEFAULT_TOP_K, techniques=None, results_dir=None, external_dir=None, assignments=None):
+    """The support and split-agreement tables (see build_all for the category table too)."""
+    support, agreement, _ = build_all(top_k, techniques, results_dir, external_dir, assignments)
+    return support, agreement
+
+
+def build_all(top_k=DEFAULT_TOP_K, techniques=None, results_dir=None, external_dir=None, assignments=None,
+              lexicons=None, committed_shares=None):
+    """Support, split-agreement and category-share tables.
+
+    `committed_shares` is the committed rq2_category_shares table; when given,
+    the own-post category rows must reproduce it.
+    """
     if top_k < 1:
         raise SamePostError("top_k must be positive")
+    word_index, _ = build_word_index(load_lexicons() if lexicons is None else lexicons)
     runs = load_whole_runs(techniques, results_dir, external_dir, assignments)
     common = {split: common_posts(runs, split) for split in SPLITS}
-    support_rows, agreement_rows = [], []
+    support_rows, agreement_rows, category_tables = [], [], []
     for technique in sorted(runs):
         frames = {}
         for split in SPLITS:
@@ -330,22 +412,31 @@ def build(top_k=DEFAULT_TOP_K, techniques=None, results_dir=None, external_dir=N
                 if (post_set, split) in frames:
                     run_id, n_posts, frame = frames[(post_set, split)]
                     support_rows.append(support_row(technique, run_id, split, post_set, n_posts, frame, top_k))
+                    category_tables.append(
+                        category_rows(technique, run_id, split, post_set, n_posts, frame, word_index, top_k))
             if (post_set, "test") in frames and (post_set, "validation") in frames:
                 rt, nt, ft = frames[(post_set, "test")]
                 rv, nv, fv = frames[(post_set, "validation")]
                 agreement_rows.append(agreement_row(technique, post_set, rt, rv, ft, fv, nt, nv, top_k))
     support = pd.DataFrame(support_rows, columns=list(SUPPORT_COLUMNS))
     agreement = pd.DataFrame(agreement_rows, columns=list(AGREEMENT_COLUMNS))
-    return support, agreement
+    categories = (pd.concat(category_tables, ignore_index=True) if category_tables
+                  else pd.DataFrame(columns=list(CATEGORY_COLUMNS)))
+    verify_own_categories(categories, committed_shares)
+    return support, agreement, categories
 
 
-def write_tables(support, agreement, support_path=RQ2_SAME_POST_SUPPORT_CSV,
-                 agreement_path=RQ3_SAME_POST_SPLIT_AGREEMENT_CSV):
-    for table, path in ((support, support_path), (agreement, agreement_path)):
+def write_tables(support, agreement, categories=None, support_path=RQ2_SAME_POST_SUPPORT_CSV,
+                 agreement_path=RQ3_SAME_POST_SPLIT_AGREEMENT_CSV,
+                 categories_path=RQ2_SAME_POST_CATEGORY_SHARES_CSV):
+    tables = [(support, support_path), (agreement, agreement_path)]
+    if categories is not None:
+        tables.append((categories, categories_path))
+    for table, path in tables:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        table.to_csv(path, index=False, float_format="%.6g")
-    return Path(support_path), Path(agreement_path)
+        table.to_csv(path, index=False, float_format="%.6g" if table is not categories else "%.8g")
+    return [Path(path) for _, path in tables]
 
 
 def main():
@@ -354,12 +445,14 @@ def main():
     parser.add_argument("--techniques", nargs="*", default=None, help="restrict to these technique names")
     args = parser.parse_args()
     assignments = pd.read_csv(SPLIT_ASSIGNMENTS_CSV, usecols=["row_id", "split"], dtype=str)
+    committed = pd.read_csv(RQ2_CATEGORY_SHARES_CSV) if Path(RQ2_CATEGORY_SHARES_CSV).is_file() else None
     try:
-        support, agreement = build(args.top_k, args.techniques, assignments=assignments)
+        support, agreement, categories = build_all(args.top_k, args.techniques, assignments=assignments,
+                                                   committed_shares=committed)
     except (AttributionArtifactError, SamePostError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 1
-    paths = write_tables(support, agreement)
+    paths = write_tables(support, agreement, categories)
     test = support[support["split"] == "test"]
     for _, row in test.iterrows():
         print(f"{row['technique']} [{row['post_set']}, {row['n_posts']} test posts]: "
@@ -369,6 +462,10 @@ def main():
     for _, row in agreement.iterrows():
         print(f"{row['technique']} [{row['post_set']}]: test vs validation top-{args.top_k} Jaccard "
               f"positive {row['jaccard_top_k_positive']:.3f}, abs {row['jaccard_top_k_abs']:.3f}")
+    identity = categories[(categories["category"] == "identity_term") & (categories["split"] == "test")]
+    for _, row in identity.iterrows():
+        print(f"{row['technique']} [{row['post_set']}, {row['n_posts']} test posts]: identity-term share of "
+              f"top-{args.top_k} positive mass {row['share_of_positive_mass']:.3f}")
     for path in paths:
         print(f"wrote {path}")
     return 0
