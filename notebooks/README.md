@@ -11,7 +11,7 @@ statically with `tools/check_notebook.py`.
 
 ## State of the notebooks
 
-All twelve notebooks are **primed**: the code is rewritten on the template and
+Every notebook is **primed**: the code is rewritten on the template and
 ready to rerun, and the cell outputs are empty until each one is rerun on
 Kaggle. The outputs of the earlier runs are kept in git history (see
 [Earlier outputs](#earlier-outputs)).
@@ -38,6 +38,16 @@ artifact, two whole-model attribution runs, and a result folder.
 | `07_TWITTER-ROBERTA_FINE-TUNE.ipynb` | Fine-tuned Twitter-RoBERTa (hate-speech pretrained). | The single-transformer reference. |
 | `12_ROBERTA-BASE_FINE-TUNE.ipynb` | Fine-tuned `roberta-base`, with notebook 07's recipe unchanged except the base checkpoint. | The no-domain-pretraining control for 07 (RQ3). Primed, not yet run. |
 | `11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb` | Mean log-odds pool over heterogeneous fine-tuned checkpoints, three seeds each. | The ensemble. Its per-component attribution runs are how pretraining lineages are compared (RQ3). |
+
+### Outside the comparison
+
+Audited like any new classifier (`docs/FRAMEWORK.md`): the same two-artifact
+contract, `"in_comparison": False`, so `tools/audit.py` gives it its own Holm
+family and keeps it out of the comparison tables.
+
+| Notebook | Technique | Role in the research questions |
+|---|---|---|
+| `14_ZERO-SHOT-LLM_SELF-EXPLAIN.ipynb` | Zero-shot open-weight instruction-tuned LLM (`Qwen/Qwen3-4B-Instruct-2507`, pinned revision; preregistered fallback `microsoft/Phi-4-mini-instruct`) run on the Kaggle GPU. P(EXTREMIST) from its two answer tokens' log-probabilities; nothing is trained. | WP10, preregistered in `docs/preregistrations/WP10_zero_shot_llm.md`. RQ1 in its own family; RQ2 to RQ4 through its artifacts; the model's self-named words compared with its own SHAP attributions (overlap and deletion), exported as `self_explanation_test.json` and a word-count table. No dataset text leaves the kernel. Primed, not yet run. |
 
 ### Closed lines
 
@@ -129,8 +139,10 @@ python3 tools/check_notebook.py --print-template classical   # or transformer, e
 3. **Load the primed code into the kernel** before running it. Kaggle's
    GitHub sync writes the whole notebook file on each push, so a kernel that
    still holds the old code would overwrite the primed notebook here.
-4. Turn the GPU and internet on for notebooks 07 to 11 (they download
-   checkpoints from the Hugging Face Hub).
+4. Turn the GPU and internet on for notebooks 07 to 12 and 14 (they download
+   checkpoints from the Hugging Face Hub). Notebook 14 needs `transformers`
+   4.51 or later and runs on a T4 only (about 1.5 to 3.5 hours for its two SHAP runs); its title block
+   has the details.
 5. Run all cells. Section 14 writes `<TECHNIQUE>_repo_files.zip`.
 
 After the run:
@@ -196,6 +208,9 @@ is superseded, so result folders, artifacts, and the records in
 09  multi-checkpoint stacking                   (closed line, superseded by 11)
 10  logit-pooled seed ensemble                  (closed line)
 11  heterogeneous multi-checkpoint logit pool
+12  plain roberta-base control for 07
+13  reserved for the WP9 layer-wise probe notebook
+14  zero-shot LLM with self-explanation         (outside the comparison)
 ```
 
 New notebooks take the next free number and the pattern
