@@ -89,12 +89,12 @@ Source: `results_summary/rq/rq4_identity_fpr.csv`.
 
 | Non-extremist test posts | n | False-positive rate |
 |---|---|---|
-| with an identity term | 68 | 0.074 |
-| without | 212 | 0.019 |
+| with an identity term | 67 | 0.075 |
+| without | 213 | 0.019 |
 
-Ratio 3.90, Fisher exact p 0.041, at the locked threshold 0.56. This is a correlation; the counterfactual below is the intervention.
+Ratio 3.97, Fisher exact p 0.038, at the locked threshold 0.56. This is a correlation; the counterfactual below is the intervention.
 
-Ambiguous identity words (`results_summary/rq/rq4_identity_fpr_sensitivity.csv`, variant `exclude_ambiguous_only`): dropping the 14 non-extremist posts whose only identity matches are ambiguous words (colour words, interjections; declared in `tools/identity_sensitivity.py`, the lexicon is unchanged) leaves 54 with an identity term (FPR 0.093) and 212 without (FPR 0.019): ratio 4.91, Fisher exact p 0.019.
+Ambiguous identity words (`results_summary/rq/rq4_identity_fpr_sensitivity.csv`, variant `exclude_ambiguous_only`): dropping the 14 non-extremist posts whose only identity matches are ambiguous words (colour words, interjections; declared in `tools/identity_sensitivity.py`, the lexicon is unchanged) leaves 53 with an identity term (FPR 0.094) and 213 without (FPR 0.019): ratio 5.02, Fisher exact p 0.017.
 
 ## WP7. Identity counterfactual (remove the term)
 
@@ -102,10 +102,10 @@ Sources: `results_summary/rq/rq4_identity_counterfactual.csv`, `results_summary/
 
 | Population | n | Mean delta | Flagged before | Flips to not flagged | Flips to flagged | Wilcoxon Holm p | McNemar Holm p |
 |---|---|---|---|---|---|---|---|
-| non_extremist | 68 | 0.0274 | 5 | 1 | 0 | 0.00011 | 1.000 |
-| extremist | 84 | 0.0507 | 53 | 7 | 1 | 5.7e-12 | 1.000 |
-| non_extremist, unambiguous match | 54 | 0.0320 | 5 | 1 | 0 | 8.2e-05 | 1.000 |
-| extremist, unambiguous match | 60 | 0.0523 | 37 | 6 | 1 | 1.5e-07 | 1.000 |
+| non_extremist | 67 | 0.0264 | 5 | 1 | 0 | 0.00018 | 1.000 |
+| extremist | 83 | 0.0509 | 53 | 7 | 1 | 8.8e-12 | 1.000 |
+| non_extremist, unambiguous match | 53 | 0.0309 | 5 | 1 | 0 | 0.00011 | 1.000 |
+| extremist, unambiguous match | 59 | 0.0525 | 37 | 6 | 1 | 2.4e-07 | 1.000 |
 
 Rows marked `unambiguous match` are the posts that keep at least one identity match outside the ambiguous list, with every match removed. Their Holm p values are over the sensitivity table's own rows, not the WP7 family. A smaller population has less power; its effect size is that of the restricted posts.
 
