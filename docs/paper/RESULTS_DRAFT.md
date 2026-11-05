@@ -682,6 +682,141 @@ remove-and-retrain (Hooker et al., 2019) controls for and WP7 does not.
 Unlike remove-and-retrain and the deletion test of section 6.2, WP7's edit
 set comes from the identity lexicon, not from attribution rank.
 
+### 8.2b Swapping one group for another (WP7b)
+
+WP7 leaves one question open for the transformers: do they respond to which
+group a post names, or only to a group being named? WP7b, a preregistered
+sensitivity analysis of RQ4 (`docs/preregistrations/WP7b_identity_swap.md`),
+replaces each identity term with other identity terms of the same lexicon
+category and grammatical form. It is a within-category version of the
+identity-term perturbations of Prabhakaran et al. (2019) and the
+counterfactual token fairness of Garg et al. (2019). The swap map
+(`data/lexicons/identity_swap_pairs.csv`) and the analysis plan, including
+the reading rule below, were committed before any model was run on swapped
+text. Each source term maps to 3 [C675] targets from a fixed panel for its
+category and form (religion, ethnicity/nationality, migration, gender and
+sexuality), never to a term naming its own group. Ambiguous entries, and
+entries whose same-form targets would be ambiguous or that are umbrella
+terms, are excluded and left in the text unchanged. The population is the
+68 [C671] test posts with a swapped term, 23 [C672] non-extremist and
+45 [C673] extremist, a subset of WP7's 150 [C623]. Three operations edit the
+same spans: swap (the primary operation, with p(extremist) averaged over the
+three targets), removal, and substitution with WP7's neutral panel,
+case-matched. Because only the swapped spans are edited, the removal and
+substitution rows here differ from Table 8. As in WP7, frozen models are
+re-scored at their locked thresholds and nothing is selected. p values are
+Holm-adjusted Wilcoxon over the 48 [C674] technique x population x
+operation rows.
+
+The preregistered reading rule labels each technique and population.
+*Group-specific*: the swap row is Holm-significant and the mean swap delta
+is at least half the mean removal delta. *Group mention (or noun deletion),
+not group identity*: removal is Holm-significant, the swap is not, and the
+swap delta is below half the removal delta. Anything else is *partial* and
+is described, not classified.
+
+The plan was amended twice, without changing a result. The WP3 lexicon
+freeze added `aliens` to the identity lexicon, so Amendment 1 gave it an
+excluded row in the map; Amendment 2 dropped it from the lexicon again (see
+Limitations) and restored the preregistered map byte for byte. The
+population was the same under every version of the map, and the re-runs
+reproduced `rq4_identity_swap.csv` and the directions file byte for byte.
+
+**Table 9.** Identity swap, removal and substitution on the same spans.
+Delta is p(extremist) before minus after the edit, averaged over posts (and
+over the three variants for substitution and swap); a negative delta means
+the edit raised p(extremist). Swap mean |delta| is taken over posts and
+variants before averaging and is descriptive, not tested. Holm p is for the
+swap row. The rule is the preregistered label.[^t9]
+
+| Technique | Population | Remove delta | Substitute delta | Swap delta | Swap mean \|delta\| | Swap Wilcoxon Holm p | Rule |
+|---|---|---|---|---|---|---|---|
+| 01 | non-extremist | 0.043 [C900] | 0.059 [C901] | -0.011 [C902] | 0.046 [C903] | 1.00 [C904] | group mention |
+| 01 | extremist | 0.059 [C905] | 0.079 [C906] | 0.026 [C907] | 0.048 [C908] | 0.13 [C909] | group mention |
+| 02 | non-extremist | 0.030 [C910] | 0.041 [C911] | -0.002 [C912] | 0.026 [C913] | 1.00 [C914] | group mention |
+| 02 | extremist | 0.040 [C915] | 0.054 [C916] | 0.016 [C917] | 0.035 [C918] | 0.21 [C919] | group mention |
+| 03 | non-extremist | 0.009 [C920] | 0.009 [C921] | -0.002 [C922] | 0.008 [C923] | 1.00 [C924] | group mention |
+| 03 | extremist | 0.012 [C925] | 0.015 [C926] | 0.004 [C927] | 0.008 [C928] | 0.021 [C929] | partial |
+| 04 | non-extremist | 0.060 [C930] | 0.072 [C931] | 0.003 [C932] | 0.021 [C933] | 1.00 [C934] | group mention |
+| 04 | extremist | 0.058 [C935] | 0.086 [C936] | 0.011 [C937] | 0.031 [C938] | 0.44 [C939] | group mention |
+| 05 | non-extremist | 0.064 [C940] | 0.074 [C941] | 0.008 [C942] | 0.021 [C943] | 0.54 [C944] | group mention |
+| 05 | extremist | 0.061 [C945] | 0.082 [C946] | 0.022 [C947] | 0.036 [C948] | 0.016 [C949] | partial |
+| 06 | non-extremist | 0.056 [C950] | 0.053 [C951] | 0.027 [C952] | 0.033 [C953] | 2.1e-4 [C954] | partial |
+| 06 | extremist | 0.036 [C955] | 0.048 [C956] | 0.027 [C957] | 0.042 [C958] | 5.6e-3 [C959] | group-specific |
+| 07 | non-extremist | 0.055 [C960] | -0.002 [C961] | -0.100 [C962] | 0.110 [C963] | 0.087 [C964] | partial |
+| 07 | extremist | 0.069 [C965] | 0.043 [C966] | 0.006 [C967] | 0.044 [C968] | 1.00 [C969] | group mention |
+| 11 | non-extremist | 0.108 [C970] | 0.050 [C971] | -0.059 [C972] | 0.076 [C973] | 0.022 [C974] | partial |
+| 11 | extremist | 0.149 [C975] | 0.101 [C976] | 0.004 [C977] | 0.036 [C978] | 1.00 [C979] | group mention |
+
+[^t9]: `results_summary/rq/rq4_identity_swap.csv` (Holm column
+    `wilcoxon_p_holm`); per-direction shifts in
+    `results_summary/rq/rq4_identity_swap_directions.csv`.
+
+*Transformers, extremist posts.* Swapping moves 07 and 11 by 0.006 [C967]
+and 0.004 [C977] (Holm p = 1.00 [C969] and 1.00 [C979]), against
+0.069 [C965] and 0.149 [C975] under removal (Holm p = 3.7e-4 [C694] and
+6.4e-9 [C695]), and their flagged counts do not change (34 [C676] ->
+34 [C677] and 38 [C678] -> 38 [C679]). Under the rule both are group
+mention: they respond to a group being named rather than to which group is
+named. The neutral substitute separates the two. For 11 it also lowers
+p(extremist) (0.101 [C976], Holm p = 8.1e-6 [C680]) while another group's
+name does not, so for 11 the presence of an identity term matters, not which
+group it names. For 07 the substitute shift (0.043 [C966], Holm p =
+0.12 [C681]) is not significant, so a response to group mention and a
+response to deleting a noun cannot be told apart. The swap shifts are near
+the resolution of the re-scoring: on the original texts the restored
+predictors of 07 and 11 reproduce the committed probabilities to within
+1.4e-3 [C692] and 7.7e-4 [C693], the same order as these mean shifts and
+larger than their medians (1.7e-5 [C696] and 3.4e-4 [C697]).
+
+*Transformers, non-extremist posts.* Here swapping raises p(extremist) on
+average: delta is -0.059 [C972] for 11 (Holm p = 0.022 [C974]) and
+-0.100 [C962] for 07 (Holm p = 0.087 [C964], not significant). The rule
+gives partial for both, because the sign is the reverse of removal's. The
+medians are close to zero (-0.006 [C683] and -0.002 [C682]), so the rise
+sits in few posts. Flagged non-extremist posts go from 3 [C686] to 7 [C687]
+for 11 and from 2 [C684] to 4 [C685] for 07, with the flagged extremist
+counts unchanged (above); these counts are descriptive and below the 14-row
+rule of thumb. In the single-source directions, which are descriptive and
+untested, most of the upward shift comes from three source terms (refugees,
+muslim and american for 07; refugees, american and christian for 11), and
+the sign varies by source. The targets' label skew in training does not
+explain it: across these directions the shift is only weakly rank-correlated
+with the source-minus-target difference in 01's coefficient or in training
+extremist share (target profile in each technique's
+`identity_swap_test.json`; correlations in `docs/RESEARCH_PLAN.md`, WP7b).
+
+*Classical techniques.* For 01 and 02 the averaged swap shift is small and
+not significant, but the edit is not inert: the mean |delta| per post and
+variant under swap is 0.046 [C903] (non-extremist) and 0.048 [C908]
+(extremist) for 01, against 0.051 [C688] and 0.064 [C689] under removal,
+and 0.026 [C913] and 0.035 [C918] for 02, against 0.034 [C690] and
+0.045 [C691]. Targets that raise p(extremist) and targets that lower it
+cancel in the mean, and per direction the shift follows the change in 01's
+coefficient from source to target. Following the plan, this is reported as
+direction-dependent sensitivity that the averaged test cannot see, not as
+group-specific sensitivity in either direction, and the classical group
+mention labels describe the averaged shift only. 03 and 05 are
+partial on extremist posts: their swap shifts are small (0.004 [C927] and
+0.022 [C947]) but Holm-significant (0.021 [C929] and 0.016 [C949]) and below
+half of removal's. 06 is the only technique that meets the group-specific
+rule, on extremist posts (swap delta 0.027 [C957], Holm p = 5.6e-3 [C959],
+against 0.036 [C955] under removal); on non-extremist posts it is partial
+(0.027 [C952], Holm p = 2.1e-4 [C954], below half of removal's
+0.056 [C950]).
+
+*Reading.* WP7b supports the cautious reading of section 8.2 and goes no
+further. On extremist posts, which group a post names does not detectably
+move 07's or 11's p(extremist), while a group being named does: for 11 the
+neutral substitute shows that the identity term's presence matters, and for
+07 group mention and noun deletion cannot be separated. We do not claim
+that the transformers treat identity terms as evidence of extremism, and
+WP7b ranks no techniques. The panel fixes one set of comparison groups and
+another could give a different answer; swapping two co-occurring groups can
+leave a post's set of groups unchanged; the non-extremist population is
+small, so its flip counts are descriptive; and a word-level model scores a
+target unseen in training like a deletion.
+
 ### 8.3 Does RQ2 reliance predict RQ4 false positives?
 
 This section is descriptive. Both sides depend on the lexicons, which are
@@ -767,7 +902,10 @@ remaining difficulty sits.
    For the classical techniques, replacing the term with a neutral group
    noun lowers p(extremist) about as much as deleting it. For the
    transformers, deleting it costs recall but substituting it does not, so
-   the edit, not only the term, may drive the effect (section 8.2). Avenue:
+   the edit, not only the term, may drive the effect (section 8.2).
+   Swapping the term for another group of the same category barely moves
+   the transformers on extremist posts, so they respond to a group being
+   named rather than to which group (section 8.2b). Avenue:
    counterfactual data augmentation (Kaushik et al., 2020) or
    identity-balanced training such as data rebalancing (Dixon et al., 2018)
    or worst-group training (Sagawa et al., 2020), evaluated with
