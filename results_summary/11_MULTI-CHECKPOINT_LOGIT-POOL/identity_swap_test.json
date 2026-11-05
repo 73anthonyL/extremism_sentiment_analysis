@@ -1259,6 +1259,7 @@
     }
   ],
   "excluded_entries": [
+    "aliens",
     "asylum",
     "black",
     "boy",
@@ -1548,7 +1549,7 @@
     "humans"
   ],
   "swap_map": "data/lexicons/identity_swap_pairs.csv",
-  "swap_map_sha256": "1e94dd70e48e511d0530592a95044f4e15bb74235853ec04c2356cb32dab406f",
+  "swap_map_sha256": "89c99e5b3b69779c70003d2317da0cbf39957485d399118740ffbbd4a8ac47f4",
   "technique": "11_MULTI-CHECKPOINT_LOGIT-POOL",
   "term_profile": {
     "n_lr_coefficients": 4692,

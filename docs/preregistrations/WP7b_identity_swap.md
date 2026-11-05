@@ -172,3 +172,9 @@ non-extremist, 45 extremist) for every technique. Both runs are kept: the
 first, on the preregistered map (commit `f08193b1`), is the
 `rq4_identity_swap.csv` and `identity_swap_test.json` files of commit
 `0ca755d4`; the re-run on the amended map supersedes them in the tree.
+
+Re-run on the amended map (2026-11-05), all eight techniques with their
+restored predictors: `rq4_identity_swap.csv` and
+`rq4_identity_swap_directions.csv` are byte-identical to the first run, and
+each `identity_swap_test.json` differs only in `swap_map_sha256` and in
+listing `aliens` among `excluded_entries`. No WP7b result changed.
