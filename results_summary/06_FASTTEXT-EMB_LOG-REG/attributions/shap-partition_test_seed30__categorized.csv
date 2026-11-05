@@ -1,5 +1,5 @@
 word,mean_abs_attribution,mean_attribution,support,category,matched_categories,abs_mass,positive_mass,rank
-nigger,0.32054081,0.32054081,2,topical,,0.64108162,0.64108162,1
+nigger,0.32054081,0.32054081,2,slur,slur,0.64108162,0.64108162,1
 whites,0.27016194,0.27016194,2,topical,,0.54032388,0.54032388,2
 ill,0.2418389,0.2418389,5,topical,,1.2091945,1.2091945,3
 marry,0.19884744,0.19884744,2,topical,,0.39769488,0.39769488,4

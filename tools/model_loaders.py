@@ -13,10 +13,10 @@ The family of a folder is recognised from the files it holds:
     weights/pipeline.joblib                        01, 02, 04, 05  (scikit-learn pipeline)
     weights/vectorizer.joblib + slp_state_dict.pt  03              (TF-IDF + one linear layer)
     weights/fasttext.model + classifier.joblib     06              (FastText pooling + LR)
-    weights/transformer_model/ + tokenizer/        07              (one fine-tuned transformer)
+    weights/transformer_model/ + tokenizer/        07, 12          (one fine-tuned transformer)
     weights/member-<component>-seed<N>/            11              (log-odds pooled ensemble)
 
-The inference code for 03, 06, 07 and 11 is reproduced here from the
+The inference code for 03, 06, 07, 12 and 11 is reproduced here from the
 notebooks, because a pipeline object cannot be pickled for them. Each
 reproduction is pinned to its notebook by `tools/tests/test_curated_examples.py`,
 which parses the notebook's constants and compares, and every loaded model is
@@ -390,7 +390,7 @@ def _load_transformer(external_dir, hyperparameters, device, batch_size):
     if not tokenizer_dir.is_dir():
         raise ModelLoadError(f"{external_dir}: transformer weights without a tokenizer/ folder")
     if "max_length" not in hyperparameters:
-        raise ModelLoadError("best_config.json hyperparameters lack 'max_length' (needed by 07)")
+        raise ModelLoadError("best_config.json hyperparameters lack 'max_length' (needed by 07 and 12)")
     torch_device = _torch_device(device)
     tokenizer = AutoTokenizer.from_pretrained(str(tokenizer_dir), use_fast=True)
     model = _load_hf_classifier(model_dir, torch_device)

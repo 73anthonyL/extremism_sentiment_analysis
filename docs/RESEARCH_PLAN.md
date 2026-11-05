@@ -163,20 +163,21 @@ Techniques in the controlled comparison and what each one has today.
 
 | Technique | Result folder | Probability artifact | Attribution run | Coefficients | RQ2 | RQ3 | RQ4 |
 |---|---|---|---|---|---|---|---|
-| `01_LOG-REG_TF-IDF` | yes, derived | yes | 2 whole-model | yes, check PASS | no | no | **yes** |
-| `02_LIN-SVM_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `03_SLP_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `04_CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `05_WORD-CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `06_FASTTEXT-EMB_LOG-REG` | yes, derived | yes | 2 whole-model | yes, check FAIL (calibration point) | no | no | **yes** |
-| `07_TWITTER-ROBERTA_FINE-TUNE` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | yes, derived | yes | 2 whole-model + 4 member (test) | n/a | no | no | **yes** |
+| `01_LOG-REG_TF-IDF` | yes, derived | yes | 2 whole-model | yes, check PASS | **yes** | **yes** | **yes** |
+| `02_LIN-SVM_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `03_SLP_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `04_CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `06_FASTTEXT-EMB_LOG-REG` | yes, derived | yes | 2 whole-model | yes, check FAIL (calibration point) | **yes** | **yes** | **yes** |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | yes, derived | yes | 2 whole-model + 4 member (test) | n/a | **yes** | **yes** | **yes** |
 
 Every result folder is now derived from a committed probability artifact
 (`provenance: derived_from_probs`, `recomputable: true`), from the Kaggle
 reruns of 2026-10-08. The notebook 00 rerun reproduced the frozen split and
-the committed mirror is byte-identical. RQ2 and RQ3 stay "no" until the
-lexicons are frozen (WP3) and the categorisation tools are run (WP5).
+the committed mirror is byte-identical. RQ2 and RQ3 are "yes" since the
+WP3 lexicon freeze (2026-11-04) and the re-run of the categorisation tools;
+RQ3's pretraining-lineage contrast still waits for notebook 12.
 
 Other facts that shape the order of work:
 
@@ -195,11 +196,18 @@ Other facts that shape the order of work:
   the 168 words in any top-50 belong to one technique only. The word
   TF-IDF models agree with each other (Spearman 0.90, top-50 Jaccard 0.67)
   and the two transformers with each other (0.76, 0.54); across families
-  agreement is 0.2 to 0.3. About half of the transformers' top-50 words
-  occur in a single explained post, against a quarter to two fifths for
-  the classical models, on 200 versus 450 posts; a same-post comparison
-  from the external per-post files is the next step before that
-  difference is claimed.
+  agreement is 0.2 to 0.3. On their own runs, 56% (07) and 52% (11) of the
+  transformers' top-50 positive words occur in a single explained post,
+  against 22 to 40% for the classical models, but on 200 versus 450 posts.
+  On the same 200 test posts (`rq2_same_post_support.csv`) the classical
+  shares rise to 32 to 52%: char TF-IDF (04) reaches 52% and FastText (06)
+  48%, while the word TF-IDF models (01, 02, 03, 05) stay 12 to 24 points
+  below 07. Under a post-level bootstrap the single-post share is a
+  replicate spread, not an interval: resampling shifts it upward and the
+  point for 01 falls outside its own spread (`rq2_bootstrap_same_post.csv`).
+  On paired draws 07's excess over the word TF-IDF models has a lower bound
+  of only 0.02 to 0.04, and its difference from 04 spans -0.10 to 0.14. The
+  comparison stays descriptive.
 * **The identity counterfactual exists** (WP7, 2026-11-04).
   `tools/identity_counterfactual.py` re-scores the 150 test posts that
   contain an identity-lexicon match (67 non-extremist, 83 extremist) with
@@ -217,10 +225,110 @@ Other facts that shape the order of work:
   (smallest 0.33), and they are descriptive, not a ranking. On the 83
   extremist posts the same edit unflags 15 of 71 flagged posts for 07 and
   22 of 74 for 11 (Holm-adjusted McNemar p = 0.016 and 1.5e-5); no
-  classical drop survives Holm. Identity terms therefore count as evidence
-  of extremism whatever the label, and removing them trades false positives
-  for recall. Substitution with a control panel is a sensitivity check;
-  the per-model counts, the panel and the limits are under WP7.
+  classical drop survives Holm. Removal therefore trades false positives for
+  recall. Substitution with a control panel is the stricter control: there
+  the recall loss is Holm-significant for 01, 04, 05 and 06 and not for 07
+  or 11, so the classical models weight the identity term itself as
+  evidence of extremism, while the transformers' removal effect may partly
+  reflect deleting a noun rather than the term specifically. The
+  per-model counts, the panel and the limits are under WP7. On the 59
+  extremist posts that keep an unambiguous identity match, only the 11 drop
+  stays Holm-significant (see the sensitivity bullet below).
+* **The SHAP attributions pass a deletion test** (2026-11-04).
+  `tools/faithfulness.py` deletes each test post's top-k words by positive
+  attribution toward extremist (k = 1, 3, 5, 10) and compares the drop in
+  p(extremist) with deleting as many random words (5 seeds), using each
+  restored predictor at its locked threshold (largest difference from the
+  committed probabilities 1.9e-3). On the 196 to 200 test posts every
+  technique explained, top-k deletion lowers p(extremist) more than random
+  deletion for all eight techniques at every k (Holm-adjusted Wilcoxon p <=
+  7.6e-21 over the 32 rows). Deletion recovers 0.46 to 0.80 of the summed
+  SHAP of the deleted words. For 07 and 11 the effect sits in the flagged
+  posts. Their median paired difference is 0.001 to 0.010 and 0.005 to
+  0.024, against 0.034 to 0.177 for 01, 02 and 04 to 06. On flagged posts at
+  k = 1 their margin over random is 0.231 and 0.204, against 0.016 to 0.091
+  for the classical techniques. No cross-technique test was run, so these
+  differences are descriptive. The test shows that SHAP finds the words the
+  models need, not that the models are right to need them
+  (`rq2_faithfulness.csv`).
+  On the validation split's whole-model run
+  (`rq2_faithfulness_validation.csv`; 195 to 200 shared posts, every
+  predictor verified against its validation artifact at the locked
+  threshold, Holm over the 32 shared validation rows) the result replicates:
+  all eight techniques lose more probability with their top-k words than
+  with random words at every k (Holm p <= 2.6e-25), and for 07 and 11 the
+  margin again sits in the flagged posts (flagged margin about twice the
+  all-post margin; median paired difference 0.002 to 0.055). Validation is
+  not the test split, so this spends nothing of the test budget.
+* **RQ4 and WP7 are robust to ambiguous identity words, except for 07's
+  significance** (2026-11-04). `tools/identity_sensitivity.py` sets aside 13
+  ambiguous lexicon entries (white, black, man, men, boy, boys, girl, girls,
+  english, native, trans, asylum, indian); the lexicon is unchanged.
+  Excluding the 14 non-extremist and 24 extremist test posts whose only
+  matches are those words, every FPR ratio stays above 1 (1.61 to 5.02, 53
+  identity-term negatives). The same three techniques have Fisher p < 0.05
+  (04 0.031, 05 0.017, 11 0.0056). 03 falls to 1.61 (p = 0.49) and 06 to
+  1.83 (p = 0.33); at this n that is not evidence that the effect is absent.
+  On the 59 extremist posts that keep an unambiguous match, removal unflags
+  15 of 51 flagged posts for 11 (Holm p = 0.002 over 32 rows) and 10 of 48
+  for 07 (raw p = 0.012, Holm p = 0.33). 07's rate, about 21%, equals its
+  full-population rate (15 of 71); with fewer discordant pairs the test
+  loses power. 07's result is therefore the same effect size, not
+  significant at the reduced n. Removing only the unambiguous matches
+  unflags 11 of 51 for 11 (Holm p = 0.030) and 6 of 48 for 07. Only 11's
+  recall loss is Holm-significant under every family tried. No non-extremist
+  flip survives Holm (`rq4_identity_fpr_sensitivity.csv`,
+  `rq4_identity_counterfactual_sensitivity.csv`).
+* **The RQ2-to-RQ4 relation is computed** (WP5, 2026-11-04; re-run on the frozen WP3
+  lexicons, which leave it unchanged: the slur list does not enter it). `tools/rq2_rq4_relation.py` ranks the eight
+  techniques by test identity-term share of positive mass and by RQ4 FPR
+  ratio: Spearman 0.83 (exact permutation p = 0.017; |rho| >= 0.73 is needed
+  for p <= 0.05; leave-one-out 0.74 to 0.95). Under section 5 this is
+  descriptive at n = 8. It does not show that identity reliance goes with
+  identity-term false positives. Identity share against FPR on identity-term
+  negatives is -0.22, and the ratio ordering follows low FPR on the other
+  negatives (05: 4 of 213, 11: 6 of 213). The WP7 removal shift shows no
+  relation to the ratio (rho 0.06). Among the six classical techniques the
+  correlation is 0.60 (p = 0.24). The ranking is unstable under resampling.
+  Resampling explained posts for the shares and test rows for the FPR ratios
+  (`rq2_rq4_bootstrap_relation.csv`, 2000 replicates) gives a replicate
+  median of 0.48 against the point 0.83; rho is positive in about 90% of
+  replicates and below the point in 94%, with replicates spread from -0.29
+  to 0.89. The instability comes mainly from the FPR ratios: resampling test
+  rows alone gives a median of 0.43, posts alone 0.80. Each ratio rests on 4
+  to 18 false positives, and only 04 [1.06, 6.37] and 11 [1.40, 16.1] keep
+  their ratio above 1 across 95% of replicates. Resampling noisy ratios also
+  pulls a rank correlation toward zero, so these figures describe how
+  fragile the ordering is, not a confidence interval for rho. The relation
+  stays descriptive at n = 8.
+* **Transformer attributions agree less across post samples.** On the same
+  200 posts, the test-versus-validation Spearman of mean absolute
+  attribution is 0.43 (07) and 0.49 (11), against 0.62 to 0.74 for the
+  classical techniques (`rq3_same_post_split_agreement.csv`). A post-level
+  bootstrap that resamples each split's posts independently
+  (`rq3_bootstrap_split_agreement.csv`) gives 07 0.43 [0.34, 0.48] and 11
+  0.49 [0.41, 0.54]; FastText gives 0.62 [0.57, 0.68] and the other
+  classical techniques 0.69 to 0.74, each with a lower bound of at least
+  0.63. On paired draws (`rq2_rq3_bootstrap_paired_differences.csv`) every
+  transformer-minus-classical difference has an interval that excludes zero
+  (07: upper bound <= -0.13; 11: <= -0.08); 07 and 11 do not separate from
+  each other (-0.06 [-0.13, 0.005]). This is descriptive: it covers post
+  sampling only, not the SHAP seed or another split, and it is not the
+  section 5 difference criterion. Lower agreement may reflect attributions
+  that depend on context, which a word-level mean over different posts reads
+  as instability, rather than less reliable explanations. Top-50 Jaccard by
+  absolute attribution (07 0.18, 11 0.22, 06 0.19; the others 0.32 to 0.47)
+  is a replicate spread under the bootstrap and does not separate the
+  transformers from 06 or 04.
+* **Identity shares carry more post-sampling spread than the two runs
+  show.** Post-level bootstrap SDs of the identity share
+  (`rq2_bootstrap_category_shares.csv`) are 0.016 to 0.036, against 0.002 to
+  0.023 across the two runs in `rq3_stability.csv`. On the common posts,
+  paired draws put 11 (0.17 [0.11, 0.24]) above 01, 02, 03 and 06 but not
+  above 04 or 05; 07 (0.07 [0.04, 0.17]) does not separate from any
+  classical technique. These intervals cover post sampling only and do not
+  replace the section 5 rule; whether section 5 should use them is an author
+  decision.
 * **The framework has one entry point** (WP8, 2026-11-04).
   `tools/audit.py` checks a technique against the contract
   (`check-contract`), runs the documented tool chain in order and stops at
@@ -238,7 +346,12 @@ Other facts that shape the order of work:
   technique with `in_comparison: false` gets its own Holm family and is kept
   out of the comparison tables and the rendered docs, so auditing a new
   classifier leaves the eight-technique results unchanged. The user guide
-  is `docs/FRAMEWORK.md`.
+  is `docs/FRAMEWORK.md`. The chain now also runs the ambiguous-term
+  sensitivity, the lexicon-gap candidates, the same-post tables and the
+  RQ2-RQ4 relation, and, with `--with-perturbation`, the two counterfactuals
+  and the deletion faithfulness test; a stage whose inputs are absent prints
+  SKIP with its reason. Each card gains a faithfulness section and the
+  ambiguous-term rows (2026-11-04).
 * **Every technique has its attribution runs.** Two whole-model SHAP runs
   per technique (test and validation samples), and one test run per
   admitted member of 11 (`A_anchor`, `B_dynabench`, `C_hatebert`,
@@ -258,21 +371,33 @@ Other facts that shape the order of work:
   folders (weights, per-post predictions and attributions; 6.2 GB for 11)
   are still in the Kaggle outputs and have not been uploaded to a Kaggle
   Dataset, so no manifest lists them.
-* **All twelve notebooks are primed** (WP0). Each follows one template, loads
-  `tools/notebook_kit.py`, and passes `tools/check_notebook.py --primed`.
-  Their outputs are empty until rerun; the earlier outputs are at tag
-  `notebooks-pre-priming`.
+* **Every notebook follows the primed template** (WP0). Each loads
+  `tools/notebook_kit.py` and passes `tools/check_notebook.py`. 00 to 07 and
+  11 carry their Kaggle outputs. 08 to 10 are empty (closed lines). 12 is
+  primed and not yet run. The earlier outputs, which contained text, are at
+  tag `notebooks-pre-priming`.
 * **Notebook 11 already fine-tunes the lineages RQ3 needs.** Its admitted
   members are `cardiffnlp/twitter-roberta-base-hate-latest`,
   `cardiffnlp/twitter-roberta-large-hate-latest`,
   `facebook/roberta-hate-speech-dynabench-r4-target`, and `GroNLP/hateBERT`;
   `microsoft/deberta-v3-base` was excluded by the prespecified 0.84
   validation floor. Per-member attribution runs from notebook 11 cover the
-  hate-speech and Twitter lineages. What is missing is a **plain RoBERTa
-  control** with no domain pretraining.
-* **The slur lexicon is empty** (`data/lexicons/slurs.txt`). Until it is
-  populated, every slur is counted as topical or as extremist framing, which
-  biases RQ2 and hides the slur-versus-identity distinction RQ3 turns on.
+  hate-speech and Twitter lineages. The plain RoBERTa control is written but
+  not run. `notebooks/12_ROBERTA-BASE_FINE-TUNE.ipynb` uses 07's recipe with
+  only the checkpoint changed; its head starts from the seed, while 07's
+  checkpoint brings a pretrained two-class head. It passes
+  `check_notebook.py --primed` and has no result folder yet. Adding it grows
+  the RQ1 Holm family from 28 to 36 pairs. 01 vs 11 (Holm p 0.049 now) stays
+  significant only if all eight new pairs are themselves Holm-significant
+  (with equal raw p, below about 0.0017). Otherwise it rises to at most
+  0.067 and the significant count falls from 7 to 6.
+* **The lexicons are frozen** (WP3, 2026-11-04). `data/lexicons/slurs.txt`
+  holds 58 HurtLex entries (ethnic and sexual-orientation slurs,
+  conservative level); the identity list is unchanged (`aliens` was added at
+  the freeze and dropped on 2026-11-05, see section 7). Every test top-50
+  list except 03's now holds one slur (the same racial slur, two explained
+  posts), at most 0.026 of positive mass, so the slur-versus-identity
+  distinction is measurable but thin.
 * **`tools/scan_text_leakage.py` passes.** The outputs that contained dataset
   text, hashes and row ids were cleared by priming, and the scanner now also
   checks notebook outputs and result files for row ids.
@@ -364,8 +489,14 @@ committed.
 
 1. Populate `data/lexicons/slurs.txt` from a published, citable slur lexicon
    (record the source and licence in `data/lexicons/README.md`). Entries
-   that also appear in `identity_terms.txt` are removed from the identity
-   list, since the first-match order gives `slur` precedence anyway.
+   of the source that are neutral identity references already in
+   `identity_terms.txt` are removed from the slur list and stay identity
+   terms. (This step first said the reverse: remove them from the identity
+   list, since `slur` takes precedence. Changed at the freeze, 2026-11-04,
+   because HurtLex's slur categories contain neutral words such as `gay` and
+   `queer`; dropping them from the identity list would remove neutral
+   mentions of those groups from RQ4, which measures false positives on
+   exactly such mentions.)
 2. Review `identity_terms.txt` (96 entries) for coverage of the communities
    the dataset actually mentions. Use `identity_fpr_terms_test.csv` counts,
    which carry no text, to find high-support terms.
@@ -378,6 +509,22 @@ committed.
 *Done when.* The slur list is non-empty and sourced, the overlap report
 from `categorize_attributions.py` shows no identity-versus-slur collisions,
 and the lists are frozen.
+
+*Status: done 2026-11-04.* Slurs: HurtLex EN 1.2, conservative level,
+categories `ps` and `om`, 58 entries after removing generic insults,
+everyday-sense words, neutral references and non-lemmas (CC BY-NC-SA 4.0;
+source, licence and the removed words in `data/lexicons/README.md` and the
+header of `slurs.txt`). Identity list unchanged at 96 entries, the 13
+ambiguous entries kept (`aliens` was added on 2026-11-04 and dropped on
+2026-11-05 because it was test-derived; see section 7). Framing list reviewed and unchanged; no entry is
+shared between any two lists. Version note with sha256 in
+`data/lexicons/README.md`, with the rule that no term is added on
+test-split evidence. The WP7b swap map gained and then lost an excluded row
+for `aliens` (Amendments 1 and 2 of its preregistration; it is back to its
+preregistered bytes and the population never changed). RQ2, RQ3, RQ4, WP7,
+WP7b, the relation and the bootstrap were re-run after each change; with
+the final lists only the slur results and the coverage count differ from
+the pre-freeze outputs.
 
 ### WP4. Attribution runs for RQ2 and RQ3 (Kaggle)
 
@@ -443,6 +590,8 @@ tools with adversarial tests:
   tables (`rq1_error_overlap.csv`, `rq1_shared_errors.csv`).
 * `tools/rq2_rq4_relation.py`: the rank correlation between each technique's
   RQ2 identity-term share and its RQ4 FPR ratio, from the two `rq/` tables.
+  Done 2026-11-04 (`rq2_rq4_relation.csv`), and re-run on the frozen WP3
+  lexicons.
 
 *Done when.* All five rendered regions are populated for every technique,
 `render_tables.py --check` passes, and the two new tools have tests that
@@ -512,8 +661,10 @@ rows, as section 5 requires.
   (15 lost, 1 gained, Holm p = 0.016) and the 11 drop (22 lost, 0 gained,
   Holm p = 1.5e-5) survive Holm. This matches RQ4: recall for 07 and 11 is
   0.855 and 0.892 on extremist posts with identity terms, against 0.839 and
-  0.793 without. The models treat identity terms as evidence of extremism
-  whatever the label. The term is not only a source of errors. Every
+  0.793 without. Under removal the transformers respond as if the term were
+  evidence of extremism whatever the label; the substitution check below
+  does not reproduce that for them, so the effect may partly come from
+  deleting a noun. The term is not only a source of errors. Every
   false-positive reduction above is reported next to this cost.
 
 *Substitute (sensitivity check).* Every match is replaced by each word of a
@@ -524,6 +675,10 @@ than 0.10 from the base rate of 0.376, or if its 01 coefficient has
 |coef| > 0.5. The panel words occur in 10, 7 and 5 training posts, with
 extremist shares of 0.40, 0.43 and 0.40 and coefficients +0.17, -0.18 and
 -0.49 (ranks 1510, 3001 and 4225 of 4692). The JSON records all of these.
+Under substitution the extremist recall drop is Holm-significant for 01, 04,
+05 and 06 (11 lost each, Holm p = 0.029) and not for 07 (1.0) or 11 (0.094),
+so the recall cost of an identity-term edit is not specific to the
+transformers.
 
 * The first version substituted "people", which is not a neutral control.
   It occurs in 219 extremist and 116 non-extremist dataset posts. 63% of
@@ -552,6 +707,141 @@ join. The panel words are rare in training (5 to 10 posts), so their balance
 is estimated from few posts. Words never seen in training act like removal
 for the word-level models. The lexicon covers only the identity terms it
 lists. All of this is post-level and text-only.
+
+### WP7b. Identity swap (local, sensitivity analysis of WP7). Run 2026-11-04.
+
+WP7's substitution check left one question open: do the transformers respond
+to which group is named, or only to a group being named? WP7b replaces each
+identity term with three other identity terms of the same lexicon category
+and grammatical form (religion, ethnicity/nationality, migration, gender and
+sexuality), averages the probabilities over the three, and compares the
+shift with removal and with WP7's neutral panel on the same spans of the
+same posts.
+
+The swap map (`data/lexicons/identity_swap_pairs.csv`) and the analysis plan
+(`docs/preregistrations/WP7b_identity_swap.md`) were committed before any
+model was run on swapped text, so the metrics, the Holm family (the 48
+technique x population x operation rows) and the reading rule are fixed in
+advance. WP7b is still a sensitivity analysis of RQ4, not a primary outcome:
+WP7's removal stays the primary operation. The map excludes the 13
+ambiguous entries and 8 more (`indians`, `woman`, `women`, `feminist`,
+`feminists`, `queer`, `lgbt`, `lgbtq`), so the population is the 68 test
+posts with a swapped term (23 non-extremist, 45 extremist), a subset of
+WP7's 150. Operations edit only the swapped spans and match their case, so
+the remove and substitute rows here differ from WP7's.
+
+`tools/identity_swap.py` refuses a map that leaves the lexicon, crosses a
+category, changes form, repeats the source's group or uses an ambiguous
+term. It verifies each restored predictor against the committed artifact
+before scoring. It writes `identity_swap_test.json` per technique,
+`rq/rq4_identity_swap.csv` and the descriptive
+`rq/rq4_identity_swap_directions.csv`. The authors adopted the cautious
+reading on 2026-11-04 (`docs/DECISIONS_NEEDED.md`, decision 5): substitution
+is the stricter control; the classical models weigh identity terms under
+every edit; the transformers respond to a group being named rather than
+which group, and part of their removal effect may be the loss of a noun. The
+paper does not claim the transformers treat identity terms as evidence of
+extremism. Folding WP7b into the results draft is pending.
+
+*Results, descriptive, with the preregistered rule applied as written.*
+Here delta is p(extremist) before minus after the edit, and p values are
+Holm-adjusted Wilcoxon over the 48 rows of `rq4_identity_swap.csv`.
+
+* Labels. The rule gives "group mention" on both populations for 01, 02
+  and 04. For 03 and 05 it gives group mention on non-extremist posts and
+  "partial" on extremist posts. There the swap shifts are tiny (0.0045 and
+  0.022) but still Holm-significant (0.021 and 0.016), and below half of
+  removal. 06 is "group-specific" on extremist posts (swap 0.027, Holm
+  0.0056, 0.75 of the removal shift). On non-extremist posts 06 is partial
+  (swap 0.027, Holm 2.1e-4, 0.47 of removal). 07 and 11 are group mention on
+  extremist posts and partial on non-extremist posts.
+* Extremist posts. The swap moves 07 and 11 by 0.006 and 0.004 (Holm 1.0
+  for both), against 0.069 and 0.149 under removal, and unflags none of
+  their 34 and 38 flagged posts. For 11 the neutral substitute also lowers p
+  (0.101, Holm 8.1e-6), so for 11 the presence of an identity term matters,
+  not which group it names. For 07 the substitute shift (0.043, Holm 0.12)
+  is not significant, so group mention and noun deletion cannot be told
+  apart.
+* Non-extremist posts. The swap raises p: 11 by 0.059 (Holm 0.022) and 07
+  by 0.100 (Holm 0.087, not significant). Both are partial under the rule
+  because the sign is the reverse of removal's. The medians are about zero
+  (-0.006 and -0.002), so the shift sits in few posts. In the
+  single-source directions, three sources carry about 72% of the summed
+  upward shift for 07 (refugees, muslim, american) and 73% for 11
+  (refugees, american, christian). The sign varies by source: swapping away
+  christians lowers p for both models, and muslims for 11 (+0.068). The targets' training-label skew
+  does not explain this. Across non-extremist directions, the shift's
+  Spearman correlation with the source-minus-target 01 coefficient is
+  -0.15 (07) and -0.10 (11), and with the difference in training extremist
+  share +0.13 and +0.09. On extremist posts the correlations are +0.21 and
+  +0.32 (coefficient) and +0.21 and +0.23 (share).
+* Classical models. The averaged swap shift is near zero, but the
+  per-variant mean |delta| is 0.91 (non-extremist) and 0.75 (extremist) of
+  removal's for 01, and 0.75 and 0.77 for 02. Targets that raise p and
+  targets that lower it cancel in the mean. Per-direction shifts track the
+  change in 01 coefficient: Spearman 0.92 for 01 and 0.88 for 02 over 114
+  directions, then 0.72 (03), 0.67 (05), 0.41 (04) and 0.25 (06). Targets
+  never seen in training count as coefficient 0. This is direction-dependent
+  sensitivity, not an absence of response.
+* Magnitude, extremist posts, swap mean |delta| over remove mean |delta|:
+  11 0.24, 07 0.46, 01 0.75, 02 0.77. Descriptive only.
+* Precision. p_original is the committed artifact, while every
+  counterfactual for 07 and 11 was re-scored on MPS. On the original texts
+  the two differ by at most 1.4e-3 (07) and 7.7e-4 (11). That is the same
+  order as the extremist swap deltas (0.006 and 0.004) and larger than their
+  medians (2e-5 and 3.4e-4).
+
+*Limitations.* The panel fixes one set of comparison groups. Swapping two
+co-occurring groups can leave a post's set of groups unchanged. The
+non-extremist population is small (23 posts, 2 to 7 flagged), so flip
+counts there are descriptive. Word-level models score a target unseen in
+training like a deletion. Post-level labels, text-only features.
+
+### WP9. Layer-wise probes on the transformers (Kaggle GPU). Written 2026-11-05; not run.
+
+Preregistered in `docs/preregistrations/WP9_layer_probes.md` before the
+notebook was written. `notebooks/13_TRANSFORMER-LAYER-PROBES.ipynb` loads
+07, the 12 runs of 11's admitted pool (A, B, C, E x seeds 17, 30, 73) and
+the pretrained checkpoints they started from, checks that the fine-tuned
+weights reproduce the committed probabilities (validation before any probe,
+test before any test number), and probes the mean-pooled states of every
+layer for the label, identity-term presence and a word-type control. Probes
+are L2 logistic regressions whose C is chosen by cross-validation inside
+train; validation selects nothing and test is opened once. Outputs:
+per-layer AUC and accuracy with bootstrap intervals, selectivity and
+fine-tuned-minus-base contrasts with paired intervals (RQ3), and a
+final-layer identity-direction ablation against random directions with Holm
+over 07 and 11 pooled (RQ4). The notebook role `probe` was added to the kit
+and the checker, with its helpers in `tools/probe_kit.py`;
+`tools/layer_probes_report.py` checks and summarises the tables locally.
+
+*Author action.* Run notebook 13 on a Kaggle GPU (instructions in its first
+cell; the 07 and 11 weights must be uploaded as Kaggle datasets first, which
+decision 11 already requires), unzip its outputs, then
+`layer_probes_report.py --check` and `--write`.
+
+### WP10. Zero-shot LLM with self-explanation (Kaggle GPU). Primed 2026-11-05.
+
+Author decision 6: an open-weight instruction-tuned model on a Kaggle GPU, so
+no dataset text leaves the authors' control. Preregistered in
+`docs/preregistrations/WP10_zero_shot_llm.md` before the notebook was
+written: `Qwen/Qwen3-4B-Instruct-2507` (Apache-2.0) at a pinned revision, with
+`microsoft/Phi-4-mini-instruct` (MIT) as a fallback chosen only by
+label-blind rules; one fixed zero-shot prompt; P(EXTREMIST) from the two
+answer tokens' log-probabilities; threshold on validation; one test
+evaluation. The two-artifact contract is met with the settings of 07 and 11
+(200 posts per split, `max_evals` 500), so the model enters RQ2 to RQ4 as an
+audited technique with `in_comparison: false` (its own Holm family). The
+self-explanation analysis asks the model for at most five decisive words on
+the 200 test posts and compares them with its own SHAP attributions:
+overlap@k against chance, and deletion of the self-named tokens against
+SHAP's top tokens of the same count and random tokens, eight Wilcoxon tests
+under one Holm family, read by the preregistered rule. Notebook:
+`notebooks/14_ZERO-SHOT-LLM_SELF-EXPLAIN.ipynb`, primed, not yet run.
+
+*Done when.* The notebook has run on Kaggle, its outputs pass
+`check_notebook.py` and `scan_text_leakage.py`, and `audit.py run` and
+`report` have produced its card.
 
 ### WP6. Write the paper
 
@@ -589,17 +879,22 @@ descriptive.
 **Reliance (RQ2, RQ3).** A category share is reported only with its
 across-run standard deviation from `rq3_stability.csv`. A difference in
 share between two techniques is described as a difference only if it exceeds
-the pooled across-run standard deviation of the two. Top-K is 50 throughout;
+the pooled across-run standard deviation of the two. This preregistered rule
+stays the primary criterion (author decision, 2026-11-04); the post-level
+bootstrap intervals (`rq2_bootstrap_category_shares.csv`) are reported next
+to it as a stricter check, and the paper says which differences pass both. Top-K is 50 throughout;
 changing it re-runs everything and is stated. Runs are compared only when
 they explain the same number of posts with the same evaluation budget; the
-sidecar records both. Multi-word lexicon entries
-cannot match word-level artifacts and the count of skipped entries is
-reported.
+sidecar records both. Lexicon entries the word-level masker splits
+(spaces, hyphens, other punctuation) cannot match word-level artifacts and
+the count of skipped entries is reported.
 
 **Identity false positives (RQ4).** The Fisher exact test on the 2x2 table
 (identity term present or absent, false positive or true negative) is
 reported with the FPR ratio and the count of negatives with identity terms.
-With 67 such posts in the test split, only large ratios are detectable; a
+With 67 such posts in the test split (68 for one day while `aliens` was in
+the identity list, 2026-11-04 to 2026-11-05; a count update only, the rule
+itself did not change), only large ratios are detectable; a
 non-significant result is reported as such, not as absence of effect. The
 RQ2-to-RQ4 relation is reported as a rank correlation over techniques with
 n stated; with eight or nine points it is descriptive.
@@ -619,11 +914,14 @@ extremist posts. Differences between techniques are not ranked below the
 threshold. No threshold is re-chosen to change an RQ4 result.
 
 **Test budget.** One test evaluation per technique, ever. A rerun in WP1
-replaces the earlier evaluation rather than adding one. Notebook 12 is the
-only new test unlock this plan authorises. WP7 re-scores edited test texts
+replaces the earlier evaluation rather than adding one. Notebooks 12 and 14
+are the only new test unlocks this plan authorises (14: WP10, approved by
+author decision 6 on 2026-11-04, a new technique outside the comparison). WP7 re-scores edited test texts
 with frozen models at their locked thresholds. That is a perturbation
 analysis, not a test evaluation: it selects no threshold, model or
-configuration and does not count against this budget.
+configuration and does not count against this budget. `tools/faithfulness.py`
+and `tools/identity_sensitivity.py counterfactual` likewise re-score perturbed
+test texts with frozen models; they select nothing.
 
 **Lexicons.** Frozen after WP3. If a reviewer's question forces a change,
 the change is made once, RQ2 and RQ4 are re-run in full, and both versions of
@@ -645,16 +943,23 @@ Not part of this paper, and not to be started on this branch of work:
 
 ## 7. Open decisions for the authors
 
-Each of these changes an artifact and must be settled before the package
-that depends on it closes.
-
-| Decision | Blocks | Default if not decided |
-|---|---|---|
-| Source lexicon for `slurs.txt` | WP3 | Not populated; RQ2 slur column reported as unavailable and the limitation stated. |
-| ~~SHAP background size and seeds for the second runs~~ | WP4 | Decided 2026-10-02: the text masker uses no background sample; run 2 explains the validation split with the same seed; transformer families explain 200 posts per split. |
-| Whether notebook 12 also gets a large-scale twin | WP4 | No. One control is enough for the lineage question. |
-| Whether per-member runs for 11 include the excluded DeBERTa member | WP4 | No. Excluded members are not part of the ensemble's reliance. |
-| Holm family for RQ1: all 36 pairs or only the 8 pairs against 07 | WP5 | All pairs reported; the 07 column highlighted. |
+All open decisions were settled on 2026-11-04; `docs/DECISIONS_NEEDED.md`
+records each with its context and the option chosen. In short: slurs from
+HurtLex (conservative level, English slur categories, source and licence
+recorded in `data/lexicons/README.md`); identity list gains only terms with
+support >= 3, ambiguous entries kept and reported via the sensitivity
+check (the one such term, `aliens`, was added at the freeze on 2026-11-04
+and dropped on 2026-11-05 by author decision: it came from 06's own test
+top-50 gap list, always appears as "illegal aliens", and alone moved 06's
+RQ4 Fisher p below 0.05; terms are no longer added on test-split evidence); the section 5 share rule stays primary with the
+bootstrap reported alongside; notebook 12 will be run by the authors; WP7
+and WP7b take the cautious reading; WP10 uses an open-weight model on a
+Kaggle GPU, so no dataset text leaves the authors' control; WP9 probes are
+done now (notebook written locally, run on Kaggle); report-card slurs are
+redacted in figures only; the SHAP check keeps its preregistered rule;
+external assets are uploaded before submission. Earlier decisions (SHAP
+background, notebook 12 twin, DeBERTa member, RQ1 Holm family) stand as
+recorded in the git history of this section.
 
 ## 8. Order of execution
 

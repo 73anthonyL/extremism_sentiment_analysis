@@ -1,5 +1,5 @@
 word,mean_abs_attribution,mean_attribution,support,category,matched_categories,abs_mass,positive_mass,rank
-nigger,0.39825868,0.39825868,2,topical,,0.79651736,0.79651736,1
+nigger,0.39825868,0.39825868,2,slur,slur,0.79651736,0.79651736,1
 shoot,0.31281089,0.31281089,9,topical,,2.815298,2.815298,2
 see,0.29136463,0.29136463,10,topical,,2.9136463,2.9136463,3
 ill,0.29080017,0.29080017,5,topical,,1.4540009,1.4540009,4

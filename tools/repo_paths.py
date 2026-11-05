@@ -43,6 +43,9 @@ RQ1_MCNEMAR_PAIRS_CSV = RQ_DIR / "rq1_mcnemar_pairs.csv"
 RQ1_ERROR_OVERLAP_CSV = RQ_DIR / "rq1_error_overlap.csv"
 RQ1_SHARED_ERRORS_CSV = RQ_DIR / "rq1_shared_errors.csv"
 RQ2_CATEGORY_SHARES_CSV = RQ_DIR / "rq2_category_shares.csv"
+# Lexicon entries per category, and how many are multi-word phrases that a
+# word-level attribution artifact can never match (categorize_attributions.py).
+RQ2_LEXICON_COVERAGE_CSV = RQ_DIR / "rq2_lexicon_coverage.csv"
 RQ2_WORD_AGREEMENT_CSV = RQ_DIR / "rq2_word_agreement_pairs.csv"
 RQ2_SHARED_TOP_WORDS_CSV = RQ_DIR / "rq2_shared_top_words.csv"
 RQ2_TOP_WORD_SUPPORT_CSV = RQ_DIR / "rq2_top_word_support.csv"
@@ -50,6 +53,18 @@ RQ3_RELIANCE_CSV = RQ_DIR / "rq3_reliance_comparison.csv"
 RQ3_STABILITY_CSV = RQ_DIR / "rq3_stability.csv"
 RQ4_IDENTITY_FPR_CSV = RQ_DIR / "rq4_identity_fpr.csv"
 RQ4_IDENTITY_COUNTERFACTUAL_CSV = RQ_DIR / "rq4_identity_counterfactual.csv"
+# Deletion faithfulness of the per-post SHAP attributions (tools/faithfulness.py).
+RQ2_FAITHFULNESS_CSV = RQ_DIR / "rq2_faithfulness.csv"
+# The same test on the validation split's whole-model run: a sibling table, so the
+# test table, its readers and its Holm families are unchanged.
+RQ2_FAITHFULNESS_VALIDATION_CSV = RQ_DIR / "rq2_faithfulness_validation.csv"
+# Same-post re-aggregation of the per-post attribution files (same_post_stability.py).
+RQ2_SAME_POST_SUPPORT_CSV = RQ_DIR / "rq2_same_post_support.csv"
+RQ3_SAME_POST_SPLIT_AGREEMENT_CSV = RQ_DIR / "rq3_same_post_split_agreement.csv"
+RQ2_SAME_POST_CATEGORY_SHARES_CSV = RQ_DIR / "rq2_same_post_category_shares.csv"
+# Rank correlation of RQ2 reliance measures with the RQ4 FPR ratio (rq2_rq4_relation.py).
+RQ2_RQ4_RELATION_CSV = RQ_DIR / "rq2_rq4_relation.csv"
+RQ2_RQ4_RELATION_INPUTS_CSV = RQ_DIR / "rq2_rq4_relation_inputs.csv"
 
 # Pairs between a technique outside the comparison (best_config.json
 # "in_comparison": false) and every technique in it. Kept apart so an audited
@@ -69,6 +84,7 @@ RUN_MANIFEST_FILENAME = "run_manifest.json"
 IDENTITY_FPR_FILENAME = "identity_fpr_{split}.json"
 IDENTITY_FPR_TERMS_FILENAME = "identity_fpr_terms_{split}.csv"
 IDENTITY_COUNTERFACTUAL_FILENAME = "identity_counterfactual_{split}.json"
+FAITHFULNESS_FILENAME = "faithfulness_{split}.json"
 
 # Probability artifacts (row_id, split, y_true, y_prob) exported by notebooks.
 LOOP_DIR = REPO_ROOT / "research_loop"
@@ -154,3 +170,26 @@ def outside_comparison_technique_dirs(results_dir=None):
     """Technique folders with `"in_comparison": false` (an audited classifier
     that must not move the paper's numbers)."""
     return [d for d in technique_dirs(results_dir) if not in_comparison(d.name, results_dir)]
+
+# Sensitivity of RQ4 / WP7 to ambiguous identity terms, and identity-lexicon
+# gap candidates for WP3; written by tools/identity_sensitivity.py.
+RQ4_IDENTITY_FPR_SENSITIVITY_CSV = RQ_DIR / "rq4_identity_fpr_sensitivity.csv"
+RQ4_IDENTITY_COUNTERFACTUAL_SENSITIVITY_CSV = RQ_DIR / "rq4_identity_counterfactual_sensitivity.csv"
+RQ2_IDENTITY_LEXICON_GAPS_SENSITIVITY_CSV = RQ_DIR / "rq2_identity_lexicon_gaps_sensitivity.csv"
+RQ2_IDENTITY_TOP_K_SENSITIVITY_CSV = RQ_DIR / "rq2_identity_top_k_sensitivity.csv"
+
+# WP7b identity-term swap (tools/identity_swap.py). The swap map is
+# preregistered in docs/preregistrations/WP7b_identity_swap.md; it is not a
+# lexicon and no RQ2/RQ4 tool reads it.
+IDENTITY_SWAP_MAP_CSV = LEXICON_DIR / "identity_swap_pairs.csv"
+RQ4_IDENTITY_SWAP_CSV = RQ_DIR / "rq4_identity_swap.csv"
+RQ4_IDENTITY_SWAP_DIRECTIONS_CSV = RQ_DIR / "rq4_identity_swap_directions.csv"
+IDENTITY_SWAP_FILENAME = "identity_swap_{split}.json"
+
+# Post-level bootstrap intervals for the descriptive RQ2/RQ3 numbers and the
+# RQ2-RQ4 relation; written by tools/bootstrap_uncertainty.py.
+RQ2_BOOTSTRAP_CATEGORY_SHARES_CSV = RQ_DIR / "rq2_bootstrap_category_shares.csv"
+RQ2_BOOTSTRAP_SAME_POST_CSV = RQ_DIR / "rq2_bootstrap_same_post.csv"
+RQ3_BOOTSTRAP_SPLIT_AGREEMENT_CSV = RQ_DIR / "rq3_bootstrap_split_agreement.csv"
+RQ2_RQ4_BOOTSTRAP_RELATION_CSV = RQ_DIR / "rq2_rq4_bootstrap_relation.csv"
+RQ2_RQ3_BOOTSTRAP_PAIRED_DIFFERENCES_CSV = RQ_DIR / "rq2_rq3_bootstrap_paired_differences.csv"

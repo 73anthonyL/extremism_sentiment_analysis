@@ -1,6 +1,6 @@
 {
   "device": null,
-  "holm_adjusted_p": "see rq4_identity_counterfactual.csv (family: every row of that table)",
+  "holm_adjusted_p": "see rq4_identity_counterfactual.csv (family: every comparison row of that table, or this technique's own rows when it is outside the comparison)",
   "n_identity_terms_in_lexicon": 96,
   "n_population": 150,
   "n_population_by_label": {

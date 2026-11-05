@@ -1,4 +1,70 @@
 {
+  "faithfulness": {
+    "holm_family_size": 32,
+    "in_comparison": true,
+    "n_posts_explained": 200,
+    "n_posts_shared": 200,
+    "n_posts_shared_set": 200,
+    "n_random_seeds": 5,
+    "population": "shared",
+    "rows": [
+      {
+        "drop_minus_random": 0.10885,
+        "drop_minus_random_flagged": 0.230728,
+        "drop_over_attributed_topk": 0.4583,
+        "k": 1,
+        "mean_drop_random": 0.00531773,
+        "mean_drop_topk": 0.114168,
+        "n_flagged": 75,
+        "n_posts": 199,
+        "share_topk_drop_gt_random": 0.798995,
+        "wilcoxon_p_holm": 7.6144e-21
+      },
+      {
+        "drop_minus_random": 0.177513,
+        "drop_minus_random_flagged": 0.392122,
+        "drop_over_attributed_topk": 0.532225,
+        "k": 3,
+        "mean_drop_random": 0.0535847,
+        "mean_drop_topk": 0.231097,
+        "n_flagged": 75,
+        "n_posts": 199,
+        "share_topk_drop_gt_random": 0.874372,
+        "wilcoxon_p_holm": 1.80797e-26
+      },
+      {
+        "drop_minus_random": 0.205635,
+        "drop_minus_random_flagged": 0.42792,
+        "drop_over_attributed_topk": 0.53679,
+        "k": 5,
+        "mean_drop_random": 0.0700491,
+        "mean_drop_topk": 0.275684,
+        "n_flagged": 75,
+        "n_posts": 199,
+        "share_topk_drop_gt_random": 0.919598,
+        "wilcoxon_p_holm": 1.00656e-28
+      },
+      {
+        "drop_minus_random": 0.19859,
+        "drop_minus_random_flagged": 0.394175,
+        "drop_over_attributed_topk": 0.605504,
+        "k": 10,
+        "mean_drop_random": 0.153714,
+        "mean_drop_topk": 0.352304,
+        "n_flagged": 75,
+        "n_posts": 199,
+        "share_topk_drop_gt_random": 0.894472,
+        "wilcoxon_p_holm": 2.33859e-29
+      }
+    ],
+    "sources": [
+      "results_summary/07_TWITTER-ROBERTA_FINE-TUNE/faithfulness_test.json",
+      "results_summary/rq/rq2_faithfulness.csv"
+    ],
+    "status": "run",
+    "threshold": 0.555,
+    "verification_max_abs_diff": 0.00113338
+  },
   "generated_by": "tools/audit.py report",
   "rq1": {
     "holm_family_size": 28,
@@ -120,9 +186,7 @@
         "top_k": 50
       }
     ],
-    "empty_lexicon_categories": [
-      "slur"
-    ],
+    "empty_lexicon_categories": [],
     "least_agreeing_by_jaccard": "06_FASTTEXT-EMB_LOG-REG",
     "least_agreeing_by_spearman": "06_FASTTEXT-EMB_LOG-REG",
     "most_agreeing_by_jaccard": "11_MULTI-CHECKPOINT_LOGIT-POOL",
@@ -142,7 +206,7 @@
         "word": "jew"
       },
       {
-        "category": "topical",
+        "category": "slur",
         "mean_attribution": 0.613391,
         "support": 2,
         "word": "nigger"
@@ -222,6 +286,21 @@
     ],
     "threshold": 0.555
   },
+  "rq4_ambiguous_terms_sensitivity": {
+    "fisher_p_value": 0.163693,
+    "fpr_ratio": 1.87547,
+    "fpr_with_identity_terms": 0.132075,
+    "fpr_without_identity_terms": 0.0704225,
+    "n_negative_excluded": 14,
+    "n_negative_with_identity_terms": 53,
+    "n_negative_without_identity_terms": 213,
+    "n_positive_excluded": 24,
+    "n_positive_with_identity_terms": 59,
+    "sources": [
+      "results_summary/rq/rq4_identity_fpr_sensitivity.csv"
+    ],
+    "variant": "exclude_ambiguous_only"
+  },
   "scope": "post-level labels, text-only features, one dataset, 450-row test split",
   "shap_check": {
     "anchor": "01_LOG-REG_TF-IDF",
@@ -258,6 +337,34 @@
     "sources": [
       "results_summary/rq/rq4_identity_counterfactual.csv"
     ],
-    "status": "run"
+    "status": "run",
+    "unambiguous_population": {
+      "rows": [
+        {
+          "mcnemar_p_holm": 1.0,
+          "mean_delta": 0.0930098,
+          "n_flagged_original": 7,
+          "n_flip_neg_to_pos": 0,
+          "n_flip_pos_to_neg": 5,
+          "n_posts": 53,
+          "population": "non_extremist, unambiguous match",
+          "wilcoxon_p_holm": 4.37013e-05
+        },
+        {
+          "mcnemar_p_holm": 0.328126,
+          "mean_delta": 0.156868,
+          "n_flagged_original": 48,
+          "n_flip_neg_to_pos": 1,
+          "n_flip_pos_to_neg": 10,
+          "n_posts": 59,
+          "population": "extremist, unambiguous match",
+          "wilcoxon_p_holm": 2.0933e-06
+        }
+      ],
+      "sources": [
+        "results_summary/rq/rq4_identity_counterfactual_sensitivity.csv"
+      ],
+      "status": "run"
+    }
   }
 }
