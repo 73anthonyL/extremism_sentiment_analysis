@@ -250,6 +250,15 @@ Other facts that shape the order of work:
   differences are descriptive. The test shows that SHAP finds the words the
   models need, not that the models are right to need them
   (`rq2_faithfulness.csv`).
+  On the validation split's whole-model run
+  (`rq2_faithfulness_validation.csv`; 195 to 200 shared posts, every
+  predictor verified against its validation artifact at the locked
+  threshold, Holm over the 32 shared validation rows) the result replicates:
+  all eight techniques lose more probability with their top-k words than
+  with random words at every k (Holm p <= 2.6e-25), and for 07 and 11 the
+  margin again sits in the flagged posts (flagged margin about twice the
+  all-post margin; median paired difference 0.002 to 0.055). Validation is
+  not the test split, so this spends nothing of the test budget.
 * **RQ4 and WP7 are robust to ambiguous identity words, except for 07's
   significance** (2026-11-04). `tools/identity_sensitivity.py` sets aside 13
   ambiguous lexicon entries (white, black, man, men, boy, boys, girl, girls,
@@ -784,6 +793,29 @@ cell; the 07 and 11 weights must be uploaded as Kaggle datasets first, which
 decision 11 already requires), unzip its outputs, then
 `layer_probes_report.py --check` and `--write`.
 
+### WP10. Zero-shot LLM with self-explanation (Kaggle GPU). Primed 2026-11-05.
+
+Author decision 6: an open-weight instruction-tuned model on a Kaggle GPU, so
+no dataset text leaves the authors' control. Preregistered in
+`docs/preregistrations/WP10_zero_shot_llm.md` before the notebook was
+written: `Qwen/Qwen3-4B-Instruct-2507` (Apache-2.0) at a pinned revision, with
+`microsoft/Phi-4-mini-instruct` (MIT) as a fallback chosen only by
+label-blind rules; one fixed zero-shot prompt; P(EXTREMIST) from the two
+answer tokens' log-probabilities; threshold on validation; one test
+evaluation. The two-artifact contract is met with the settings of 07 and 11
+(200 posts per split, `max_evals` 500), so the model enters RQ2 to RQ4 as an
+audited technique with `in_comparison: false` (its own Holm family). The
+self-explanation analysis asks the model for at most five decisive words on
+the 200 test posts and compares them with its own SHAP attributions:
+overlap@k against chance, and deletion of the self-named tokens against
+SHAP's top tokens of the same count and random tokens, eight Wilcoxon tests
+under one Holm family, read by the preregistered rule. Notebook:
+`notebooks/14_ZERO-SHOT-LLM_SELF-EXPLAIN.ipynb`, primed, not yet run.
+
+*Done when.* The notebook has run on Kaggle, its outputs pass
+`check_notebook.py` and `scan_text_leakage.py`, and `audit.py run` and
+`report` have produced its card.
+
 ### WP6. Write the paper
 
 Sections map one-to-one onto the research questions:
@@ -853,8 +885,9 @@ extremist posts. Differences between techniques are not ranked below the
 threshold. No threshold is re-chosen to change an RQ4 result.
 
 **Test budget.** One test evaluation per technique, ever. A rerun in WP1
-replaces the earlier evaluation rather than adding one. Notebook 12 is the
-only new test unlock this plan authorises. WP7 re-scores edited test texts
+replaces the earlier evaluation rather than adding one. Notebooks 12 and 14
+are the only new test unlocks this plan authorises (14: WP10, approved by
+author decision 6 on 2026-11-04, a new technique outside the comparison). WP7 re-scores edited test texts
 with frozen models at their locked thresholds. That is a perturbation
 analysis, not a test evaluation: it selects no threshold, model or
 configuration and does not count against this budget. `tools/faithfulness.py`

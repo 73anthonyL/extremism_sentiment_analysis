@@ -171,4 +171,5 @@ context (6).
   `notebooks/13_TRANSFORMER-LAYER-PROBES.ipynb`); waiting for the Kaggle run.
 * **WP10. Zero-shot LLM comparison with self-explanation.** Approved
   2026-11-04 with an open-weight model on a Kaggle GPU; no dataset text is
-  sent to a hosted API.
+  sent to a hosted API. Preregistered in
+  `docs/preregistrations/WP10_zero_shot_llm.md`; notebook 14 is primed.
