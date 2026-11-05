@@ -881,18 +881,49 @@ def _rq4(technique, rq_dir):
     }
 
 
-def _wp7(technique, rq_dir):
-    path = Path(rq_dir) / RQ4_IDENTITY_COUNTERFACTUAL_CSV.name
-    if not path.exists():
-        return {"sources": [], "status": "not run", "rows": []}
-    table = pd.read_csv(path)
-    rows = table[(table["technique"] == technique) & (table["operation"] == "remove")]
-    if rows.empty:
-        return {"sources": [_rel(path)], "status": "not run", "rows": []}
+SENSITIVITY_VARIANT = "exclude_ambiguous_only"
+
+
+def _rq4_sensitivity(technique, rq_dir, rq4):
+    """RQ4 without the posts whose only identity matches are ambiguous words.
+
+    The tool's full_lexicon row recomputes RQ4; it must agree with the RQ4
+    table, or one of the two is stale.
+    """
+    path = Path(rq_dir) / RQ4_IDENTITY_FPR_SENSITIVITY_CSV.name
+    table = _read_table(path)
+    rows = table[(table["technique"] == technique) & (table["split"] == "test")].set_index("variant")
+    if not {"full_lexicon", SENSITIVITY_VARIANT} <= set(rows.index):
+        raise _stale(path, technique, "tools/identity_sensitivity.py fpr")
+    full = rows.loc["full_lexicon"]
+    same = (int(full["n_negative_with_identity_terms"]) == rq4["n_negative_with_identity_terms"]
+            and all(math.isclose(float(full[c]), rq4[c] or 0.0, rel_tol=1e-5, abs_tol=1e-9)
+                    for c in ("threshold", "fpr_with_identity_terms", "fpr_without_identity_terms")))
+    if not same:
+        raise AuditError(
+            f"{_rel(path)} full_lexicon row for {technique} differs from {RQ4_IDENTITY_FPR_CSV.name}; "
+            "the table is stale. Rerun tools/identity_sensitivity.py fpr before reporting"
+        )
+    row = rows.loc[SENSITIVITY_VARIANT]
+    n_with = int(row["n_negative_with_identity_terms"])
+    return {
+        "sources": [_rel(path)],
+        "variant": SENSITIVITY_VARIANT,
+        "n_negative_excluded": int(row["n_negative_excluded"]),
+        "n_negative_with_identity_terms": n_with,
+        "n_negative_without_identity_terms": int(row["n_negative"]) - n_with,
+        "fpr_with_identity_terms": _num(row["fpr_with_identity_terms"]),
+        "fpr_without_identity_terms": _num(row["fpr_without_identity_terms"]),
+        "fpr_ratio": _num(row["fpr_ratio"]),
+        "fisher_p_value": _num(row["fisher_p_value"]),
+    }
+
+
+def _counterfactual_rows(rows, population=lambda row: row["population"]):
     out = []
     for _, row in rows.sort_values("y_true").iterrows():
         out.append({
-            "population": row["population"],
+            "population": population(row),
             "n_posts": int(row["n_posts"]),
             "mean_delta": _num(row["mean_delta"]),
             "n_flagged_original": _int(row["n_flagged_original"]),
@@ -901,7 +932,111 @@ def _wp7(technique, rq_dir):
             "wilcoxon_p_holm": _num(row["wilcoxon_p_holm"]),
             "mcnemar_p_holm": _num(row["mcnemar_p_holm"]),
         })
-    return {"sources": [_rel(path)], "status": "run", "rows": out}
+    return out
+
+
+def _wp7_unambiguous(technique, rq_dir):
+    path = Path(rq_dir) / RQ4_IDENTITY_COUNTERFACTUAL_SENSITIVITY_CSV.name
+    if not path.exists():
+        return {"sources": [], "status": "not run", "rows": []}
+    table = pd.read_csv(path)
+    rows = table[(table["technique"] == technique) & (table["operation"] == "remove")]
+    if rows.empty:
+        return {"sources": [_rel(path)], "status": "not run", "rows": []}
+    return {"sources": [_rel(path)], "status": "run",
+            "rows": _counterfactual_rows(rows, lambda row: f"{row['population']}, unambiguous match")}
+
+
+def _wp7(technique, rq_dir):
+    path = Path(rq_dir) / RQ4_IDENTITY_COUNTERFACTUAL_CSV.name
+    payload = {"sources": [], "status": "not run", "rows": []}
+    if path.exists():
+        table = pd.read_csv(path)
+        rows = table[(table["technique"] == technique) & (table["operation"] == "remove")]
+        payload["sources"] = [_rel(path)]
+        if not rows.empty:
+            payload.update(status="run", rows=_counterfactual_rows(rows))
+    payload["unambiguous_population"] = _wp7_unambiguous(technique, rq_dir)
+    return payload
+
+
+FAITHFULNESS_POPULATION = "shared"  # the primary Holm family (faithfulness.py)
+# Columns a table row must share with the technique's JSON, or the table is stale.
+FAITHFULNESS_MATCH_COLUMNS = ("threshold", "n_posts", "n_flagged", "mean_drop_topk", "mean_drop_random",
+                              "drop_minus_random", "wilcoxon_p")
+
+
+def _locked_threshold(technique, results_dir):
+    with open(Path(results_dir) / technique / "best_config.json") as handle:
+        return float(json.load(handle)["selected_threshold"])
+
+
+def _faithfulness(technique, results_dir, rq_dir):
+    """Deletion faithfulness from faithfulness_test.json and its rows in rq2_faithfulness.csv.
+
+    Neither present: "not run". Either without the other, or the two
+    disagreeing, or a threshold other than the locked one: stale, refused.
+    """
+    json_path = Path(results_dir) / technique / FAITHFULNESS_FILENAME.format(split="test")
+    path = Path(rq_dir) / RQ2_FAITHFULNESS_CSV.name
+    table = pd.read_csv(path) if path.exists() else None
+    rows = table[table["technique"] == technique] if table is not None else pd.DataFrame()
+    if not json_path.exists():
+        if not rows.empty:
+            raise AuditError(f"{_rel(path)} has rows for {technique} but {_rel(json_path)} is missing; the "
+                             "table is stale. Rerun tools/faithfulness.py --rebuild-table before reporting")
+        return {"sources": [], "status": "not run", "rows": []}
+    if rows.empty:
+        raise _stale(path, technique, "tools/faithfulness.py --rebuild-table")
+    with open(json_path) as handle:
+        payload = json.load(handle)
+    keyed = {(r["population"], int(r["k"])): r for _, r in rows.iterrows()}
+    for expected in payload["rows"]:
+        row = keyed.get((expected["population"], int(expected["k"])))
+        differs = row is None or any(
+            not math.isclose(float(row[c]), float(expected[c]), rel_tol=1e-5, abs_tol=1e-12)
+            for c in FAITHFULNESS_MATCH_COLUMNS if expected.get(c) is not None)
+        if differs:
+            raise AuditError(
+                f"{_rel(path)} does not match {_rel(json_path)} for {expected['population']} k={expected['k']}; "
+                "the table is stale. Rerun tools/faithfulness.py --rebuild-table before reporting"
+            )
+    locked = _locked_threshold(technique, results_dir)
+    if not math.isclose(float(payload["threshold"]), locked, abs_tol=1e-9):
+        raise AuditError(
+            f"{_rel(json_path)} was computed at threshold {payload['threshold']} but the locked threshold is "
+            f"{locked}; it is stale. Rerun tools/faithfulness.py --technique {technique} before reporting"
+        )
+    inside = in_comparison(technique, results_dir)
+    family = table[table["population"] == FAITHFULNESS_POPULATION]
+    family = family[family["technique"].map(lambda t: in_comparison(t, results_dir) == inside
+                                            and (inside or t == technique))]
+    shared = rows[rows["population"] == FAITHFULNESS_POPULATION].sort_values("k")
+    out = [{
+        "k": int(r["k"]),
+        "n_posts": int(r["n_posts"]),
+        "mean_drop_topk": _num(r["mean_drop_topk"]),
+        "mean_drop_random": _num(r["mean_drop_random"]),
+        "drop_minus_random": _num(r["drop_minus_random"]),
+        "n_flagged": int(r["n_flagged"]),
+        "drop_minus_random_flagged": _num(r["drop_minus_random_flagged"]),
+        "share_topk_drop_gt_random": _num(r["share_topk_drop_gt_random"]),
+        "drop_over_attributed_topk": _num(r["drop_over_attributed_topk"]),
+        "wilcoxon_p_holm": _num(r["wilcoxon_p_holm"]),
+    } for _, r in shared.iterrows()]
+    return {
+        "sources": [_rel(json_path), _rel(path)],
+        "status": "run",
+        "population": FAITHFULNESS_POPULATION,
+        "n_posts_shared": int(payload["n_posts_shared"]),
+        "n_posts_explained": int(payload["n_posts_explained"]),
+        "n_random_seeds": len(payload["random_seeds"]),
+        "threshold": _num(payload["threshold"]),
+        "verification_max_abs_diff": _num(payload["verification"]["max_abs_diff"]),
+        "in_comparison": inside,
+        "holm_family_size": int(len(family)),
+        "rows": out,
+    }
 
 
 def build_report(technique, results_dir=None, rq_dir=None):
@@ -917,10 +1052,12 @@ def build_report(technique, results_dir=None, rq_dir=None):
         "rq1": _rq1(technique, results_dir, rq_dir),
         "rq2": _rq2(technique, results_dir, rq_dir),
         "shap_check": _shap_check(technique, results_dir),
+        "faithfulness": _faithfulness(technique, results_dir, rq_dir),
         "rq3": _rq3(technique, results_dir, rq_dir),
         "rq4": _rq4(technique, rq_dir),
         "wp7_counterfactual": _wp7(technique, rq_dir),
     }
+    payload["rq4_ambiguous_terms_sensitivity"] = _rq4_sensitivity(technique, rq_dir, payload["rq4"])
     assert_text_free(payload)
     return payload
 
@@ -1027,6 +1164,92 @@ def _rq2_reading(shap):
     return "No coefficients to check against; the attributions rest on the anchor's pipeline check."
 
 
+def _faithfulness_lines(faith):
+    lines = ["## RQ2 support. Are the explanations faithful to the model?", ""]
+    if faith["status"] != "run":
+        return lines + ["Not run for this technique (`tools/faithfulness.py`; needs the restorable predictor and "
+                        "the per-post attribution files under `external/`: `audit.py run --with-perturbation`)."]
+    if faith["in_comparison"]:
+        family = f"over the {faith['holm_family_size']} `{faith['population']}` rows of the comparison techniques"
+    else:
+        family = (f"over this technique's own {faith['holm_family_size']} `{faith['population']}` rows, "
+                  "so it does not move the comparison's p values")
+    lines += [
+        f"Sources: {', '.join(f'`{s}`' for s in faith['sources'])}.",
+        "",
+        f"Deletion test on the {faith['n_posts_shared']} test posts that every comparison technique explained "
+        f"(this technique explained {faith['n_posts_explained']} in all). For each k, the k words the post's own "
+        "explanation ranks highest toward EXTREMIST are deleted, against deleting as many random words of the "
+        f"same post ({faith['n_random_seeds']} seeds). Drop is p(extremist) before minus after; n counts the "
+        "posts with at least one positive word. The restored predictor matched the committed probabilities "
+        f"within {_fmt(faith['verification_max_abs_diff'])}.",
+        "",
+        "| k | n | Drop, top-k | Drop, random | Margin | Margin on flagged posts (n) | Share top-k > random "
+        "| Drop / summed SHAP | Wilcoxon Holm p |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    for row in faith["rows"]:
+        lines.append(
+            f"| {row['k']} | {row['n_posts']} | {_fmt(row['mean_drop_topk'])} | {_fmt(row['mean_drop_random'])} | "
+            f"{_fmt(row['drop_minus_random'])} | {_fmt(row['drop_minus_random_flagged'])} ({row['n_flagged']}) | "
+            f"{_fmt(row['share_topk_drop_gt_random'], 2)} | {_fmt(row['drop_over_attributed_topk'], 2)} | "
+            f"{_fmt(row['wilcoxon_p_holm'])} |"
+        )
+    lines += [
+        "",
+        f"Holm runs {family}. A positive margin with a small Holm p means the explanation finds words this "
+        "model needs; it does not show the model is right to need them. No test compares margins across "
+        "techniques, and the all-post means are capped by each model's probabilities, so compare techniques "
+        "on the flagged-post margin, descriptively.",
+    ]
+    return lines
+
+
+def _sensitivity_lines(sens):
+    return [
+        f"Ambiguous identity words (`{sens['sources'][0]}`, variant `{sens['variant']}`): dropping the "
+        f"{sens['n_negative_excluded']} non-extremist posts whose only identity matches are ambiguous words "
+        "(colour words, interjections; declared in `tools/identity_sensitivity.py`, the lexicon is unchanged) leaves "
+        f"{sens['n_negative_with_identity_terms']} with an identity term (FPR "
+        f"{_fmt(sens['fpr_with_identity_terms'])}) and {sens['n_negative_without_identity_terms']} without (FPR "
+        f"{_fmt(sens['fpr_without_identity_terms'])}): ratio {_fmt(sens['fpr_ratio'], 2)}, Fisher exact p "
+        f"{_fmt(sens['fisher_p_value'])}.",
+    ]
+
+
+def _wp7_lines(wp7):
+    restricted = wp7["unambiguous_population"]
+    if wp7["status"] != "run" and restricted["status"] != "run":
+        return ["Not run for this technique (`tools/identity_counterfactual.py` and `identity_sensitivity.py "
+                "counterfactual` need `external/`: `audit.py run --with-perturbation`)."]
+    lines = []
+    if wp7["status"] != "run":
+        lines += ["The full-population counterfactual was not run (`tools/identity_counterfactual.py`).", ""]
+    sources = [*(wp7["sources"][:1] if wp7["status"] == "run" else []),
+               *(restricted["sources"][:1] if restricted["status"] == "run" else [])]
+    lines += [
+        f"Sources: {', '.join(f'`{s}`' for s in sources)}. Mean delta is p(extremist) before minus after the edit.",
+        "",
+        "| Population | n | Mean delta | Flagged before | Flips to not flagged | Flips to flagged "
+        "| Wilcoxon Holm p | McNemar Holm p |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    for row in [*wp7["rows"], *restricted["rows"]]:
+        lines.append(
+            f"| {row['population']} | {row['n_posts']} | {_fmt(row['mean_delta'], 4)} | "
+            f"{row['n_flagged_original']} | {row['n_flip_pos_to_neg']} | {row['n_flip_neg_to_pos']} | "
+            f"{_fmt(row['wilcoxon_p_holm'])} | {_fmt(row['mcnemar_p_holm'])} |"
+        )
+    if restricted["status"] == "run":
+        lines += [
+            "",
+            "Rows marked `unambiguous match` are the posts that keep at least one identity match outside the "
+            "ambiguous list, with every match removed. Their Holm p values are over the sensitivity table's own "
+            "rows, not the WP7 family; a smaller population lowers power without changing the effect size.",
+        ]
+    return lines
+
+
 def render_markdown(payload):
     t = payload["technique"]
     rq1, rq2, rq3, rq4, wp7 = (payload[k] for k in ("rq1", "rq2", "rq3", "rq4", "wp7_counterfactual"))
@@ -1097,6 +1320,7 @@ def render_markdown(payload):
     for pair in rq2["agreement"]:
         lines.append(f"| `{pair['other_technique']}` | {_fmt(pair['spearman_mean_attribution'])} | "
                      f"{_fmt(pair['jaccard_top_k_positive'])} |")
+    lines += ["", *_faithfulness_lines(payload["faithfulness"])]
     lines += [
         "",
         "## RQ3. Stability of the explanation across post samples",
@@ -1120,25 +1344,12 @@ def render_markdown(payload):
         f"Ratio {_fmt(rq4['fpr_ratio'], 2)}, Fisher exact p {_fmt(rq4['fisher_p_value'])}, at the locked "
         f"threshold {rq4['threshold']}. This is a correlation; the counterfactual below is the intervention.",
         "",
+        *_sensitivity_lines(payload["rq4_ambiguous_terms_sensitivity"]),
+        "",
         "## WP7. Identity counterfactual (remove the term)",
         "",
+        *_wp7_lines(wp7),
     ]
-    if wp7["status"] != "run":
-        lines.append("Not run for this technique (`tools/identity_counterfactual.py`, needs `external/`).")
-    else:
-        lines += [
-            f"Source: `{wp7['sources'][0]}`. Mean delta is p(extremist) before minus after the edit.",
-            "",
-            "| Population | n | Mean delta | Flagged before | Flips to not flagged | Flips to flagged "
-            "| Wilcoxon Holm p | McNemar Holm p |",
-            "|---|---|---|---|---|---|---|---|",
-        ]
-        for row in wp7["rows"]:
-            lines.append(
-                f"| {row['population']} | {row['n_posts']} | {_fmt(row['mean_delta'], 4)} | "
-                f"{row['n_flagged_original']} | {row['n_flip_pos_to_neg']} | {row['n_flip_neg_to_pos']} | "
-                f"{_fmt(row['wilcoxon_p_holm'])} | {_fmt(row['mcnemar_p_holm'])} |"
-            )
     lines += [
         "",
         "## Limits",

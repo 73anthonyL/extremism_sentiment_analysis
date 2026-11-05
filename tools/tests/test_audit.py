@@ -83,7 +83,40 @@ def audited(tmp_path, make_probs, make_run, results_dir):
         "n_negative_with_identity_terms": 67, "fpr_with_identity_terms": [0.16, 0.13],
         "fpr_without_identity_terms": [0.08, 0.07], "fpr_ratio": [2.0, 1.9], "fisher_p_value": [0.07, 0.13],
     }).to_csv(rq_dir / "rq4_identity_fpr.csv", index=False)
+    _write_fpr_sensitivity(rq_dir, pd.read_csv(rq_dir / "rq4_identity_fpr.csv"))
     return results_dir, rq_dir
+
+
+def _write_fpr_sensitivity(rq_dir, rq4):
+    """The sensitivity table identity_sensitivity.py fpr writes: full_lexicon equals RQ4, plus the primary variant."""
+    full = rq4.assign(variant="full_lexicon", n_negative_excluded=0)
+    excluded = rq4.assign(variant="exclude_ambiguous_only", n_negative_excluded=14, n_negative=266,
+                          n_negative_with_identity_terms=53, fpr_ratio=2.1, fisher_p_value=0.08)
+    pd.concat([full, excluded], ignore_index=True).to_csv(rq_dir / "rq4_identity_fpr_sensitivity.csv", index=False)
+
+
+def _write_faithfulness(results_dir, rq_dir, techniques, threshold=0.5):
+    """faithfulness_test.json per technique and the cross-technique table, by the tool's own writers."""
+    from faithfulness import ROW_COLUMNS, write_outputs, write_table
+
+    payloads = []
+    for i, technique in enumerate(techniques):
+        rows = []
+        for population in ("explained", "shared"):
+            for k in (1, 3):
+                row = {c: 0.0 for c in ROW_COLUMNS}
+                row.update(technique=technique, model_family="toy", split="test", population=population, k=k,
+                           threshold=threshold, n_posts_explained=200, n_posts=198, n_flagged=70,
+                           mean_drop_topk=0.1 * k, mean_drop_random=0.01 * k, drop_minus_random=0.09 * k,
+                           mean_drop_topk_flagged=0.2, mean_drop_random_flagged=0.05,
+                           wilcoxon_p=1e-6 * (i + 1) * k, n_random_seeds=5)
+                rows.append(row)
+        payload = {"technique": technique, "split": "test", "threshold": threshold, "n_posts_explained": 200,
+                   "n_posts_shared": 200, "random_seeds": [30, 31, 32, 33, 34],
+                   "verification": {"max_abs_diff": 1e-8}, "rows": rows}
+        write_outputs(payload, results_dir)
+        payloads.append(payload)
+    return write_table(payloads, rq_dir / "rq2_faithfulness.csv", results_dir)
 
 
 class TestCheckContract:
@@ -170,9 +203,87 @@ class TestReport:
         assert payload["rq3"]["mean_pairwise_jaccard_top50"] == 0.4
         assert payload["rq4"]["n_negative_without_identity_terms"] == 213
         assert payload["wp7_counterfactual"]["status"] == "not run"
+        assert payload["wp7_counterfactual"]["unambiguous_population"]["status"] == "not run"
+        assert payload["faithfulness"]["status"] == "not run"
+        assert payload["rq4_ambiguous_terms_sensitivity"]["n_negative_with_identity_terms"] == 53
         assert len(payload["rq2"]["top_words_by_positive_mean_attribution"]) == 10
         markdown = (out / "01_A.md").read_text()
         assert "## WP7" in markdown and "Not run" in markdown
+        assert "## RQ2 support" in markdown and "--with-perturbation" in markdown
+        assert "Ambiguous identity words" in markdown and "ratio 2.10" in markdown
+
+    def test_sensitivity_table_disagreeing_with_rq4_is_stale(self, audited):
+        """identity_sensitivity's full_lexicon row recomputes RQ4; a mismatch means one table is stale."""
+        results_dir, rq_dir = audited
+        path = rq_dir / "rq4_identity_fpr_sensitivity.csv"
+        frame = pd.read_csv(path)
+        frame.loc[(frame["technique"] == "01_A") & (frame["variant"] == "full_lexicon"),
+                  "fpr_with_identity_terms"] = 0.2
+        frame.to_csv(path, index=False)
+        with pytest.raises(audit.AuditError, match="full_lexicon row for 01_A differs.*stale"):
+            audit.build_report("01_A", results_dir, rq_dir)
+
+    def test_faithfulness_section_reads_the_json_and_the_table(self, audited):
+        results_dir, rq_dir = audited
+        _write_faithfulness(results_dir, rq_dir, TECHNIQUES)
+        payload = audit.build_report("01_A", results_dir, rq_dir)
+        faith = payload["faithfulness"]
+        assert faith["status"] == "run" and faith["population"] == "shared"
+        assert [r["k"] for r in faith["rows"]] == [1, 3]
+        assert faith["holm_family_size"] == 4  # two comparison techniques x two k on `shared`
+        assert faith["rows"][1]["drop_minus_random"] == pytest.approx(0.27)
+        markdown = audit.render_markdown(payload)
+        assert "Holm runs over the 4 `shared` rows of the comparison techniques" in markdown
+        assert "does not show the model is right to need them" in markdown
+        assert "better" not in markdown.lower() and "outperform" not in markdown.lower()
+
+    def test_faithfulness_json_without_table_rows_is_stale(self, audited):
+        results_dir, rq_dir = audited
+        path = _write_faithfulness(results_dir, rq_dir, TECHNIQUES)
+        frame = pd.read_csv(path)
+        frame[frame["technique"] != "02_B"].to_csv(path, index=False)
+        with pytest.raises(audit.AuditError, match="rq2_faithfulness.csv has no row for 02_B; the table is stale"):
+            audit.write_reports(TECHNIQUES, results_dir=results_dir, rq_dir=rq_dir, out_dir=rq_dir / "cards")
+        assert not (rq_dir / "cards").exists()
+
+    def test_faithfulness_table_disagreeing_with_its_json_is_stale(self, audited):
+        results_dir, rq_dir = audited
+        path = _write_faithfulness(results_dir, rq_dir, TECHNIQUES)
+        frame = pd.read_csv(path)
+        frame.loc[(frame["technique"] == "01_A") & (frame["k"] == 3), "mean_drop_topk"] = 0.9
+        frame.to_csv(path, index=False)
+        with pytest.raises(audit.AuditError, match="does not match .*faithfulness_test.json.*k=3; the table is stale"):
+            audit.build_report("01_A", results_dir, rq_dir)
+
+    def test_faithfulness_rows_without_their_json_are_stale(self, audited):
+        results_dir, rq_dir = audited
+        _write_faithfulness(results_dir, rq_dir, TECHNIQUES)
+        (results_dir / "01_A" / "faithfulness_test.json").unlink()
+        with pytest.raises(audit.AuditError, match="faithfulness_test.json is missing; the table is stale"):
+            audit.build_report("01_A", results_dir, rq_dir)
+
+    def test_faithfulness_at_another_threshold_is_stale(self, audited):
+        results_dir, rq_dir = audited
+        _write_faithfulness(results_dir, rq_dir, TECHNIQUES)
+        _lock_threshold(results_dir, "01_A", threshold=0.6)  # the threshold was relocked after the run
+        with pytest.raises(audit.AuditError, match="locked threshold is 0.6; it is stale"):
+            audit.build_report("01_A", results_dir, rq_dir)
+
+    def test_restricted_counterfactual_rows_join_the_wp7_table(self, audited):
+        results_dir, rq_dir = audited
+        rows = [{"technique": "01_A", "split": "test", "population": name, "y_true": y, "operation": op,
+                 "n_posts": 50, "mean_delta": 0.04, "n_flagged_original": 9, "n_flip_pos_to_neg": 3,
+                 "n_flip_neg_to_pos": 0, "wilcoxon_p_holm": 1e-4, "mcnemar_p_holm": 1.0}
+                for name, y in (("non_extremist", 0), ("extremist", 1))
+                for op in ("remove", "remove_unambiguous")]
+        pd.DataFrame(rows).to_csv(rq_dir / "rq4_identity_counterfactual_sensitivity.csv", index=False)
+        payload = audit.build_report("01_A", results_dir, rq_dir)
+        restricted = payload["wp7_counterfactual"]["unambiguous_population"]
+        assert restricted["status"] == "run" and len(restricted["rows"]) == 2  # remove only
+        markdown = audit.render_markdown(payload)
+        assert "full-population counterfactual was not run" in markdown
+        assert "| non_extremist, unambiguous match | 50 |" in markdown
+        assert "not the WP7 family" in markdown
 
     def test_rq1_gap_is_oriented_to_the_technique(self, audited):
         results_dir, rq_dir = audited
@@ -190,7 +301,8 @@ class TestReport:
         assert "better" not in markdown and "outperform" not in markdown
 
     @pytest.mark.parametrize("table", ["rq1_mcnemar_pairs.csv", "rq2_word_agreement_pairs.csv",
-                                       "rq3_stability.csv", "rq4_identity_fpr.csv"])
+                                       "rq3_stability.csv", "rq4_identity_fpr.csv",
+                                       "rq4_identity_fpr_sensitivity.csv"])
     def test_refuses_a_technique_missing_from_a_table(self, audited, tmp_path, table):
         results_dir, rq_dir = audited
         path = rq_dir / table
@@ -659,10 +771,24 @@ class TestOutsideComparison:
             "n_negative_with_identity_terms": 67, "fpr_with_identity_terms": 0.1,
             "fpr_without_identity_terms": 0.05, "fpr_ratio": 2.0, "fisher_p_value": 0.1,
         }).to_csv(rq_dir / "rq4_identity_fpr.csv", index=False)
+        _write_fpr_sensitivity(rq_dir, pd.read_csv(rq_dir / "rq4_identity_fpr.csv"))
+        _write_faithfulness(three, rq_dir, everyone)
 
         toy = audit.build_report("98_TOY", three, rq_dir)
         assert not toy["rq1"]["in_comparison"] and toy["rq1"]["holm_family_size"] == 2
-        assert "outside the comparison" in audit.render_markdown(toy)
+        assert toy["faithfulness"]["holm_family_size"] == 2  # its own two `shared` rows
+        markdown = audit.render_markdown(toy)
+        assert "outside the comparison" in markdown
+        assert "own 2 `shared` rows, so it does not move the comparison's p values" in markdown
         anchor = audit.build_report("01_A", three, rq_dir)  # not stale although 98_TOY is absent
         assert anchor["rq1"]["holm_family_size"] == 1
         assert [p["other_technique"] for p in anchor["rq1"]["pairs"]] == ["02_B"]
+        assert anchor["faithfulness"]["holm_family_size"] == 4
+
+    def test_faithfulness_holm_ignores_the_outside_technique(self, three, tmp_path):
+        rq_dir = tmp_path / "rq"
+        rq_dir.mkdir()
+        before = pd.read_csv(_write_faithfulness(three, rq_dir, TECHNIQUES))
+        after = pd.read_csv(_write_faithfulness(three, rq_dir, [*TECHNIQUES, "98_TOY"]))
+        kept = after[after["technique"] != "98_TOY"].reset_index(drop=True)
+        pd.testing.assert_frame_equal(kept, before)
