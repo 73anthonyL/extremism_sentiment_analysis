@@ -668,3 +668,4 @@ data.
 | C817 | `results_summary/foundation/split_label_distribution.csv` | `split=train;label=0` | `split_count` | 2099 | 0 |
 | C818 | `results_summary/foundation/split_label_distribution.csv` | `split=test;label=0` | `split_count` | 450 | 0 |
 | C819 | `results_summary/rq/report_cards/01_LOG-REG_TF-IDF.json` | `-` | `wp7_counterfactual.rows.[population=non_extremist].n_flagged_original` | 11 | 0 |
+| C820 | `results_summary/rq/rq2_lexicon_coverage.csv` | `*` | `sum(n_multi_word_unmatchable)@3` | 0 | 0 |

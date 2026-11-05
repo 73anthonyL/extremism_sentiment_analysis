@@ -12,12 +12,16 @@ Outputs, per run, next to the artifact:
     <run_id>__categorized.csv      top-K words with category and matches
     <run_id>__category_shares.csv  one row per category
 and one cross-technique long table, results_summary/rq/rq2_category_shares.csv,
-which compare_reliance.py and render_tables.py read.
+which compare_reliance.py and render_tables.py read. It also writes
+results_summary/rq/rq2_lexicon_coverage.csv: per category, the number of
+lexicon entries and how many are multi-word phrases that no word-level
+artifact can match, so that count is reported rather than only printed.
 
 USAGE
 -----
     python3 tools/categorize_attributions.py --all
     python3 tools/categorize_attributions.py --technique 01_LOG-REG_TF-IDF --top-k 50
+    python3 tools/categorize_attributions.py --check-coverage
 """
 
 import argparse
@@ -35,6 +39,7 @@ from repo_paths import (
     CATEGORY_PRECEDENCE,
     DEFAULT_CATEGORY,
     RQ2_CATEGORY_SHARES_CSV,
+    RQ2_LEXICON_COVERAGE_CSV,
     RQ_DIR,
     technique_dirs,
 )
@@ -67,6 +72,53 @@ def build_word_index(lexicons):
         index[category] = set(singles)
         skipped += len(phrases)
     return index, skipped
+
+
+COVERAGE_COLUMNS = ("category", "n_entries", "n_single_word", "n_multi_word_unmatchable")
+
+
+def lexicon_coverage(lexicons):
+    """One row per category: entries, single words, and multi-word phrases.
+
+    Phrases cannot match a word-level attribution artifact, so they never
+    contribute to a category share; the decision rules require the count.
+    """
+    rows = []
+    for category in CATEGORIES:
+        if category == DEFAULT_CATEGORY:
+            continue
+        singles, phrases = split_by_arity(lexicons.get(category, []))
+        rows.append(
+            {
+                "category": category,
+                "n_entries": len(singles) + len(phrases),
+                "n_single_word": len(singles),
+                "n_multi_word_unmatchable": len(phrases),
+            }
+        )
+    return pd.DataFrame(rows, columns=COVERAGE_COLUMNS)
+
+
+def write_coverage(lexicons, path=RQ2_LEXICON_COVERAGE_CSV):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lexicon_coverage(lexicons).to_csv(path, index=False)
+    return path
+
+
+def check_coverage(lexicons, path=RQ2_LEXICON_COVERAGE_CSV):
+    """Refuse a coverage table that does not match the current lexicons."""
+    path = Path(path)
+    if not path.exists():
+        raise ValueError(f"{path} is missing; run categorize_attributions.py --all")
+    committed = pd.read_csv(path)
+    expected = lexicon_coverage(lexicons)
+    if list(committed.columns) != list(COVERAGE_COLUMNS) or not committed.equals(expected):
+        raise ValueError(
+            f"{path} does not match data/lexicons/; a lexicon changed without "
+            "re-running categorize_attributions.py (and RQ2/RQ4)"
+        )
+    return path
 
 
 def categorize_word(word, word_index):
@@ -171,8 +223,22 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--technique")
     group.add_argument("--all", action="store_true")
+    group.add_argument(
+        "--check-coverage",
+        action="store_true",
+        help="verify rq2_lexicon_coverage.csv against data/lexicons/ and exit",
+    )
     parser.add_argument("--top-k", type=int, default=DEFAULT_TOP_K)
     args = parser.parse_args()
+
+    if args.check_coverage:
+        try:
+            path = check_coverage(load_lexicons())
+        except ValueError as error:
+            print(f"FAIL: {error}", file=sys.stderr)
+            return 1
+        print(f"OK: {path} matches data/lexicons/")
+        return 0
 
     techniques = [args.technique] if args.technique else [d.name for d in technique_dirs()]
     table, skipped = categorize_all(techniques, top_k=args.top_k)
@@ -181,9 +247,11 @@ def main():
         return 1
     path = write_rq2_table(table)
     print(f"wrote {path} ({len(table)} rows)")
+    lexicons = load_lexicons()
+    coverage_path = write_coverage(lexicons)
+    print(f"wrote {coverage_path}")
     if skipped:
         print(f"note: {skipped} multi-word lexicon entries cannot match word-level artifacts")
-    lexicons = load_lexicons()
     for category, entries in lexicons.items():
         if not entries:
             print(f"note: lexicon for '{category}' is empty; no word can take that category")

@@ -43,6 +43,9 @@ RQ1_MCNEMAR_PAIRS_CSV = RQ_DIR / "rq1_mcnemar_pairs.csv"
 RQ1_ERROR_OVERLAP_CSV = RQ_DIR / "rq1_error_overlap.csv"
 RQ1_SHARED_ERRORS_CSV = RQ_DIR / "rq1_shared_errors.csv"
 RQ2_CATEGORY_SHARES_CSV = RQ_DIR / "rq2_category_shares.csv"
+# Lexicon entries per category, and how many are multi-word phrases that a
+# word-level attribution artifact can never match (categorize_attributions.py).
+RQ2_LEXICON_COVERAGE_CSV = RQ_DIR / "rq2_lexicon_coverage.csv"
 RQ2_WORD_AGREEMENT_CSV = RQ_DIR / "rq2_word_agreement_pairs.csv"
 RQ2_SHARED_TOP_WORDS_CSV = RQ_DIR / "rq2_shared_top_words.csv"
 RQ2_TOP_WORD_SUPPORT_CSV = RQ_DIR / "rq2_top_word_support.csv"
