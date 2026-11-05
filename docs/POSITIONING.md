@@ -93,16 +93,35 @@ Each item cites the artifact that shows it.
    This points at label ambiguity or signal the text does not contain. That
    fits the post-level, text-only limitation.
 3. **Identity terms are a shortcut.** Every technique has a higher FPR on
-   benign posts that mention a community (`rq4_identity_fpr.csv`, ratios 1.9
-   to 4.2). In the counterfactual test (WP7), removing the term lowers
-   p(extremist) on those posts for 7 of 8 techniques. The same edit also
-   unflags extremist posts (Holm-significant for 07 and 11), so the models
-   treat identity terms as evidence of extremism whatever the label. The
-   false-positive flips (5 to 11 posts per model) are descriptive.
-4. **Transformer explanations are unstable across post samples.** Test and
-   validation top-50 overlap is 0.18 to 0.22 for the transformers, against
-   0.3 to 0.6 for the classical models (`rq3_stability.csv`). Per-word claims
-   about transformers are therefore fragile, and the paper says so.
+   benign posts that mention a community (`rq4_identity_fpr.csv`: point
+   estimates 1.9 to 4.2, Fisher p < 0.05 unadjusted for 04, 05 and 11 only).
+   Setting aside 13 ambiguous identity words keeps every ratio above 1 (1.6
+   to 5.0), and the same three stay below p 0.05
+   (`rq4_identity_fpr_sensitivity.csv`). In the counterfactual test (WP7),
+   removing the term lowers p(extremist) on those posts for 7 of 8
+   techniques. The same edit also unflags extremist posts. That loss is
+   Holm-significant for 07 and 11 on all 83 posts, and for 11 alone on the
+   59 posts that keep an unambiguous match. There, 07 loses the same share
+   of flagged posts (about 21%), with too few discordant pairs to reach
+   significance (`rq4_identity_counterfactual_sensitivity.csv`). So the
+   models treat identity terms as evidence of extremism whatever the label.
+   The false-positive flips (5 to 11 posts per model) are descriptive.
+   Across the eight techniques, the ranking by identity-term share of
+   attribution follows the FPR-ratio ranking (Spearman 0.83, n = 8,
+   descriptive). It does so through low FPR on posts without identity terms,
+   not through more identity-term false positives (`rq2_rq4_relation.csv`).
+4. **Transformer explanations are faithful per post but unstable across
+   post samples.** Deleting each post's top-SHAP words lowers p(extremist)
+   more than deleting random words, for every technique
+   (`rq2_faithfulness.csv`), so the attributions find words the models use.
+   For 07 and 11 the effect is concentrated in flagged posts: the median
+   paired difference is at most 0.024. Across samples, on the same 200
+   posts, the test and validation rank agreement of word attributions is
+   0.43 (07) and 0.49 (11), against 0.62 to 0.74 for the classical models
+   (`rq3_same_post_split_agreement.csv`). Top-50 overlap is as low for
+   FastText (0.19) as for the transformers (0.18, 0.22). There is one run
+   per split, so this is descriptive. Per-word claims about transformers are
+   fragile, and the paper says so.
 5. **Lexicons do not cover the vocabulary.** The "topical" category absorbs
    80 to 100 percent of positive mass while the slur list is empty (WP3), so
    category-level claims depend on curation choices.
@@ -111,9 +130,10 @@ Each item cites the artifact that shows it.
 
 Avenues for progress, each tied to the item it addresses: a larger test split
 (1); multi-annotator labels with agreement (2); counterfactual data
-augmentation or identity-term-balanced training (3); explanation stability as
-a reported metric (4); hand-annotated top words instead of lexicons (5);
-probing and LLM self-explanation (WP9, WP10) for context (6).
+augmentation or identity-term-balanced training (3); explanation stability and
+deletion faithfulness as reported metrics (4); hand-annotated top words
+instead of lexicons (5); probing and LLM self-explanation (WP9, WP10) for
+context (6).
 
 ## 5. New work packages
 
