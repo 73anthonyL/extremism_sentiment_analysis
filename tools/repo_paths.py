@@ -50,6 +50,11 @@ RQ3_RELIANCE_CSV = RQ_DIR / "rq3_reliance_comparison.csv"
 RQ3_STABILITY_CSV = RQ_DIR / "rq3_stability.csv"
 RQ4_IDENTITY_FPR_CSV = RQ_DIR / "rq4_identity_fpr.csv"
 RQ4_IDENTITY_COUNTERFACTUAL_CSV = RQ_DIR / "rq4_identity_counterfactual.csv"
+# Same-post re-aggregation of the per-post attribution files (same_post_stability.py).
+RQ2_SAME_POST_SUPPORT_CSV = RQ_DIR / "rq2_same_post_support.csv"
+RQ3_SAME_POST_SPLIT_AGREEMENT_CSV = RQ_DIR / "rq3_same_post_split_agreement.csv"
+# Rank correlation of RQ2 reliance measures with the RQ4 FPR ratio (rq2_rq4_relation.py).
+RQ2_RQ4_RELATION_CSV = RQ_DIR / "rq2_rq4_relation.csv"
 
 # Pairs between a technique outside the comparison (best_config.json
 # "in_comparison": false) and every technique in it. Kept apart so an audited
