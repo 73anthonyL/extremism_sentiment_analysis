@@ -86,6 +86,20 @@ class TestRefusals:
             lpr.load_tables(rq_dir)
         assert lpr.main(["--check", "--rq-dir", str(rq_dir)]) == lpr.EXIT_FAILED
 
+    def test_table_the_run_record_does_not_list_is_refused(self, probe_run):
+        """A table dropped in next to a run (or one whose hash was struck from it) is not trusted."""
+        import json
+
+        ctx, tables = probe_run
+        rq_dir = export(ctx, *tables)
+        run_path = rq_dir / pk.PROBE_TABLE_FILES["run"]
+        record = json.loads(run_path.read_text())
+        del record["artifact_sha256"]["ablation"]
+        run_path.write_text(json.dumps(record))
+        with pytest.raises(lpr.LayerProbesError, match="not recorded in the run record"):
+            lpr.load_tables(rq_dir)
+        assert lpr.main(["--check", "--rq-dir", str(rq_dir)]) == lpr.EXIT_FAILED
+
     def test_half_a_run_is_refused(self, probe_run):
         ctx, tables = probe_run
         rq_dir = export(ctx, *tables)
