@@ -21,9 +21,9 @@ References at the end; every one is an entry of `docs/RELATED_WORK.md`.
 Items that need an author decision or a result that does not exist yet are
 marked **TODO(author)**. All category-level results (RQ2, RQ3, RQ4 and the
 RQ2-RQ4 relation in section 8.3) use the lexicons frozen at WP3
-(2026-11-04): slurs from HurtLex (Bassignana et al., 2018), and `aliens`
-added to the identity list (`data/lexicons/README.md`). No slur is quoted in
-this text.
+(2026-11-04): slurs from HurtLex (Bassignana et al., 2018); the identity
+and framing lists are unchanged (`data/lexicons/README.md`). No slur is
+quoted in this text.
 
 Scope, stated once for every section below: labels are post-level and
 features are text-only. The classifiers detect extremist content in a single
@@ -241,7 +241,7 @@ HurtLex, `data/lexicons/README.md`).[^t4]
 | 03 | 450 [C122] | 0.000 [C123] (0.000 [C264]) | 0.000 [C124] (0.023 [C126]) | 0.000 [C280] (0.001 [C281]) | 1.000 [C125] (0.024 [C265]) | 0.031 [C127] |
 | 04 | 450 [C128] | 0.000 [C129] (0.000 [C266]) | 0.104 [C130] (0.019 [C132]) | 0.017 [C282] (0.000 [C283]) | 0.879 [C131] (0.019 [C267]) | 0.036 [C133] |
 | 05 | 450 [C134] | 0.000 [C135] (0.000 [C268]) | 0.130 [C136] (0.003 [C138]) | 0.007 [C284] (0.001 [C285]) | 0.863 [C137] (0.002 [C269]) | 0.020 [C139] |
-| 06 | 450 [C140] | 0.000 [C141] (0.001 [C270]) | 0.137 [C142] (0.017 [C144]) | 0.010 [C286] (0.005 [C287]) | 0.853 [C143] (0.021 [C271]) | 0.024 [C145] |
+| 06 | 450 [C140] | 0.000 [C141] (0.001 [C270]) | 0.132 [C142] (0.014 [C144]) | 0.010 [C286] (0.005 [C287]) | 0.858 [C143] (0.018 [C271]) | 0.023 [C145] |
 | 07 | 200 [C146] | 0.030 [C147] (0.015 [C272]) | 0.070 [C148] (0.003 [C150]) | 0.026 [C288] (0.013 [C289]) | 0.873 [C149] (0.005 [C273]) | 0.034 [C151] |
 | 11 | 200 [C152] | 0.016 [C153] (0.007 [C274]) | 0.174 [C154] (0.002 [C156]) | 0.021 [C290] (0.001 [C291]) | 0.789 [C155] (0.008 [C275]) | 0.033 [C157] |
 
@@ -292,14 +292,13 @@ stays the primary criterion and the bootstrap intervals are reported
 alongside as a stricter check; the text says which differences pass both.
 
 The identity lexicon also misses identity references, though the evidence is
-thin. Across the eight top-50 lists there are 26 [C700] candidate
+thin. Across the eight top-50 lists there are 27 [C700] candidate
 (technique, word) pairs that look like identity references (plurals,
-hashtags, group nouns) but are not lexicon entries; they cover 13 [C703]
-distinct words, and all 26 [C704] of the 26 [C701] pairs rest on two explained
-posts or fewer. 6 [C702] of the pairs are 11's.[^gaps] At the WP3 freeze the
-one gap word with support of three posts or more (`aliens`, in 06's list)
-was added to the identity lexicon; the rest stay a review list, not
-additions.
+hashtags, group nouns) but are not lexicon entries; they cover 14 [C703]
+distinct words, and 26 [C704] of the 27 [C701] pairs rest on two explained
+posts or fewer. 6 [C702] of the pairs are 11's.[^gaps] They are a review
+list, not additions: a term found in a test-split attribution list is not
+added to a lexicon that is then used to measure test-split results.
 
 [^gaps]: `results_summary/rq/rq2_identity_top_k_sensitivity.csv`,
     `results_summary/rq/rq2_identity_lexicon_gaps_sensitivity.csv`.
@@ -513,30 +512,20 @@ groups (Basile et al., 2019). Table 7 compares false-positive rates with
 and without identity terms in the spirit of Dixon et al. (2018), on real
 posts rather than templates, with extremism labels at each locked
 threshold.
-Of the 280 [C465] non-extremist test posts, 68 [C464] contain at least one
-identity-lexicon match (84 [C466] extremist posts do).[^rq4n] Every technique
-has a higher false-positive rate on those 68 [C464] than on the other
-212 [C474] (Table 7). The ratio is 1.87 [C420] to 4.16 [C460]. Unadjusted Fisher
-exact p is below 0.05 for 04, 05, 06 and 11, and none of the four survives
-Holm over the eight tests: the smallest, 11's 0.0071 [C461], becomes about
-0.057 (eight times 0.0071). "Four" counts unadjusted p only. 06 sits at the
-boundary (0.049 [C445]) and rests on a single post. One of its false
-positives matches only `aliens`, which was added to the identity lexicon at
-the WP3 freeze; under the lexicon before the freeze 06 was not significant
-(p = 0.15), and without the term the post would count on the other side of
-the ratio. The term was taken from 06's own test top-50 list of lexicon
-gaps (section 6.3), so the addition is not independent of 06's results.
-It is also not a neutral reference: in all 25 posts of the dataset that
-contain it, it co-occurs with "illegal" (a count from `data/dataset.csv`,
-not an artifact), so it marks a loaded phrase rather than a group name.
-Whether it stays in the identity list is an author decision. With so few such posts, only
+Of the 280 [C465] non-extremist test posts, 67 [C464] contain at least one
+identity-lexicon match (83 [C466] extremist posts do).[^rq4n] Every technique
+has a higher false-positive rate on those 67 [C464] than on the other
+213 [C474] (Table 7). The ratio is 1.91 [C420] to 4.24 [C460]. Unadjusted Fisher
+exact p is below 0.05 for 04, 05 and 11 only, and none of the three survives
+Holm over the eight tests: the smallest, 11's 0.0064 [C461], becomes about
+0.051 (eight times 0.0064). With so few such posts, only
 large ratios are detectable, so a non-significant ratio is not evidence that
 the effect is absent. The identity matches come from the frozen lexicon. That the point estimate exceeds 1 for
 every technique, classical or transformer, is consistent with the bias
 being learned from the training data rather than introduced by one
 architecture, as Davidson et al. (2019) found for dialect bias across five
-abuse datasets; only four of the eight ratios reach unadjusted Fisher
-p < 0.05, one of them barely, and none after Holm.
+abuse datasets; only three of the eight ratios reach unadjusted Fisher
+p < 0.05, and none after Holm.
 Threshold-free subgroup and BPSN/BNSP AUCs (Borkan et al., 2019) would
 complement these rates and can be computed from the committed
 probabilities; they are not reported here.
@@ -547,31 +536,31 @@ probabilities; they are not reported here.
 **Table 7.** False positives on non-extremist test posts with and without an
 identity term, at each locked threshold, and the ratio after setting aside
 the 14 [C468] non-extremist posts whose only matches are ambiguous words,
-leaving 54 [C467] (the list is declared in `tools/identity_sensitivity.py`:
+leaving 53 [C467] (the list is declared in `tools/identity_sensitivity.py`:
 white, black, man, men, boy, boys, girl, girls, english, native, trans,
 asylum, indian; the lexicon is unchanged; 24 [C469] extremist posts are set
 aside the same way).[^t7]
 
 | Technique | FP with | FPR with | FP without | FPR without | Ratio | Fisher p | Ratio, unambiguous | Fisher p |
 |---|---|---|---|---|---|---|---|---|
-| 01 | 11 [C400] | 0.162 [C401] | 18 [C402] | 0.085 [C403] | 1.91 [C404] | 0.106 [C405] | 1.96 [C406] | 0.082 [C407] |
-| 02 | 10 [C408] | 0.147 [C409] | 15 [C410] | 0.071 [C411] | 2.08 [C412] | 0.084 [C413] | 2.09 [C414] | 0.099 [C415] |
-| 03 | 6 [C416] | 0.088 [C417] | 10 [C418] | 0.047 [C419] | 1.87 [C420] | 0.231 [C421] | 1.57 [C422] | 0.493 [C423] |
-| 04 | 9 [C424] | 0.132 [C425] | 11 [C426] | 0.052 [C427] | 2.55 [C428] | 0.032 [C429] | 2.86 [C430] | 0.032 [C431] |
-| 05 | 5 [C432] | 0.074 [C433] | 4 [C434] | 0.019 [C435] | 3.90 [C436] | 0.041 [C437] | 4.91 [C438] | 0.019 [C439] |
-| 06 | 8 [C440] | 0.118 [C441] | 10 [C442] | 0.047 [C443] | 2.49 [C444] | 0.049 [C445] | 2.36 [C446] | 0.104 [C447] |
-| 07 | 9 [C448] | 0.132 [C449] | 15 [C450] | 0.071 [C451] | 1.87 [C452] | 0.135 [C453] | 1.83 [C454] | 0.170 [C455] |
-| 11 | 8 [C456] | 0.118 [C457] | 6 [C458] | 0.028 [C459] | 4.16 [C460] | 0.0071 [C461] | 4.58 [C462] | 0.0062 [C463] |
+| 01 | 11 [C400] | 0.164 [C401] | 18 [C402] | 0.085 [C403] | 1.94 [C404] | 0.069 [C405] | 2.01 [C406] | 0.077 [C407] |
+| 02 | 10 [C408] | 0.149 [C409] | 15 [C410] | 0.070 [C411] | 2.12 [C412] | 0.082 [C413] | 2.14 [C414] | 0.096 [C415] |
+| 03 | 6 [C416] | 0.090 [C417] | 10 [C418] | 0.047 [C419] | 1.91 [C420] | 0.226 [C421] | 1.61 [C422] | 0.489 [C423] |
+| 04 | 9 [C424] | 0.134 [C425] | 11 [C426] | 0.052 [C427] | 2.60 [C428] | 0.030 [C429] | 2.92 [C430] | 0.031 [C431] |
+| 05 | 5 [C432] | 0.075 [C433] | 4 [C434] | 0.019 [C435] | 3.97 [C436] | 0.038 [C437] | 5.02 [C438] | 0.017 [C439] |
+| 06 | 7 [C440] | 0.104 [C441] | 11 [C442] | 0.052 [C443] | 2.02 [C444] | 0.152 [C445] | 1.83 [C446] | 0.328 [C447] |
+| 07 | 9 [C448] | 0.134 [C449] | 15 [C450] | 0.070 [C451] | 1.91 [C452] | 0.131 [C453] | 1.88 [C454] | 0.164 [C455] |
+| 11 | 8 [C456] | 0.119 [C457] | 6 [C458] | 0.028 [C459] | 4.24 [C460] | 0.0064 [C461] | 4.69 [C462] | 0.0056 [C463] |
 
 [^t7]: FP counts: `results_summary/rq/rq2_rq4_relation_inputs.csv`. Rates,
     ratio and Fisher p: `results_summary/rq/rq4_identity_fpr.csv`.
     Unambiguous columns: `results_summary/rq/rq4_identity_fpr_sensitivity.csv`,
     `variant=exclude_ambiguous_only`.
 
-Setting the ambiguous words aside keeps every ratio above 1 (1.57 [C422] to
-4.91 [C438]). 04, 05 and 11 stay below p = 0.05; 06 (2.36 [C446], p =
-0.104 [C447]) does not, and 03 falls to 1.57 [C422]. At this n neither is evidence
-that the effect is absent. The false-positive counts are small (5 [C432] to 11 [C400] with
+Setting the ambiguous words aside keeps every ratio above 1 (1.61 [C422] to
+5.02 [C438]), and the same three techniques stay below p = 0.05. 03 and 06 fall
+to 1.61 [C422] and 1.83 [C446] (p = 0.328 [C447] for 06), which at this n is not
+evidence that their effect is absent. The false-positive counts are small (5 [C432] to 11 [C400] with
 identity terms) and below the 14-row rule of thumb, so Table 7 does not rank
 the techniques.
 
@@ -586,7 +575,7 @@ therefore an input-level intervention in the line of perturbation
 sensitivity analysis (Prabhakaran et al., 2019). Its substitution arm,
 which swaps the identity term for a neutral group noun, is the direct
 analogue of counterfactual token fairness (Garg et al., 2019) and an
-invariance test in the sense of CheckList (Ribeiro et al., 2020). WP7 edits every identity-lexicon match in the 152 [C623] test posts
+invariance test in the sense of CheckList (Ribeiro et al., 2020). WP7 edits every identity-lexicon match in the 150 [C623] test posts
 that have one and re-scores the edited posts with each technique's restored
 predictor at its locked threshold. Before scoring, each restored predictor
 reproduces the committed test probabilities to within 0.0016 [C621]. This
@@ -606,23 +595,23 @@ before -> after, with the posts that flip in brackets.[^t8]
 
 | Technique | Mean delta | Median delta | Wilcoxon Holm p | Non-extremist flagged (cleared / new) | Extremist flagged (lost / gained) | McNemar Holm p, extremist |
 |---|---|---|---|---|---|---|
-| 01 | 0.036 [C500] | 0.025 [C501] | 1.4e-5 [C502] | 11 [C503] -> 8 [C504] (3 [C505] / 0 [C506]) | 63 [C507] -> 56 [C508] (7 [C509] / 0 [C510]) | 0.328 [C511] |
-| 02 | 0.021 [C512] | 0.018 [C513] | 1.8e-4 [C514] | 10 [C515] -> 8 [C516] (3 [C517] / 1 [C518]) | 60 [C519] -> 50 [C520] (10 [C521] / 0 [C522]) | 0.051 [C523] |
-| 03 | 0.002 [C524] | 0.000 [C525] | 0.91 [C526] | 6 [C527] -> 7 [C528] (0 [C529] / 1 [C530]) | 51 [C531] -> 49 [C532] (4 [C533] / 2 [C534]) | 1.000 [C535] |
-| 04 | 0.023 [C536] | 0.014 [C537] | 8.1e-4 [C538] | 9 [C539] -> 4 [C540] (5 [C541] / 0 [C542]) | 53 [C543] -> 45 [C544] (8 [C545] / 0 [C546]) | 0.172 [C547] |
-| 05 | 0.027 [C548] | 0.010 [C549] | 1.1e-4 [C550] | 5 [C551] -> 4 [C552] (1 [C553] / 0 [C554]) | 53 [C555] -> 47 [C556] (7 [C557] / 1 [C558]) | 1.000 [C559] |
-| 06 | 0.042 [C560] | 0.034 [C561] | 8.9e-7 [C562] | 8 [C563] -> 8 [C564] (1 [C565] / 1 [C566]) | 53 [C567] -> 44 [C568] (9 [C569] / 0 [C570]) | 0.094 [C571] |
-| 07 | 0.097 [C572] | 0.001 [C573] | 8.7e-5 [C574] | 9 [C575] -> 2 [C576] (7 [C577] / 0 [C578]) | 71 [C579] -> 57 [C580] (15 [C581] / 1 [C582]) | 0.016 [C583] |
-| 11 | 0.093 [C584] | 0.003 [C585] | 7.5e-6 [C586] | 8 [C587] -> 2 [C588] (7 [C589] / 1 [C590]) | 74 [C591] -> 52 [C592] (22 [C593] / 0 [C594]) | 1.5e-5 [C595] |
+| 01 | 0.035 [C500] | 0.024 [C501] | 2.5e-5 [C502] | 11 [C503] -> 8 [C504] (3 [C505] / 0 [C506]) | 62 [C507] -> 56 [C508] (6 [C509] / 0 [C510]) | 0.625 [C511] |
+| 02 | 0.020 [C512] | 0.017 [C513] | 3.1e-4 [C514] | 10 [C515] -> 8 [C516] (3 [C517] / 1 [C518]) | 60 [C519] -> 50 [C520] (10 [C521] / 0 [C522]) | 0.051 [C523] |
+| 03 | 0.001 [C524] | 0.000 [C525] | 0.92 [C526] | 6 [C527] -> 7 [C528] (0 [C529] / 1 [C530]) | 51 [C531] -> 49 [C532] (4 [C533] / 2 [C534]) | 1.000 [C535] |
+| 04 | 0.022 [C536] | 0.012 [C537] | 1.4e-3 [C538] | 9 [C539] -> 4 [C540] (5 [C541] / 0 [C542]) | 53 [C543] -> 45 [C544] (8 [C545] / 0 [C546]) | 0.172 [C547] |
+| 05 | 0.026 [C548] | 0.010 [C549] | 1.8e-4 [C550] | 5 [C551] -> 4 [C552] (1 [C553] / 0 [C554]) | 53 [C555] -> 47 [C556] (7 [C557] / 1 [C558]) | 1.000 [C559] |
+| 06 | 0.040 [C560] | 0.034 [C561] | 1.6e-6 [C562] | 7 [C563] -> 7 [C564] (1 [C565] / 1 [C566]) | 52 [C567] -> 43 [C568] (9 [C569] / 0 [C570]) | 0.094 [C571] |
+| 07 | 0.099 [C572] | 0.001 [C573] | 3.3e-5 [C574] | 9 [C575] -> 2 [C576] (7 [C577] / 0 [C578]) | 71 [C579] -> 57 [C580] (15 [C581] / 1 [C582]) | 0.016 [C583] |
+| 11 | 0.095 [C584] | 0.003 [C585] | 9.8e-6 [C586] | 8 [C587] -> 2 [C588] (7 [C589] / 1 [C590]) | 74 [C591] -> 52 [C592] (22 [C593] / 0 [C594]) | 1.5e-5 [C595] |
 
 [^t8]: `results_summary/rq/rq4_identity_counterfactual.csv` (Table 8:
     `operation=remove`).
 
 *Removal.* On the non-extremist posts, removal lowers p(extremist) for every
-technique except 03 (the other seven have Holm p at most 8.1e-4 [C660]). 03 shows
-no detectable shift (mean 0.002 [C524], Holm p = 0.91 [C526]), which is not evidence
-that the effect is absent. For 07 and 11 the mean drop (0.097 [C572],
-0.093 [C584]) is far above the median (0.001 [C573], 0.003 [C585]): the shift sits in a
+technique except 03 (the other seven have Holm p at most 1.4e-3 [C660]). 03 shows
+no detectable shift (mean 0.001 [C524], Holm p = 0.92 [C526]), which is not evidence
+that the effect is absent. For 07 and 11 the mean drop (0.099 [C572],
+0.095 [C584]) is far above the median (0.001 [C573], 0.003 [C585]): the shift sits in a
 minority of posts. Removal clears 7 [C577] of 9 [C575] original false
 positives for 07 and 7 [C589] of 8 [C587] for 11, against 0 [C529] to
 5 [C541] for the classical techniques. These flip counts are descriptive: no
@@ -633,13 +622,13 @@ are below the 14-row rule of thumb. On the extremist posts, removal unflags
 recall loss survives Holm in this family; techniques are not compared with
 each other. 02, for example, loses 10 [C521] of 60 [C519] (Holm p =
 0.051 [C523]). Recall on extremist posts with and without identity terms differs
-by little for 07 (0.845 [C470] against 0.849 [C471], one or two posts) and more for
-11 (0.881 [C472] against 0.802 [C473]).[^rec]
+by little for 07 (0.855 [C470] against 0.839 [C471], one or two posts) and more for
+11 (0.892 [C472] against 0.793 [C473]).[^rec]
 
 [^rec]: `results_summary/rq/rq4_identity_fpr.csv`
     (`recall_with_identity_terms`, `recall_without_identity_terms`).
 
-*Removal on the unambiguous posts.* On the 60 [C617] extremist posts that
+*Removal on the unambiguous posts.* On the 59 [C617] extremist posts that
 keep an unambiguous identity match, removal unflags 15 [C611] of 51 [C610]
 flagged posts for 11 (Holm p = 0.002 [C612], over that table's 32 [C670] rows)
 and 10 [C614] of 48 [C613] for 07 (Holm p = 0.33 [C615]; flip rate 0.21 [C616],
@@ -655,16 +644,16 @@ the family.[^cfs]
     `mcnemar_p_holm_remove_extremist`).
 
 *Substitution.* Under the stricter control the pattern changes. The four
-classical techniques 01, 04, 05 and 06 each lose 12 [C604], 11 [C609],
-11 [C624] and 11 [C625] flagged extremist posts (Holm p = 0.015 [C600],
-0.028 [C601], 0.028 [C602], 0.028 [C603]), and the classical techniques other than 03
-still lower p(extremist) on non-extremist posts by a mean of 0.029 [C666] to
-0.046 [C667], about as much as under removal. For 07 and 11 the recall loss does
+classical techniques 01, 04, 05 and 06 each lose 11 [C604], 11 [C609],
+11 [C624] and 11 [C625] flagged extremist posts (Holm p = 0.029 [C600],
+0.029 [C601], 0.029 [C602], 0.029 [C603]), and the classical techniques other than 03
+still lower p(extremist) on non-extremist posts by a mean of 0.028 [C666] to
+0.045 [C667], about as much as under removal. For 07 and 11 the recall loss does
 not survive Holm (1.00 [C605] and 0.094 [C606]). On non-extremist posts their shift
-is small and not significant (07 mean 0.003 [C607], Holm p = 0.16 [C608]; 11 mean
-0.034 [C669], Holm p = 0.91 [C664]). On extremist posts their p(extremist) still
-falls (07 mean 0.052 [C665], Holm p = 2.0e-3 [C668]; 11 mean 0.110 [C663], Holm p =
-3.3e-9 [C662]), but too few posts cross the threshold for the flip test.[^sub]
+is small and not significant (07 mean 0.012 [C607], Holm p = 0.24 [C608]; 11 mean
+0.038 [C669], Holm p = 0.92 [C664]). On extremist posts their p(extremist) still
+falls (07 mean 0.053 [C665], Holm p = 1.4e-3 [C668]; 11 mean 0.111 [C663], Holm p =
+1.7e-9 [C662]), but too few posts cross the threshold for the flip test.[^sub]
 
 [^sub]: `results_summary/rq/rq4_identity_counterfactual.csv`
     (`operation=substitute`).
@@ -700,42 +689,42 @@ the frozen WP3 versions. The closest precedent for linking post-hoc
 attribution to identity-term over-reliance in hate classifiers is Kennedy
 et al. (2020); the difference here is the comparison across model families
 and the intervention of section 8.2. Ranking the eight techniques by RQ2 identity-term
-share (Table 4) and by FPR ratio (Table 7) gives Spearman rho = 0.87 [C630] at
-n = 8 [C631] (leave-one-out 0.81 [C634] to 0.95 [C635]; Holm p over the two
-preregistered rows 0.016 [C655], from which no inference is drawn at this n).
+share (Table 4) and by FPR ratio (Table 7) gives Spearman rho = 0.83 [C630] at
+n = 8 [C631] (leave-one-out 0.74 [C634] to 0.95 [C635]; Holm p over the two
+preregistered rows 0.034 [C655], from which no inference is drawn at this n).
 The shares in Table 4 come from runs of different sizes (450 posts for the
 classical runs, 200 for the transformers); the decision rules compare runs
 on the same number of posts. On the 200 posts every technique explained the
-correlation is 0.898 [C656], and with the validation-run shares 0.898 [C657]. Three
+correlation is 0.946 [C656], and with the validation-run shares 0.874 [C657]. Three
 further results argue against reading any of these as a link between
 reliance and identity-term false positives.[^rel]
 
 * The ranking follows the denominator. Identity share against FPR on
-  identity-term posts is -0.23 [C636]; against FPR on the other posts it is
-  -0.54 [C637]. The two highest ratios come from low FPR without identity terms
+  identity-term posts is -0.22 [C636]; against FPR on the other posts it is
+  -0.43 [C637]. The two highest ratios come from low FPR without identity terms
   (05: 4 [C434] false positives, 11: 6 [C458]), not from more identity-term
   false positives.
 * The intervention does not follow it. The WP7 mean removal shift against
-  the FPR ratio gives 0.16 [C638]. On the subset of techniques whose
+  the FPR ratio gives 0.06 [C638]. On the subset of techniques whose
   attributions cover the whole test split (`full_split_posts`, the
-  6 [C640] classical techniques) the primary correlation is 0.71 [C639].
+  6 [C640] classical techniques) the primary correlation is 0.60 [C639].
 * It is unstable under resampling. Resampling explained posts for the shares
   and test rows for the ratios (2000 [C648] replicates) gives a replicate median
-  of 0.50 [C641]. Rho is positive in a share 0.91 [C642] of replicates and below
-  the point estimate in 0.95 [C643], and the replicates spread from -0.26 [C644] to
-  0.90 [C645]. The instability comes mainly from the ratios: resampling test
-  rows alone gives a median of 0.53 [C646], posts alone 0.83 [C647]. The
-  common-post version behaves the same way (replicate median 0.46 [C658],
-  positive in 0.87 [C659]). Each ratio rests on few false positives; at the
-  0.95 [C654] percentile level only 04 (1.04 [C649] to 6.19 [C650]) and 11 (1.36 [C651]
-  to 15.5 [C652]) keep their ratio above 1, and 05, with the second-highest
-  ratio, does not (lower bound 0.87 [C653]).[^boot]
+  of 0.48 [C641]. Rho is positive in a share 0.90 [C642] of replicates and below
+  the point estimate in 0.94 [C643], and the replicates spread from -0.29 [C644] to
+  0.89 [C645]. The instability comes mainly from the ratios: resampling test
+  rows alone gives a median of 0.43 [C646], posts alone 0.80 [C647]. The
+  common-post version behaves the same way (replicate median 0.52 [C658],
+  positive in 0.90 [C659]). Each ratio rests on few false positives; at the
+  0.95 [C654] percentile level only 04 (1.06 [C649] to 6.37 [C650]) and 11 (1.40 [C651]
+  to 16.1 [C652]) keep their ratio above 1, and 05, with the second-highest
+  ratio, does not (lower bound 0.91 [C653]).[^boot]
 
 Resampling noisy ratios also pulls a rank correlation toward zero, so these
 figures describe how fragile the ordering is; they are not an interval for
 rho. RQ4 reading: every technique has a higher FPR on benign posts that
-mention a community (Fisher p < 0.05, unadjusted, for four of eight, one at
-the boundary, and for none after Holm); for
+mention a community (Fisher p < 0.05, unadjusted, for three of eight, and
+for none after Holm); for
 the classical word-level techniques the identity term behaves as evidence of
 extremism under both edits; for the transformers the removal effect is not
 reproduced by the stricter substitution control; and the cross-technique
@@ -796,9 +785,9 @@ remaining difficulty sits.
    0.79 [C158] to 1.00 [C159] of positive mass, the framing lexicon matches almost
    none of the top words, the HurtLex slur list reaches at most one word
    per list (0.026 [C292] of positive mass at most) and covers only ethnic and
-   sexual-orientation slurs, and 13 [C703] distinct words that look like
-   identity references are missing from the identity list (all on support
-   of two posts or fewer). Category-level claims depend on curation.
+   sexual-orientation slurs, and 14 [C703] distinct words that look like
+   identity references are missing from the identity list (most on thin
+   support). Category-level claims depend on curation.
    Avenue: hand-annotated top words rather than lexicons alone, on the
    model of the human rationales in HateXplain (Mathew et al., 2021), or
    group-robust training that does not need group labels (Liu et al., 2021)
@@ -877,7 +866,7 @@ transcribed.
 * RQ3: on the technique's own runs (450 posts per split, so not the
   common-post figures of Table 6), test-versus-validation Spearman 0.711 [C807]
   and top-50 Jaccard 0.389 [C808].
-* RQ4: FPR ratio 1.91 [C809] (Fisher p = 0.106 [C810]), and 1.96 [C811] without the
+* RQ4: FPR ratio 1.94 [C809] (Fisher p = 0.069 [C810]), and 2.01 [C811] without the
   ambiguous-only posts; WP7 removal clears 3 [C812] of the 11 [C819] false
   positives.
 
@@ -927,7 +916,10 @@ in-group spellings of a racial slur (among `data/lexicons/slurs.txt` lines 85 to
 slur use, the dialect-bias risk Sap et al. (2019) describe; and it keeps
 the four entries of one racial-typology family (lines 80 to 83), which are
 also used as a disability insult, although cognitive-disability insults
-are otherwise excluded. SHAP over subword models is aggregated to words with a
+are otherwise excluded. One identity term, `aliens`, was considered at the
+freeze and dropped: it had been found in 06's test top-50 list, so adding
+it would have fitted the lexicon to test results, and it appears only in
+the loaded phrase "illegal aliens" rather than as a neutral reference. SHAP over subword models is aggregated to words with a
 word-level masker (Kokalj et al., 2021); the pipeline check compares
 against known coefficients, and the randomization sanity checks of Adebayo
 et al. (2018) were not run; the identity lexicon does not capture
