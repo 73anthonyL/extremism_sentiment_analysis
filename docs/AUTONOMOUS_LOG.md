@@ -17,9 +17,40 @@ dataset text to an external API is listed under "Blocked" and not attempted.
   significance.
 * WP9 probes (Kaggle GPU) and WP10 zero-shot LLM baseline (data-sharing
   decision).
+* Whether section 5's share-difference rule should use the bootstrap SD
+  (`rq2_bootstrap_category_shares.csv`) instead of the two-run SD.
 * Whether report cards may print a slur verbatim; whether support >= 2
   becomes the SHAP pass rule; dropping `--primed` from the CLAUDE.md
   pre-commit list now that notebooks carry outputs.
+
+## 2026-11-04 — Bootstrap uncertainty for RQ2/RQ3 and the RQ2-RQ4 relation
+
+Branch `research/bootstrap-uncertainty`, merged into `research/integration`.
+`tools/bootstrap_uncertainty.py` resamples explained posts (and, for FPR
+ratios, test rows) 2000 times with seed 30, re-aggregating exactly as the
+kit does; with weight one it must reproduce every committed table or it
+refuses. Five text-free tables under `results_summary/rq/`, each row marked
+`percentile_ci` or `replicate_spread`.
+
+What it changed in the paper's claims:
+* RQ2-RQ4 relation (rho 0.83): the ranking is unstable under resampling
+  (replicate median 0.48, positive in ~90%), driven by the FPR ratios.
+  Now described as fragile, never with a "95% CI".
+* Transformer test-vs-validation rank agreement: lower than every classical
+  technique on paired draws (descriptive). Holds.
+* Single-post share and top-50 Jaccard: replicate spreads only; 07/11 do not
+  separate from 04 or 06.
+* Identity-share bootstrap SDs (0.016-0.036) are far larger than the
+  two-run SDs that section 5 uses. Flagged as an author decision.
+
+Adversarial review: mechanics and numbers confirmed by an independent
+recompute; it caught the mislabelled relation interval and five guards with
+no test. Fixed, each guard mutation-tested.
+
+Checks: all five pass (429 tests).
+
+Next: a results-section draft for the paper, organised by RQ, that cites
+only committed artifacts, with an adversarial check of every number.
 
 ## 2026-11-04 — Audit chain covers the new analyses (WP8 extension)
 
