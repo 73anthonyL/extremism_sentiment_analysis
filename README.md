@@ -87,6 +87,8 @@ extremism_sentiment_analysis/
 ├── research_loop/            # experiment records: probability artifacts, registry, preregistrations
 │   └── probs/                # sanitized probability artifacts (row_id, split, y_true, y_prob)
 ├── tools/
+│   ├── audit.py                  # one entry point: contract check, tool chain, report cards
+│   ├── local_foundation.py       # rebuilds notebook 00's kit inputs outside the repo, for local runs
 │   ├── notebook_kit.py           # the helper every notebook loads: split, metrics, exports
 │   ├── metrics_core.py           # the one metric function, pinned to the kit by a test
 │   ├── split_protocol.py         # rebuilds the processed dataset and the frozen split
@@ -114,6 +116,8 @@ extremism_sentiment_analysis/
 │   ├── split_assignments.csv
 │   └── split_assignments.PRE-REPAIR.csv
 ├── docs/
+│   ├── FRAMEWORK.md
+│   ├── POSITIONING.md
 │   ├── RESEARCH_PLAN.md
 │   └── RESULTS_SCHEMA.md
 ├── external/                 # untracked: downloaded weights, per-post files, curated outputs
@@ -132,6 +136,11 @@ dependency order, and the decision rules that fix what the prose may claim.
 probability artifacts, word-level attribution artifacts, the RQ outputs, and
 the run manifest. `data/lexicons/README.md` describes the word lists the RQ2
 and RQ4 tools use.
+`docs/FRAMEWORK.md` explains how to audit a new classifier with this
+repository: the contract a model must meet, the notebook exports that meet
+it, and the single entry point (`tools/audit.py`) that checks the contract,
+runs the tool chain and writes a text-free report card per technique under
+`results_summary/rq/report_cards/`.
 
 ## The verification layer
 

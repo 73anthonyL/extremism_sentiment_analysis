@@ -99,24 +99,31 @@ recovers the coefficients before any cross-model claim is made.
 |---|---|---|
 | `attributions/<run_id>__categorized.csv` | `categorize_attributions.py` | Top-K words with `category` (`slur`, `extremist_framing`, `identity_term`, `topical`) and every matched category. |
 | `attributions/<run_id>__category_shares.csv` | `categorize_attributions.py` | Share of words, absolute mass, and positive mass per category. |
-| `attributions/<run_id>__coefficient_check.json` | `validate_shap.py` | Spearman and sign-agreement statistics against the coefficients. |
+| `attributions/<run_id>__coefficient_check.json` | `validate_shap.py` | Spearman and sign-agreement statistics against the coefficients and `passed` under the preregistered rule (Spearman over all shared words, top-K sign agreement). Also `spearman_support_ge_min` over the `n_shared_words_support_ge_min` shared words with support of at least `secondary_min_support` (2), a diagnostic that does not decide `passed`. One file per whole-model run; `audit.py run` writes them for every run. |
 | `identity_fpr_<split>.json`, `identity_fpr_terms_<split>.csv` | `identity_fpr.py` | False-positive rate on non-extremist posts with vs without identity terms; per-term counts. No text. |
 | `identity_counterfactual_test.json` | `identity_counterfactual.py` | WP7: probability shift and flips at the locked threshold when identity terms are removed (primary) or replaced by a control panel (sensitivity; mean probability over the panel), per label and operation, after re-scoring the original texts against the committed artifact. Records the panel's training class balance and LR coefficients, per-word substitute deltas, and the device a torch technique ran on (null for techniques that ignore it). No text, no row ids. |
 | `run_manifest.json` | `run_manifest.py` | Kaggle notebook version, git commit, hashes of committed files, and the location and hash of every external asset. |
 
 Cross-technique tables live in `results_summary/rq/`, one per research
-question, and are the inputs to the rendered documentation tables.
+question, and are the inputs to the rendered documentation tables. Their
+families are the techniques in the comparison: a technique whose
+`best_config.json` says `"in_comparison": false` is kept out of every Holm
+family, cross-technique count and rendered table (see the two
+`_outside_comparison` files).
 
 | File | Written by | Contents |
 |---|---|---|
 | `rq/rq1_mcnemar_pairs.csv` | `mcnemar_pairs.py` | One row per technique pair on the test split: both-correct, both-wrong and discordant counts, exact McNemar p, Holm-adjusted p, error-set Jaccard. |
+| `rq/rq1_mcnemar_pairs_outside_comparison.csv` | `mcnemar_pairs.py` | Only while a technique is outside the comparison: that technique paired with every comparison technique, same columns as `rq1_mcnemar_pairs.csv`, Holm over its own pairs. Removed when no such technique exists. |
+| `rq/rq2_word_agreement_pairs_outside_comparison.csv` | `word_agreement.py` | Only while a technique is outside the comparison: its whole-model test run paired with every comparison technique's, same columns as `rq2_word_agreement_pairs.csv`. Removed when no such technique exists. |
 | `rq/rq1_error_overlap.csv` | `mcnemar_pairs.py` | Per technique: errors, false positives, false negatives, errors no other technique makes. |
 | `rq/rq1_shared_errors.csv` | `mcnemar_pairs.py` | Posts wrong for exactly k techniques, by true label. Counts only; the row-keyed matrix stays under `external/`. |
 | `rq/rq2_category_shares.csv` | `categorize_attributions.py` | Share of top-K words and attribution mass per lexicon category, per run. |
 | `rq/rq2_word_agreement_pairs.csv`, `rq/rq2_shared_top_words.csv`, `rq/rq2_top_word_support.csv` | `word_agreement.py` | Lexicon-free comparison of the whole-model word tables across techniques: pairwise Spearman and top-K Jaccard, words in several techniques' top-K, and the share of top-K words seen in a single explained post. |
 | `rq/rq3_reliance_comparison.csv`, `rq/rq3_stability.csv` | `compare_reliance.py` | Wide per-run shares with member means; across-run stability per technique. |
 | `rq/rq4_identity_fpr.csv` | `identity_fpr.py` | False-positive rate on non-extremist posts with vs without identity terms, per technique. |
-| `rq/rq4_identity_counterfactual.csv` | `identity_counterfactual.py` | WP7 counterfactual rows (technique x label x operation): mean/median delta, flagged counts before and after, flips, `fp_share_cleared` (share of original false positives that clear), Wilcoxon and exact McNemar p, their Holm adjustments over every row of the table, verification max diff. |
+| `rq/rq4_identity_counterfactual.csv` | `identity_counterfactual.py` | WP7 counterfactual rows (technique x label x operation): mean/median delta, flagged counts before and after, flips, `fp_share_cleared` (share of original false positives that clear), Wilcoxon and exact McNemar p, their Holm adjustments over every comparison row of the table (an outside-comparison technique's rows form their own family), verification max diff. |
+| `rq/report_cards/<TECHNIQUE>.md`, `rq/report_cards/<TECHNIQUE>.json` | `audit.py report` | One card per technique (WP8), read from the committed tables above and the technique's own folder only: RQ1 test accuracy and, against every other technique in its family, the row gap, McNemar and Holm p, whether it clears significance, and the Holm family size; the SHAP pipeline check (anchor status, and each whole-model run's coefficient-check figures and PASS / FAIL / calibration point, or "no coefficients"); RQ2, worded according to that check, the top 10 words by positive mean attribution on the whole-model test run with their lexicon category, the empty lexicon categories, and Spearman and top-50 Jaccard agreement with every other technique (most and least agreeing by each metric); RQ3 stability across the whole-model runs and their splits; RQ4 FPR with and without identity terms, ratio, Fisher p, n; the WP7 remove rows, or "not run". Each section names its source file. Words only; no row ids, hashes or post text, and the writer refuses a payload carrying either. The cards are regenerated, never edited, and `audit.py report` refuses to write any card while an RQ table lacks a row for a technique or a coefficient check is missing. |
 
 ### Provenance fields
 

@@ -1,0 +1,263 @@
+{
+  "generated_by": "tools/audit.py report",
+  "rq1": {
+    "holm_family_size": 28,
+    "in_comparison": true,
+    "n_test_rows": 450,
+    "pairs": [
+      {
+        "holm_p": 1.0,
+        "mcnemar_p": 0.126289,
+        "n_discordant": 43,
+        "other_accuracy": 0.855556,
+        "other_technique": "01_LOG-REG_TF-IDF",
+        "row_gap": -11,
+        "significant_holm": false
+      },
+      {
+        "holm_p": 1.0,
+        "mcnemar_p": 0.121449,
+        "n_discordant": 34,
+        "other_accuracy": 0.853333,
+        "other_technique": "02_LIN-SVM_TF-IDF",
+        "row_gap": -10,
+        "significant_holm": false
+      },
+      {
+        "holm_p": 1.0,
+        "mcnemar_p": 0.617719,
+        "n_discordant": 36,
+        "other_accuracy": 0.84,
+        "other_technique": "03_SLP_TF-IDF",
+        "row_gap": -4,
+        "significant_holm": false
+      },
+      {
+        "holm_p": 0.659104,
+        "mcnemar_p": 0.0346897,
+        "n_discordant": 23,
+        "other_accuracy": 0.855556,
+        "other_technique": "05_WORD-CHAR-TF-IDF_LIN-SVM",
+        "row_gap": -11,
+        "significant_holm": false
+      },
+      {
+        "holm_p": 1.0,
+        "mcnemar_p": 1.0,
+        "n_discordant": 59,
+        "other_accuracy": 0.833333,
+        "other_technique": "06_FASTTEXT-EMB_LOG-REG",
+        "row_gap": -1,
+        "significant_holm": false
+      },
+      {
+        "holm_p": 0.0311761,
+        "mcnemar_p": 0.001299,
+        "n_discordant": 62,
+        "other_accuracy": 0.888889,
+        "other_technique": "07_TWITTER-ROBERTA_FINE-TUNE",
+        "row_gap": -26,
+        "significant_holm": true
+      },
+      {
+        "holm_p": 9.27328e-05,
+        "mcnemar_p": 3.31188e-06,
+        "n_discordant": 57,
+        "other_accuracy": 0.908889,
+        "other_technique": "11_MULTI-CHECKPOINT_LOGIT-POOL",
+        "row_gap": -35,
+        "significant_holm": true
+      }
+    ],
+    "sources": [
+      "results_summary/04_CHAR-TF-IDF_LIN-SVM/metrics_test.json",
+      "results_summary/rq/rq1_mcnemar_pairs.csv"
+    ],
+    "test_accuracy": 0.831111
+  },
+  "rq2": {
+    "agreement": [
+      {
+        "jaccard_top_k_positive": 0.538462,
+        "other_technique": "05_WORD-CHAR-TF-IDF_LIN-SVM",
+        "spearman_mean_attribution": 0.847663,
+        "top_k": 50
+      },
+      {
+        "jaccard_top_k_positive": 0.315789,
+        "other_technique": "02_LIN-SVM_TF-IDF",
+        "spearman_mean_attribution": 0.545316,
+        "top_k": 50
+      },
+      {
+        "jaccard_top_k_positive": 0.298701,
+        "other_technique": "01_LOG-REG_TF-IDF",
+        "spearman_mean_attribution": 0.543126,
+        "top_k": 50
+      },
+      {
+        "jaccard_top_k_positive": 0.234568,
+        "other_technique": "03_SLP_TF-IDF",
+        "spearman_mean_attribution": 0.489342,
+        "top_k": 50
+      },
+      {
+        "jaccard_top_k_positive": 0.190476,
+        "other_technique": "11_MULTI-CHECKPOINT_LOGIT-POOL",
+        "spearman_mean_attribution": 0.301744,
+        "top_k": 50
+      },
+      {
+        "jaccard_top_k_positive": 0.176471,
+        "other_technique": "07_TWITTER-ROBERTA_FINE-TUNE",
+        "spearman_mean_attribution": 0.264724,
+        "top_k": 50
+      },
+      {
+        "jaccard_top_k_positive": 0.123596,
+        "other_technique": "06_FASTTEXT-EMB_LOG-REG",
+        "spearman_mean_attribution": 0.257843,
+        "top_k": 50
+      }
+    ],
+    "empty_lexicon_categories": [
+      "slur"
+    ],
+    "least_agreeing_by_jaccard": "06_FASTTEXT-EMB_LOG-REG",
+    "least_agreeing_by_spearman": "06_FASTTEXT-EMB_LOG-REG",
+    "most_agreeing_by_jaccard": "05_WORD-CHAR-TF-IDF_LIN-SVM",
+    "most_agreeing_by_spearman": "05_WORD-CHAR-TF-IDF_LIN-SVM",
+    "n_posts_explained": 450,
+    "run_id": "shap-partition_test_seed30",
+    "sources": [
+      "results_summary/04_CHAR-TF-IDF_LIN-SVM/attributions/shap-partition_test_seed30.csv",
+      "data/lexicons/",
+      "results_summary/rq/rq2_word_agreement_pairs.csv"
+    ],
+    "top_words_by_positive_mean_attribution": [
+      {
+        "category": "topical",
+        "mean_attribution": 0.230371,
+        "support": 2,
+        "word": "nigger"
+      },
+      {
+        "category": "topical",
+        "mean_attribution": 0.170939,
+        "support": 2,
+        "word": "encourage"
+      },
+      {
+        "category": "topical",
+        "mean_attribution": 0.159981,
+        "support": 1,
+        "word": "builders"
+      },
+      {
+        "category": "topical",
+        "mean_attribution": 0.158337,
+        "support": 5,
+        "word": "resentful"
+      },
+      {
+        "category": "topical",
+        "mean_attribution": 0.148624,
+        "support": 3,
+        "word": "sendthemback"
+      },
+      {
+        "category": "topical",
+        "mean_attribution": 0.147641,
+        "support": 14,
+        "word": "genocide"
+      },
+      {
+        "category": "topical",
+        "mean_attribution": 0.141719,
+        "support": 1,
+        "word": "deporthemall"
+      },
+      {
+        "category": "topical",
+        "mean_attribution": 0.139238,
+        "support": 3,
+        "word": "applaud"
+      },
+      {
+        "category": "topical",
+        "mean_attribution": 0.134606,
+        "support": 2,
+        "word": "deportthemall"
+      },
+      {
+        "category": "topical",
+        "mean_attribution": 0.132772,
+        "support": 1,
+        "word": "refugeesnotwelcome"
+      }
+    ]
+  },
+  "rq3": {
+    "mean_pairwise_jaccard_top50": 0.408451,
+    "mean_pairwise_spearman_abs_attribution": 0.686175,
+    "n_runs": 2,
+    "run_splits": [
+      "test",
+      "validation"
+    ],
+    "sources": [
+      "results_summary/rq/rq3_stability.csv"
+    ]
+  },
+  "rq4": {
+    "fisher_p_value": 0.0298498,
+    "fpr_ratio": 2.60109,
+    "fpr_with_identity_terms": 0.134328,
+    "fpr_without_identity_terms": 0.0516432,
+    "n_negative": 280,
+    "n_negative_with_identity_terms": 67,
+    "n_negative_without_identity_terms": 213,
+    "sources": [
+      "results_summary/rq/rq4_identity_fpr.csv"
+    ],
+    "threshold": 0.5
+  },
+  "scope": "post-level labels, text-only features, one dataset, 450-row test split",
+  "shap_check": {
+    "anchor": "01_LOG-REG_TF-IDF",
+    "anchor_detail": "2 run(s) checked",
+    "anchor_passes": true,
+    "runs": [],
+    "sources": [],
+    "status": "no coefficients"
+  },
+  "technique": "04_CHAR-TF-IDF_LIN-SVM",
+  "wp7_counterfactual": {
+    "rows": [
+      {
+        "mcnemar_p_holm": 1.0,
+        "mean_delta": 0.0217784,
+        "n_flagged_original": 9,
+        "n_flip_neg_to_pos": 0,
+        "n_flip_pos_to_neg": 5,
+        "n_posts": 67,
+        "population": "non_extremist",
+        "wilcoxon_p_holm": 0.00137808
+      },
+      {
+        "mcnemar_p_holm": 0.171875,
+        "mean_delta": 0.0500685,
+        "n_flagged_original": 53,
+        "n_flip_neg_to_pos": 0,
+        "n_flip_pos_to_neg": 8,
+        "n_posts": 83,
+        "population": "extremist",
+        "wilcoxon_p_holm": 6.47363e-13
+      }
+    ],
+    "sources": [
+      "results_summary/rq/rq4_identity_counterfactual.csv"
+    ],
+    "status": "run"
+  }
+}

@@ -69,9 +69,7 @@ The framework has three properties to stress in the paper:
 * **Text-free outputs.** Every committed output passes `scan_text_leakage.py`, so results can be shared even where the posts cannot.
 * **Adversarial tests.** Each tool refuses at least one specific malformed input.
 
-Remaining framework work (WP8): a single entry point that runs the whole
-chain for one new technique and writes one text-free report card, plus a
-worked example in the README showing how to add a model.
+How to audit a new classifier (WP8, closed 2026-11-04): `docs/FRAMEWORK.md`.
 
 ## 3. The four candidate end goals, assessed
 
@@ -129,7 +127,8 @@ probing and LLM self-explanation (WP9, WP10) for context (6).
   removal lowers p(extremist) for 7 of 8 techniques and also unflags 15 of
   71 (07) and 22 of 74 (11) flagged extremist posts (Holm p = 0.016 and
   1.5e-5); details in `RESEARCH_PLAN.md`, WP7.
-* **WP8. Framework entry point and report card (local).**
+* **WP8. Framework entry point and report card (local).** Closed
+  2026-11-04: `tools/audit.py` and `docs/FRAMEWORK.md`.
 * **WP9. Layer-wise probes on the transformer members (Kaggle GPU).**
 * **WP10. Zero-shot LLM comparison with self-explanation (author decision on
   data sharing first).**
