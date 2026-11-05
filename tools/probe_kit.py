@@ -55,7 +55,7 @@ from notebook_kit import (
     write_json,
 )
 
-PROBE_KIT_VERSION = "1.0.0"
+PROBE_KIT_VERSION = "1.1.0"
 PROBE_TABLE_FILES = {
     "probes": "rq3_layer_probes.csv",
     "contrasts": "rq3_layer_probe_contrasts.csv",
@@ -108,6 +108,7 @@ PROBE_COLUMNS = (
     "accuracy_low",
     "accuracy_high",
     "majority_accuracy",
+    "n_saturated",
     "n_boot",
     "n_boot_valid",
     "ci_level",
@@ -438,56 +439,83 @@ def _percentile_interval(values, ci_level):
     return float(np.percentile(values, tail)), float(np.percentile(values, 100.0 - tail))
 
 
-def score_probe(ctx, frame, y_true, y_score):
-    """ROC-AUC and accuracy at 0.5 of one probe on one split, with bootstrap intervals."""
+SATURATION_TOLERANCE = 1e-12
+
+
+def _checked_logits(frame, logits, label):
+    """Finite probe decision values (log-odds), one per row."""
+    logits = np.asarray(logits, dtype=float).reshape(-1)
+    if len(logits) != len(frame):
+        raise ArtifactContractError(f"{label}: {len(logits)} values for {len(frame)} rows")
+    if not np.isfinite(logits).all():
+        raise ArtifactContractError(f"{label}: non-finite probe logits")
+    return logits
+
+
+def logit_to_probability(logits):
+    """The probe's probability from its log-odds."""
+    return 1.0 / (1.0 + np.exp(-np.asarray(logits, dtype=float)))
+
+
+def score_probe(ctx, frame, y_true, y_logit):
+    """ROC-AUC and accuracy at 0.5 of one probe on one split, with bootstrap intervals.
+
+    `y_logit` is the probe's decision value (log-odds). AUC ranks the logits,
+    not the probabilities, so probabilities that saturate to 0 or 1 in float
+    arithmetic do not become ties; `n_saturated` counts them. Accuracy uses
+    p >= 0.5, which is logit >= 0.
+    """
     _require_probe_role(ctx, "score_probe")
     split = _refuse_unopened_test(ctx, frame, "score_probe")
     y_true = np.asarray(y_true).astype(int)
-    y_score = _checked_probabilities(frame, y_score, f"score_probe[{split}]")
+    y_logit = _checked_logits(frame, y_logit, f"score_probe[{split}]")
     if len(y_true) != len(frame):
         raise KitError("score_probe: labels and rows differ in length")
+    probability = logit_to_probability(y_logit)
     settings = ctx.config["bootstrap"]
     index = bootstrap_indices(len(frame), settings["n_resamples"], settings["seed"])
-    correct = ((y_score >= 0.5).astype(int) == y_true).astype(float)
-    boot_auc = roc_auc_rows(y_true[index], y_score[index])
+    correct = ((probability >= 0.5).astype(int) == y_true).astype(float)
+    boot_auc = roc_auc_rows(y_true[index], y_logit[index])
     boot_accuracy = correct[index].mean(axis=1)
     auc_low, auc_high = _percentile_interval(boot_auc, settings["ci_level"])
     acc_low, acc_high = _percentile_interval(boot_accuracy, settings["ci_level"])
     positive_share = float(y_true.mean())
+    saturated = (probability <= SATURATION_TOLERANCE) | (probability >= 1.0 - SATURATION_TOLERANCE)
     return {
         "split": split,
         "n_posts": int(len(y_true)),
         "n_positive": int(y_true.sum()),
-        "roc_auc": float(safe_roc_auc(y_true, y_score)),
+        "roc_auc": float(safe_roc_auc(y_true, y_logit)),
         "roc_auc_low": auc_low,
         "roc_auc_high": auc_high,
         "accuracy": float(correct.mean()),
         "accuracy_low": acc_low,
         "accuracy_high": acc_high,
         "majority_accuracy": max(positive_share, 1.0 - positive_share),
+        "n_saturated": int(saturated.sum()),
         "n_boot": int(settings["n_resamples"]),
         "n_boot_valid": int(np.isfinite(boot_auc).sum()),
         "ci_level": float(settings["ci_level"]),
     }
 
 
-def paired_auc_difference(ctx, frame, y_a, score_a, y_b, score_b):
-    """AUC(a) - AUC(b) on the same posts, with a paired bootstrap interval."""
+def paired_auc_difference(ctx, frame, y_a, logit_a, y_b, logit_b):
+    """AUC(a) - AUC(b) on the same posts, ranked on probe logits, with a paired bootstrap interval."""
     _require_probe_role(ctx, "paired_auc_difference")
     split = _refuse_unopened_test(ctx, frame, "paired_auc_difference")
     y_a, y_b = np.asarray(y_a).astype(int), np.asarray(y_b).astype(int)
-    score_a = _checked_probabilities(frame, score_a, "paired_auc_difference[a]")
-    score_b = _checked_probabilities(frame, score_b, "paired_auc_difference[b]")
+    logit_a = _checked_logits(frame, logit_a, "paired_auc_difference[a]")
+    logit_b = _checked_logits(frame, logit_b, "paired_auc_difference[b]")
     if len(y_a) != len(frame) or len(y_b) != len(frame):
         raise KitError("paired_auc_difference: labels and rows differ in length")
     settings = ctx.config["bootstrap"]
     index = bootstrap_indices(len(frame), settings["n_resamples"], settings["seed"])
-    boot = roc_auc_rows(y_a[index], score_a[index]) - roc_auc_rows(y_b[index], score_b[index])
+    boot = roc_auc_rows(y_a[index], logit_a[index]) - roc_auc_rows(y_b[index], logit_b[index])
     low, high = _percentile_interval(boot, settings["ci_level"])
     return {
         "split": split,
         "n_posts": int(len(frame)),
-        "difference": float(safe_roc_auc(y_a, score_a) - safe_roc_auc(y_b, score_b)),
+        "difference": float(safe_roc_auc(y_a, logit_a) - safe_roc_auc(y_b, logit_b)),
         "difference_low": low,
         "difference_high": high,
         "n_boot": int(settings["n_resamples"]),
@@ -497,7 +525,7 @@ def paired_auc_difference(ctx, frame, y_a, score_a, y_b, score_b):
 
 
 # mcnemar_exact_p and holm_adjust are character-for-character copies of
-# tools/mcnemar_pairs.py, pinned by tools/tests/test_notebook_kit.py.
+# tools/mcnemar_pairs.py, pinned by tools/tests/test_probe_kit.py.
 def mcnemar_exact_p(n_only_a_wrong, n_only_b_wrong):
     """Exact two-sided McNemar p-value: a binomial test over the discordant pairs."""
     discordant = int(n_only_a_wrong + n_only_b_wrong)
@@ -650,6 +678,8 @@ def validate_probe_table(frame, label=PROBE_TABLE_FILES["probes"]):
         raise ArtifactContractError(f"{label}: n_positive outside [0, n_posts]")
     if (frame["n_boot_valid"] > frame["n_boot"]).any():
         raise ArtifactContractError(f"{label}: n_boot_valid exceeds n_boot")
+    if ((frame["n_saturated"] < 0) | (frame["n_saturated"] > frame["n_posts"])).any():
+        raise ArtifactContractError(f"{label}: n_saturated outside [0, n_posts]")
     if (pd.to_numeric(frame["probe_c"]) <= 0).any():
         raise ArtifactContractError(f"{label}: probe_c must be positive")
     fine_tuned = frame[frame["model_kind"] == "fine_tuned"]

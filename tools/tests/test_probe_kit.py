@@ -67,9 +67,12 @@ def probe_frames(probe_ctx):
     return nk.split_frames(frame)
 
 
+def _noisy_logits(y, strength, rng):
+    return (np.asarray(y) * 2.0 - 1.0) * strength + rng.normal(0.0, 1.0, len(y))
+
+
 def _noisy_scores(y, strength, rng):
-    logits = (np.asarray(y) * 2.0 - 1.0) * strength + rng.normal(0.0, 1.0, len(y))
-    return 1.0 / (1.0 + np.exp(-logits))
+    return pk.logit_to_probability(_noisy_logits(y, strength, rng))
 
 
 def build_probe_tables(ctx, frames, n_layers=2):
@@ -97,7 +100,7 @@ def build_probe_tables(ctx, frames, n_layers=2):
                     split = frame["split"].iloc[0]
                     y = targets[split][task]
                     strength = (layer + 1) * (1.2 if kind == "fine_tuned" else 0.6)
-                    s = _noisy_scores(y, strength, rng)
+                    s = _noisy_logits(y, strength, rng)
                     scores[(model_id, layer, task, split)] = (y, s)
                     metrics = pk.score_probe(ctx, frame, y, s)
                     metrics.pop("split")
@@ -303,12 +306,34 @@ class TestProbeRole:
     def test_intervals_are_reproducible_and_paired_identity_is_zero(self, probe_ctx, probe_frames):
         _, val_df, _ = probe_frames
         y = val_df["label"].to_numpy()
-        s = _noisy_scores(y, 1.5, np.random.default_rng(2))
+        s = _noisy_logits(y, 1.5, np.random.default_rng(2))
         first = pk.score_probe(probe_ctx, val_df, y, s)
         assert first == pk.score_probe(probe_ctx, val_df, y, s)
         assert first["roc_auc_low"] <= first["roc_auc"] <= first["roc_auc_high"]
         same = pk.paired_auc_difference(probe_ctx, val_df, y, s, y, s)
         assert same["difference"] == 0 and same["difference_low"] == 0 and same["difference_high"] == 0
+
+    def test_saturated_probabilities_do_not_become_ties(self, probe_ctx, probe_frames):
+        """Logits of 40 and 50 both give p == 1.0 in float64; ranking logits keeps them apart."""
+        _, val_df, _ = probe_frames
+        y = val_df["label"].to_numpy()
+        logits = np.where(y == 1, 40.0 + np.arange(len(y)) * 0.01, -40.0 - np.arange(len(y)) * 0.01)
+        logits[:5] = -logits[:5]  # a few wrong-way posts, also saturated
+        metrics = pk.score_probe(probe_ctx, val_df, y, logits)
+        from sklearn.metrics import roc_auc_score
+
+        assert metrics["roc_auc"] == pytest.approx(roc_auc_score(y, logits))
+        assert metrics["n_saturated"] == len(y)
+        tied = roc_auc_score(y, pk.logit_to_probability(logits))
+        assert tied < metrics["roc_auc"]  # ranking probabilities would have tied them
+
+    def test_non_finite_logits_are_refused(self, probe_ctx, probe_frames):
+        _, val_df, _ = probe_frames
+        y = val_df["label"].to_numpy()
+        bad = np.zeros(len(y))
+        bad[0] = np.inf
+        with pytest.raises(nk.ArtifactContractError, match="non-finite"):
+            pk.score_probe(probe_ctx, val_df, y, bad)
 
     def test_restored_weights_must_reproduce_the_committed_artifact(self, tmp_path, probe_frames):
         _, val_df, _ = probe_frames
