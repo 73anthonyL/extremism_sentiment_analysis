@@ -276,3 +276,35 @@ measures necessity, not sufficiency. Safety tuning may lower the label mass
 on some posts. Labels are post-level and features text-only: the model
 detects extremist content in a post, not accounts or radicalisation over
 time.
+
+## Amendment log
+
+Each entry is dated and was made before any run of notebook 14. None changes
+a prompt, a model, a setting, a test or the reading rule above.
+
+* **2026-11-05, added safety check: padding equivalence.** Section 5 scores
+  the first 16 validation posts one at a time (batch size 1) and again inside
+  one left-padded batch, and compares both with the screening scores. If the
+  largest absolute difference in P(EXTREMIST) exceeds 0.01 the run stops,
+  because the scores would then depend on which posts share a batch. It uses
+  validation text only, reads no label, selects nothing and is recorded in
+  `format_check.padding_check` of `best_config.json`. It is not a fallback
+  rule: a failure is reported, and fixing the batching is a new version of
+  this file. It is an added safety check, not a change to the analysis.
+* **2026-11-05, clarification: the fallback window.** Rules (a) to (d) apply
+  only until the section 5 checks pass; the notebook tracks this with
+  `FALLBACK_WINDOW_OPEN`. A non-finite logit after that point (on test, in
+  the SHAP runs or the self-explanation analysis) is not rule (c): switching
+  then would evaluate a second model's test split. The run is reported with
+  its partial outputs under a new version of this file. `fallback_reason` is
+  one of `checkpoint_load`, `label_token`, `non_finite_logits`,
+  `format_check`, and the notebook refuses any other value.
+* **2026-11-05, clarifications in the notebook only.** The Holm family is
+  fixed at m = 8: a test that cannot be computed stays NaN and does not
+  shrink the family (`holm_m` in the JSON). The reading rule above is
+  computed in code (`reading` per population, at 0.05). Replies that do not
+  look like a list (no separator, or more than 5 items) are counted
+  descriptively; parsing is unchanged. The recommended accelerator is the
+  T4, as recent PyTorch CUDA builds no longer support the P100; the cost
+  figure above is left as preregistered, and the notebook's title block gives
+  the measured estimate (about 56,000 scored strings per split).
