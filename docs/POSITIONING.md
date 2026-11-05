@@ -92,7 +92,7 @@ Each item cites the artifact that shows it.
    all eight techniques, eleven of them extremist (`rq1_shared_errors.csv`).
    This points at label ambiguity or signal the text does not contain. That
    fits the post-level, text-only limitation.
-3. **Identity terms are a shortcut.** Every technique has a higher FPR on
+3. **Identity terms are hard to separate from what surrounds them.** Every technique has a higher FPR on
    benign posts that mention a community (`rq4_identity_fpr.csv`: point
    estimates 1.9 to 4.2, Fisher p < 0.05 unadjusted for 04, 05 and 11 only).
    Setting aside 13 ambiguous identity words keeps every ratio above 1 (1.6
@@ -103,8 +103,14 @@ Each item cites the artifact that shows it.
    Holm-significant for 07 and 11 on all 83 posts, and for 11 alone on the
    59 posts that keep an unambiguous match. There, 07 loses the same share
    of flagged posts (about 21%), with too few discordant pairs to reach
-   significance (`rq4_identity_counterfactual_sensitivity.csv`). So the
-   models treat identity terms as evidence of extremism whatever the label.
+   significance (`rq4_identity_counterfactual_sensitivity.csv`). Under the
+   stricter substitution control (a neutral group noun in place of the
+   term), the recall loss is Holm-significant for 01, 04, 05 and 06 and not
+   for 07 or 11, and the classical techniques shift about as much as under
+   removal (`rq4_identity_counterfactual.csv`). So the classical word-level
+   models weight the identity term itself as evidence of extremism, while
+   for the transformers the removal effect may partly reflect deleting a
+   noun rather than the identity term specifically.
    The false-positive flips (5 to 11 posts per model) are descriptive.
    At the point estimates, the identity-share ranking of the eight
    techniques follows their FPR-ratio ranking (Spearman 0.83, n = 8),
@@ -115,7 +121,7 @@ Each item cites the artifact that shows it.
    replicate median of about 0.48, positive in about 90% of replicates
    (`rq2_rq4_bootstrap_relation.csv`). It is not evidence that reliance on
    identity terms and identity-term false positives go together.
-4. **Transformer explanations are faithful per post but unstable across
+4. **Transformer explanations are faithful on the posts they flag but unstable across
    post samples.** Deleting each post's top-SHAP words lowers p(extremist)
    more than deleting random words, for every technique
    (`rq2_faithfulness.csv`), so the attributions find words the models use.
