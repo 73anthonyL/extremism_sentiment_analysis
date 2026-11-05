@@ -198,3 +198,9 @@ preregistered population, 68 test posts (23 non-extremist, 45 extremist), for
 every technique. Amendment 1 and its re-run are kept above and in git history
 (commit `7b6308ac`); the results of the re-run on the restored map are stated
 below.
+
+Re-run on the restored map (2026-11-05), all eight techniques with their
+restored predictors: `rq4_identity_swap.csv`, `rq4_identity_swap_directions.csv`
+and every `identity_swap_test.json` are byte-identical to the first run of
+commit `0ca755d4`, including `swap_map_sha256`. No WP7b result changed at
+any point of the WP3 freeze.
