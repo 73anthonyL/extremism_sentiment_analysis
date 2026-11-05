@@ -1,41 +1,49 @@
-"""Verify every quantitative claim in docs/paper/CLAIMS.md against its committed artifact.
+"""Verify every quantitative claim in docs/paper/CLAIMS.md against its artifact and the draft.
 
-The paper draft (`docs/paper/RESULTS_DRAFT.md`) cites each number through a
-claim id, singly (`C012`) or as a range (`C001–C056`). `CLAIMS.md` holds one markdown table with a row per claim:
+`CLAIMS.md` holds one markdown table with a row per claim:
 
     | id | artifact | selector | column | value | decimals |
 
 id
-    `C` followed by three digits, unique. The draft cites it, and this tool
-    checks that every id in the table is cited and every cited id exists.
+    `C` followed by three digits, unique.
 artifact
     A repository-relative path to a committed CSV or JSON file.
 selector
-    CSV: `key=value;key=value` (all must hold; values compared as the raw
-    strings in the file), or `*` for every row. JSON: `-`.
+    CSV: `key=value` or `key!=value` conditions joined by `;`, all of which
+    must hold (values are compared as the raw strings in the file; every
+    value named must occur in its column, so a misspelt value is refused,
+    not silently matched by nothing), or `*` for every row. The selection
+    must match at least one row. JSON: `-`.
 column
-    CSV: a column name, which needs the selector to match exactly one row,
-    or an aggregate over the matching rows: `count()`, `min(<column>)`,
-    `max(<column>)`, `sum(<column>)`.
-    JSON: a dotted path. A segment is a key, a list index, or
-    `[key=value]`, which picks the one element of a list whose `key` equals
-    `value` (as a string).
+    CSV: a column name, which needs the selection to be exactly one row; or
+    an aggregate over the selected rows. `count()` takes no column and its
+    value is the row count. `min(col)@N`, `max(col)@N`, `sum(col)@N` and
+    `nunique(col)@N` must state N, the number of rows the selection is
+    expected to match, so an under-specified selector that picks up extra
+    rows is refused.
+    JSON: a dotted path whose segments are keys (`[A-Za-z0-9_-]+`), list
+    indices (digits) or `[key=value]`, which picks the one list element whose
+    `key` equals `value` as a string (none or several is refused).
 value
-    The value as written in the draft.
+    The value as the draft writes it.
 decimals
-    The rounding the draft uses. An integer d accepts |artifact - value| <=
-    0.5 x 10^-d. `sN` accepts N significant figures (for p values such as
-    1.5e-5). `-` compares strings exactly (booleans case-insensitively).
+    The rounding the draft uses, which must agree with how `value` is
+    written. An integer d: `value` is a plain decimal with exactly d digits
+    after the point, and the artifact must lie within 0.5 x 10^-d. `sN`:
+    `value` has N significant figures (for p values such as 1.5e-5). `-`: an
+    exact string comparison (booleans case-insensitively); a numeric value
+    may not use `-`.
 
-The tool refuses, and exits 1, on a value outside its tolerance, a missing
-or unreadable artifact, a path outside the repository, an unknown column or
-selector key, a selector that does not pick exactly one row, a duplicate id,
-an empty table, or an id mismatch with the draft. It reads committed files
-only and writes nothing.
+Binding to the draft. Every claim id the draft mentions must be written as
+`<value> [Cnnn]`, the claim's value string, one space, the id in brackets,
+for example `0.873 [C100]`. Every claim must be bound at least once, every
+bound value must equal its claim's value, and an id that appears in any other
+form is refused. So a number changed in the prose, or in the table, fails.
+
+The tool exits 1 on any problem and writes nothing.
 
     python3 tools/check_claims.py
     python3 tools/check_claims.py --claims docs/paper/CLAIMS.md --draft docs/paper/RESULTS_DRAFT.md
-    python3 tools/check_claims.py --no-draft
 """
 
 import argparse
@@ -55,11 +63,14 @@ DEFAULT_CLAIMS = REPO_ROOT / "docs" / "paper" / "CLAIMS.md"
 DEFAULT_DRAFT = REPO_ROOT / "docs" / "paper" / "RESULTS_DRAFT.md"
 HEADER = ("id", "artifact", "selector", "column", "value", "decimals")
 ID_PATTERN = re.compile(r"^C\d{3}$")
-CITED_ID_PATTERN = re.compile(r"\bC\d{3}\b")
-# A cited range such as "C001–C056" (en dash or hyphen) cites every id in it.
-CITED_RANGE_PATTERN = re.compile(r"\bC(\d{3})\s*[\u2013-]\s*C(\d{3})\b")
-AGGREGATES = ("min", "max", "sum")
-AGGREGATE_PATTERN = re.compile(r"(\w+)\(([^()]*)\)")
+ANY_ID_PATTERN = re.compile(r"\bC\d{3}\b")
+BOUND_PATTERN = re.compile(r"(?P<value>[^\s(|\[\]]+) \[(?P<id>C\d{3})\]")
+AGGREGATE_PATTERN = re.compile(r"(?P<how>\w+)\((?P<target>[^()]*)\)(?:@(?P<n>\d+))?")
+ROW_AGGREGATES = {"min": min, "max": max, "sum": sum}
+JSON_SEGMENT = r"(?:[A-Za-z0-9_-]+|\[[A-Za-z0-9_-]+=[^\]]*\])"
+JSON_PATH_PATTERN = re.compile(rf"{JSON_SEGMENT}(?:\.{JSON_SEGMENT})*")
+PLAIN_DECIMAL = re.compile(r"-?\d+(?:\.(\d+))?")
+NUMBER = re.compile(r"-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?")
 
 
 class ClaimError(ValueError):
@@ -74,7 +85,7 @@ def _cell(text):
 
 
 def parse_claims(path):
-    """Return the claim rows of the one table whose header is HEADER."""
+    """Return the claim rows of the table whose header is HEADER."""
     path = Path(path)
     if not path.is_file():
         raise ClaimError(f"claims file not found: {path}")
@@ -140,16 +151,18 @@ class ArtifactCache:
 def _parse_selector(selector):
     if selector == "*":
         return []
-    pairs = []
+    conditions = []
     for part in selector.split(";"):
-        if "=" not in part:
-            raise ClaimError(f"selector part {part!r} is not key=value")
-        key, value = part.split("=", 1)
-        pairs.append((key.strip(), value.strip()))
-    return pairs
+        match = re.fullmatch(r"\s*([^=!]+?)\s*(!=|=)\s*(.*?)\s*", part)
+        if not match:
+            raise ClaimError(f"selector part {part!r} is not key=value or key!=value")
+        conditions.append(match.groups())
+    return conditions
 
 
 def _as_float(raw, where):
+    if isinstance(raw, bool):
+        raise ClaimError(f"{where}: {raw!r} is a boolean, not a number")
     try:
         number = float(raw)
     except (TypeError, ValueError) as error:
@@ -159,27 +172,39 @@ def _as_float(raw, where):
     return number
 
 
-def csv_value(rows, fieldnames, selector, column):
-    pairs = _parse_selector(selector)
-    for key, _ in pairs:
+def select_rows(rows, fieldnames, selector):
+    conditions = _parse_selector(selector)
+    for key, _, value in conditions:
         if key not in fieldnames:
             raise ClaimError(f"selector key {key!r} is not a column")
-    matched = [r for r in rows if all(r[k] == v for k, v in pairs)]
+        if not any(r[key] == value for r in rows):
+            raise ClaimError(f"selector value {value!r} does not occur in column {key!r}")
+    matched = [r for r in rows if all((r[k] == v) == (op == "=") for k, op, v in conditions)]
+    if not matched:
+        raise ClaimError(f"selector {selector!r} matches no rows")
+    return matched
+
+
+def csv_value(rows, fieldnames, selector, column):
+    matched = select_rows(rows, fieldnames, selector)
     aggregate = AGGREGATE_PATTERN.fullmatch(column)
     if aggregate:
-        how, target = aggregate.groups()
+        how, target, expected = aggregate.group("how"), aggregate.group("target"), aggregate.group("n")
         if how == "count":
-            if target:
-                raise ClaimError("count() takes no column")
+            if target or expected:
+                raise ClaimError("count() takes no column and no @N")
             return len(matched)
-        if how not in AGGREGATES:
+        if how not in ROW_AGGREGATES and how != "nunique":
             raise ClaimError(f"unknown aggregate {how!r}")
+        if expected is None:
+            raise ClaimError(f"{how}() needs @N, the number of rows the selector must match")
         if target not in fieldnames:
             raise ClaimError(f"column {target!r} is not in the artifact")
-        if not matched:
-            raise ClaimError(f"selector {selector!r} matches no rows")
-        values = [_as_float(r[target], target) for r in matched]
-        return {"min": min, "max": max, "sum": sum}[how](values)
+        if len(matched) != int(expected):
+            raise ClaimError(f"selector {selector!r} matches {len(matched)} rows, not the stated {expected}")
+        if how == "nunique":
+            return len({r[target] for r in matched})
+        return ROW_AGGREGATES[how]([_as_float(r[target], target) for r in matched])
     if column not in fieldnames:
         raise ClaimError(f"column {column!r} is not in the artifact")
     if len(matched) != 1:
@@ -187,62 +212,84 @@ def csv_value(rows, fieldnames, selector, column):
     return matched[0][column]
 
 
-_SEGMENT = re.compile(r"\[([^\]=]+)=([^\]]*)\]|([^.\[\]]+)")
-
-
 def json_value(payload, selector, path):
     if selector != "-":
         raise ClaimError("a JSON artifact takes selector '-'")
+    if not JSON_PATH_PATTERN.fullmatch(path):
+        raise ClaimError(f"path {path!r} is not a dotted path of keys, indices and [key=value]")
     node = payload
-    for match in _SEGMENT.finditer(path):
-        key, value, plain = match.groups()
-        if plain is not None:
-            if isinstance(node, list):
-                if not plain.isdigit() or int(plain) >= len(node):
-                    raise ClaimError(f"path {path!r}: no list element {plain!r}")
-                node = node[int(plain)]
-            elif isinstance(node, dict) and plain in node:
-                node = node[plain]
-            else:
-                raise ClaimError(f"path {path!r}: no key {plain!r}")
-        else:
+    for segment in re.findall(JSON_SEGMENT, path):
+        if segment.startswith("["):
+            key, value = segment[1:-1].split("=", 1)
             if not isinstance(node, list):
-                raise ClaimError(f"path {path!r}: [{key}={value}] needs a list")
+                raise ClaimError(f"path {path!r}: {segment} needs a list")
             hits = [e for e in node if isinstance(e, dict) and str(e.get(key)) == value]
             if len(hits) != 1:
-                raise ClaimError(f"path {path!r}: [{key}={value}] matches {len(hits)} elements")
+                raise ClaimError(f"path {path!r}: {segment} matches {len(hits)} elements, not exactly one")
             node = hits[0]
+        elif isinstance(node, list):
+            if not segment.isdigit() or int(segment) >= len(node):
+                raise ClaimError(f"path {path!r}: no list element {segment!r}")
+            node = node[int(segment)]
+        elif isinstance(node, dict) and segment in node:
+            node = node[segment]
+        else:
+            raise ClaimError(f"path {path!r}: no key {segment!r}")
     if isinstance(node, (dict, list)):
         raise ClaimError(f"path {path!r} ends at a {type(node).__name__}, not a value")
     return node
 
 
+def _significant_figures(value):
+    mantissa = re.split(r"[eE]", value.lstrip("-"))[0]
+    digits = mantissa.replace(".", "").lstrip("0")
+    return len(digits)
+
+
+def check_precision(value, decimals):
+    """Refuse a decimals entry that disagrees with how the value is written."""
+    numeric = NUMBER.fullmatch(value) is not None
+    if decimals == "-":
+        if numeric:
+            raise ClaimError(f"value {value!r} is numeric; give its decimals instead of '-'")
+        return
+    if not numeric:
+        raise ClaimError(f"value {value!r} is not a number but decimals is {decimals!r}")
+    if re.fullmatch(r"\d+", decimals):
+        plain = PLAIN_DECIMAL.fullmatch(value)
+        if not plain:
+            raise ClaimError(f"value {value!r} is not a plain decimal; use sN")
+        written = len(plain.group(1) or "")
+        if written != int(decimals):
+            raise ClaimError(f"value {value!r} has {written} decimal(s), decimals says {decimals}")
+        return
+    match = re.fullmatch(r"s(\d+)", decimals)
+    if not match or int(match.group(1)) < 1:
+        raise ClaimError(f"decimals {decimals!r} is not an integer, sN (N >= 1) or -")
+    if _significant_figures(value) != int(match.group(1)):
+        raise ClaimError(f"value {value!r} does not have {match.group(1)} significant figure(s)")
+
+
 def tolerance(decimals, claimed):
     if re.fullmatch(r"\d+", decimals):
         return 0.5 * 10 ** (-int(decimals))
-    match = re.fullmatch(r"s(\d+)", decimals)
-    if match:
-        figures = int(match.group(1))
-        if figures < 1:
-            raise ClaimError("significant figures must be at least 1")
-        if claimed == 0:
-            return 0.0
-        return 0.5 * 10 ** (math.floor(math.log10(abs(claimed))) - figures + 1)
-    raise ClaimError(f"decimals {decimals!r} is not an integer, sN or -")
+    figures = int(decimals[1:])
+    if claimed == 0:
+        return 0.0
+    return 0.5 * 10 ** (math.floor(math.log10(abs(claimed))) - figures + 1)
 
 
 def compare(actual, claimed, decimals):
     """Raise ClaimError unless `actual` rounds to `claimed` at `decimals`."""
+    check_precision(claimed, decimals)
     if decimals == "-":
         a, c = str(actual).strip(), claimed.strip()
-        if a.lower() in ("true", "false") or c.lower() in ("true", "false"):
+        if a.lower() in ("true", "false") and c.lower() in ("true", "false"):
             a, c = a.lower(), c.lower()
         if a != c:
             raise ClaimError(f"artifact has {actual!r}, claim says {claimed!r}")
         return
     claimed_number = _as_float(claimed, "claimed value")
-    if isinstance(actual, bool):
-        raise ClaimError("artifact value is a boolean; use decimals '-'")
     actual_number = _as_float(actual, "artifact value")
     allowed = tolerance(decimals, claimed_number)
     if abs(actual_number - claimed_number) > allowed + 1e-12 * max(1.0, abs(claimed_number)):
@@ -259,19 +306,26 @@ def verify_claim(claim, cache):
     return actual
 
 
-def check_draft_ids(claims, draft_path):
+def check_draft_binding(claims, draft_path):
+    """Every id in the draft is written `<value> [Cnnn]` with its claim's value."""
     text = Path(draft_path).read_text()
-    cited = set(CITED_ID_PATTERN.findall(text))
-    for start, end in CITED_RANGE_PATTERN.findall(text):
-        if int(end) < int(start):
-            raise ClaimError(f"cited range C{start}-C{end} runs backwards")
-        cited.update(f"C{n:03d}" for n in range(int(start), int(end) + 1))
-    listed = {c["id"] for c in claims}
-    problems = []
-    for missing in sorted(listed - cited):
-        problems.append(f"{missing} is in the claims table but not cited in {Path(draft_path).name}")
-    for unknown in sorted(cited - listed):
-        problems.append(f"{unknown} is cited in {Path(draft_path).name} but not in the claims table")
+    name = Path(draft_path).name
+    values = {c["id"]: c["value"] for c in claims}
+    problems, bound = [], set()
+    for match in BOUND_PATTERN.finditer(text):
+        cid, written = match.group("id"), match.group("value")
+        if cid not in values:
+            problems.append(f"{cid} is cited in {name} but not in the claims table")
+        elif written != values[cid]:
+            problems.append(f"{cid} is written {written!r} in {name}, the claim says {values[cid]!r}")
+        else:
+            bound.add(cid)
+    loose = len(ANY_ID_PATTERN.findall(text)) - len(BOUND_PATTERN.findall(text))
+    if loose:
+        problems.append(f"{loose} claim id(s) in {name} are not written as '<value> [Cnnn]'")
+    for cid in sorted(set(values) - bound):
+        if not any(p.startswith(f"{cid} is written") for p in problems):
+            problems.append(f"{cid} is in the claims table but not bound to its value in {name}")
     return problems
 
 
@@ -279,25 +333,26 @@ def run(claims_path=DEFAULT_CLAIMS, draft_path=DEFAULT_DRAFT, root=REPO_ROOT, ch
     """Return (n_verified, list of failure messages)."""
     claims = parse_claims(claims_path)
     cache = ArtifactCache(root)
-    failures = []
+    failures, verified = [], 0
     for claim in claims:
         try:
             verify_claim(claim, cache)
+            verified += 1
         except ClaimError as error:
             failures.append(f"{claim['id']} ({claim['artifact']}): {error}")
     if check_draft:
         if not Path(draft_path).is_file():
             failures.append(f"draft not found: {draft_path}")
         else:
-            failures.extend(check_draft_ids(claims, draft_path))
-    return len(claims) - sum(1 for f in failures if re.match(r"C\d{3} \(", f)), failures
+            failures.extend(check_draft_binding(claims, draft_path))
+    return verified, failures
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--claims", default=str(DEFAULT_CLAIMS))
     parser.add_argument("--draft", default=str(DEFAULT_DRAFT))
-    parser.add_argument("--no-draft", action="store_true", help="skip the id cross-check against the draft")
+    parser.add_argument("--no-draft", action="store_true", help="skip the binding check against the draft")
     parser.add_argument("--root", default=str(REPO_ROOT), help="directory artifact paths are relative to")
     args = parser.parse_args(argv)
     try:
@@ -310,7 +365,8 @@ def main(argv=None):
     if failures:
         print(f"REFUSED: {len(failures)} problem(s); {verified} claim(s) verified")
         return 1
-    print(f"OK: {verified} claim(s) verified against their artifacts")
+    bound = "not checked against the draft" if args.no_draft else "bound to their values in the draft"
+    print(f"OK: {verified} claim(s) verified against their artifacts and {bound}")
     return 0
 
 
