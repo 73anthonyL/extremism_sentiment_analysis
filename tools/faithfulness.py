@@ -53,20 +53,46 @@ Per technique x population x k:
 * wilcoxon_p_holm    Holm over every comparison row of the same population in
                      the cross-technique table; a technique outside the
                      comparison forms its own family per population.
+                     `shared` is the primary family (32 rows). `explained`
+                     is secondary: for the transformers it is the same posts,
+                     so the two families overlap and are not corrected
+                     jointly (64 tests in all).
+
+Table-only columns, derived from a row's committed means (--rebuild-table
+recomputes them without loading a model):
+
+* drop_random_over_attributed_random  mean_drop_random over
+                     mean_attributed_random: how much of the random drop the
+                     SHAP values of the randomly deleted words already predict,
+* drop_minus_random_flagged  the margin on posts flagged at the locked
+                     threshold, the comparison least affected by calibration.
 
 Populations: `explained` is every test post the technique explained (all 450
 for the classical notebooks, a 200-post seeded sample for the transformers).
 `shared` is the posts every technique in the comparison explained, which is
-the population to compare techniques on: same posts, same labels.
+the population to compare techniques on: same posts, same labels. Within it
+n_posts still varies by technique (196-200 in the committed run), because a
+post with no positive token for that technique is left out.
 
 Reading. Attributions are SHAP values of P(EXTREMIST) under word masking with
 the mask token; deletion is a different perturbation (the word and its
 separator vanish), so a gap between the two is part of what is measured.
-Deletion also produces ungrammatical text, which a transformer may react to
-on its own; the random baseline absorbs that common effect. A larger margin
-means the ranking finds words the model needs; it does not show the model is
-right to need them. Saturated probabilities cap the drop, so compare the
-margin, not the raw drop, across families.
+A larger random drop does not by itself mean a model reacts to deletion
+as such: read it next to mean_attributed_random. When attributions are
+spread over many words, randomly chosen words carry more SHAP value and the
+random drop is larger for that reason; only the part of the random drop
+beyond what SHAP predicts is a reaction to deletion itself. The
+drop-to-SHAP ratios (top-k and random) are descriptive; no cross-technique
+test is run. A larger margin means the ranking finds words the model needs;
+it does not show the model is right to need them.
+
+The all-post means mix faithfulness with calibration. The drop and the margin
+are both capped by p_original, so a model that puts most unflagged posts
+near p = 0 has a small typical-post effect however faithful its ranking is.
+Read median_paired_diff and share_topk_drop_gt_random with the mean, and
+compare families on the flagged-post columns. random_drop_sd_over_seeds is
+the spread of the random baseline over its seeds; at small k it is a large
+fraction of the random drop itself.
 
 Re-scoring frozen models at their locked thresholds is a perturbation
 analysis, not a test evaluation: no threshold, model or configuration is
