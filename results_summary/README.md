@@ -10,6 +10,7 @@ The goal is to make the repository reviewable without requiring readers to re-ru
 results_summary/
 ├── foundation/
 ├── rq/                       # cross-technique tables, one per research question
+│   └── report_cards/         # one text-free card per technique (tools/audit.py report)
 ├── 01_LOG-REG_TF-IDF/
 ├── 02_LIN-SVM_TF-IDF/
 ├── 03_SLP_TF-IDF/
