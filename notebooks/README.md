@@ -141,7 +141,7 @@ python3 tools/check_notebook.py --print-template classical   # or transformer, e
    still holds the old code would overwrite the primed notebook here.
 4. Turn the GPU and internet on for notebooks 07 to 12 and 14 (they download
    checkpoints from the Hugging Face Hub). Notebook 14 needs `transformers`
-   4.51 or later and takes about 4 to 6 hours on one T4; its title block
+   4.51 or later and runs on a T4 only (about 1.5 to 3.5 hours for its two SHAP runs); its title block
    has the details.
 5. Run all cells. Section 14 writes `<TECHNIQUE>_repo_files.zip`.
 
