@@ -193,7 +193,13 @@ class TestLexiconGaps:
         assert summary["ambiguous_words"] == "white"
 
 
-def test_cli_refuses_a_bad_ambiguous_list(monkeypatch, capsys):
+def test_cli_refuses_a_bad_ambiguous_list(monkeypatch, capsys, tmp_path):
+    # Point the outputs at tmp_path: if the subset guard regresses, the CLI must not
+    # overwrite the committed results_summary/rq tables.
+    gaps_csv, top_k_csv = tmp_path / "gaps.csv", tmp_path / "top_k.csv"
+    monkeypatch.setattr(isens, "RQ2_IDENTITY_LEXICON_GAPS_SENSITIVITY_CSV", gaps_csv)
+    monkeypatch.setattr(isens, "RQ2_IDENTITY_TOP_K_SENSITIVITY_CSV", top_k_csv)
     monkeypatch.setattr(isens, "AMBIGUOUS_IDENTITY_TERMS", {"whites": "not a lexicon entry"})
     assert isens.main(["lexicon-gaps"]) == 1
     assert "not in the identity lexicon" in capsys.readouterr().err
+    assert not gaps_csv.exists() and not top_k_csv.exists()
