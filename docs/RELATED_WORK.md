@@ -246,8 +246,12 @@ Conventions:
   Model Predictions (SHAP). *NeurIPS 2017* (Advances in Neural Information
   Processing Systems 30). arXiv:1705.07874.
   *Relation:* the method behind every attribution artifact. Its
-  linear-model case (SHAP equals coefficient times centred feature) is what
-  `validate_shap.py` checks before any cross-model claim.
+  linear-model result (SHAP equals coefficient times centred feature, for
+  independent features and a linear output) motivates `validate_shap.py`,
+  which checks a weaker property before any cross-model claim: sign
+  agreement with the LR coefficients on the top-K words (at least 90
+  percent) and Spearman rank correlation with them (at least 0.8). The exact
+  identity does not hold for our probability-output LR with word deletion.
 * **SHAP library documentation, `shap.PartitionExplainer` and
   `shap.maskers.Text`.** https://shap.readthedocs.io (checked 2026-11-04).
   *Relation:* software reference for the Partition explainer and for its
@@ -284,8 +288,10 @@ Conventions:
   (2018).** Sanity Checks for Saliency Maps. *NeurIPS 2018*.
   arXiv:1810.03292.
   *Relation:* shows that attributions can look plausible yet not depend on
-  the model. `validate_shap.py`, which recovers known LR coefficients, is our
-  sanity check of this kind.
+  the model, using model- and label-randomization tests. `validate_shap.py`
+  (sign and rank agreement with known LR coefficients) is related but
+  distinct. We have not run the randomization checks, and the limitations
+  section should say so.
 * **Kindermans, P.-J., Hooker, S., Adebayo, J., Alber, M., Schütt, K. T.,
   Dähne, S., et al. (2019).** The (Un)reliability of Saliency Methods. In
   *Explainable AI: Interpreting, Explaining and Visualizing Deep Learning*,
@@ -674,8 +680,8 @@ al. 2020; Mathew et al. 2021). The contribution is the comparison and the
 framework that makes it repeatable (POSITIONING C1, C2). Eight techniques,
 from TF-IDF linear models to a pooled transformer ensemble, are explained by
 one attribution method (Lundberg and Lee 2017, Partition/Owen values), which
-is first checked against known linear coefficients (cf. Adebayo et al.
-2018). Their word-level reliance is compared across families (RQ2) and
+is first checked for sign and rank agreement with known linear
+coefficients. Their word-level reliance is compared across families (RQ2) and
 across pretraining lineages and pooling (RQ3). Prior cross-method studies
 were designed to evaluate explainers: Atanasova et al. (2020) varied both
 explainers and neural architectures to judge the explainers, and Krishna et
