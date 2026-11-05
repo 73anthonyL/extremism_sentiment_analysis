@@ -146,3 +146,29 @@ different answer. Swapping two co-occurring groups can leave the post's set
 of groups unchanged. immigrant and migrant are near-synonyms. Word-level
 models score a target unseen in training like a deletion. Labels are
 post-level and features text-only.
+
+## Amendment 1 (2026-11-04): WP3 lexicon freeze
+
+The WP3 freeze added one entry, `aliens`, to the migration section of
+`data/lexicons/identity_terms.txt` (the only identity-lexicon gap word with
+test support of at least 3; author decision 2 in `docs/DECISIONS_NEEDED.md`)
+and populated `data/lexicons/slurs.txt` from HurtLex. Because the tool
+refuses a map without a row for every identity entry, the map gains one row:
+
+    migration,excluded,,aliens,,,,"added at WP3 freeze, after the WP7b preregistration"
+
+`aliens` is excluded rather than swapped so that the swap population and the
+panels stay as preregistered: it is neither a source nor a target, and its
+matches stay in the text unchanged under every operation, like the other
+excluded entries. Excluded entries are now 22. No other row changed. The map's
+sha256 moves from `1e94dd70e48e511d0530592a95044f4e15bb74235853ec04c2356cb32dab406f`
+to `89c99e5b3b69779c70003d2317da0cbf39957485d399118740ffbbd4a8ac47f4`.
+
+The slur lexicon could change the population, since a source match that
+overlaps a slur match is not swapped. No slur entry contains an identity
+entry, and `identity_swap.py --all --dry-run-population` with the frozen
+lexicons gives the preregistered population: 68 test posts (23
+non-extremist, 45 extremist) for every technique. Both runs are kept: the
+first, on the preregistered map (commit `f08193b1`), is the
+`rq4_identity_swap.csv` and `identity_swap_test.json` files of commit
+`0ca755d4`; the re-run on the amended map supersedes them in the tree.

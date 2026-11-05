@@ -81,6 +81,7 @@ ethnicity_nationality,excluded,,english,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERM
 ethnicity_nationality,excluded,,native,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
 ethnicity_nationality,excluded,,indians,,,,same ambiguity as indian (India and Indigenous Americans)
 migration,excluded,,asylum,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+migration,excluded,,aliens,,,,"added at WP3 freeze, after the WP7b preregistration"
 gender_sexuality,excluded,,man,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
 gender_sexuality,excluded,,men,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
 gender_sexuality,excluded,,boy,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py

@@ -84,6 +84,9 @@ refugees
 asylum
 foreigner
 foreigners
+# Added at the WP3 freeze (2026-11-04): the only lexicon-gap word with test
+# support >= 3 (rq2_identity_lexicon_gaps_sensitivity.csv).
+aliens
 
 # Gender and sexuality
 woman
