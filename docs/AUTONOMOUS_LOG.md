@@ -14,6 +14,21 @@ Remaining author actions: run notebook 12, the WP9 probe notebook and the
 WP10 open-weight LLM notebook on Kaggle; upload external assets before
 submission.
 
+## 2026-11-05 — WP7b folded into the Results draft; loop paused
+
+Branch `paper/wp7b-draft`, merged into `research/integration`. New section
+8.2b and Table 9 present the identity swap under the authors' cautious
+reading (decision 5), with 107 new bound claims (C671-C697, C900-C979).
+Review: the prose follows the already-reviewed WP7b plan paragraph line by
+line, and check_claims binds every number; the three-source concentration
+and the label-skew correlations are stated in words only because no
+artifact column holds them.
+
+Checks: all pass (598 tests); check_claims OK (772).
+
+The autonomous loop is paused here: every remaining item needs the authors
+(Kaggle runs of notebooks 12, 13 and 14; uploading external assets).
+
 ## 2026-11-05 — WP3: lexicons frozen (HurtLex slurs; aliens added then dropped)
 
 Branch `research/wp3-lexicon-freeze`, merged into `research/integration`.
