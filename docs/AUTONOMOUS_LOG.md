@@ -23,6 +23,39 @@ dataset text to an external API is listed under "Blocked" and not attempted.
   becomes the SHAP pass rule; dropping `--primed` from the CLAUDE.md
   pre-commit list now that notebooks carry outputs.
 
+## 2026-11-04 — Paper Results draft with a bound claims table
+
+Branch `paper/results-draft`, merged into `research/integration`.
+`docs/paper/RESULTS_DRAFT.md` (about 7,600 words): Results by RQ1-RQ4
+including WP7, the C3 "why this is hard" section, and a C1 framework
+usability section. Every claimed number is written as `value [Cnnn]`;
+`docs/paper/CLAIMS.md` (631 claims) gives each one's artifact, selector,
+column and precision, and `tools/check_claims.py` refuses the draft if any
+bound number differs from its artifact or from its claim (48 tests, 31
+guards mutation-tested).
+
+Adversarial review found three correct numbers attached to wrong
+descriptions (27 lexicon-gap "words" are 27 pairs over 14 words; 11's
+members do not share 07's recipe; two different 01 agreement values under
+one name) and a checker that could not catch a changed prose number. All
+fixed.
+
+Finding that changes earlier summaries: under substitution with a neutral
+panel word, 07's and 11's shift on non-extremist identity posts mostly
+disappears (07 mean delta 0.099 removed vs 0.012 substituted, Holm 0.24;
+11 0.095 vs 0.038, Holm 0.92), and their recall drops are no longer
+Holm-significant, while 01, 04, 05 and 06 lose significant recall under
+substitution. So the transformers' large removal effects may partly reflect
+deleting a noun, not the identity term. Draft, POSITIONING section 4 item 3
+and the plan's WP7 text now use substitution as the stricter control. The
+earlier slide deck and professor summary predate this.
+
+Checks: all five pass (492 tests); check_claims OK.
+
+Next: an identity-swap counterfactual (replace one group term with another
+group term, a predeclared mapping) to separate "names a group" from "names
+this group" for the transformers.
+
 ## 2026-11-04 — Bootstrap uncertainty for RQ2/RQ3 and the RQ2-RQ4 relation
 
 Branch `research/bootstrap-uncertainty`, merged into `research/integration`.
