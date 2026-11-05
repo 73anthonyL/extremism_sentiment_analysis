@@ -23,7 +23,8 @@ run --technique T [--with-perturbation] [--device D] [--sequential-checkpoints]
     reported as OK. --with-perturbation runs the stages that restore the
     predictor from external/ and re-score edited texts (identity
     counterfactual, its ambiguous-term sensitivity, deletion faithfulness);
-    --with-counterfactual is kept as an alias.
+    --with-counterfactual is kept as an alias. With --with-perturbation, a
+    perturbation stage that skips for missing inputs makes the run exit 2.
 
 report --technique T | --all
     Reads committed outputs only and writes
@@ -90,6 +91,8 @@ from repo_paths import (  # noqa: E402
 
 EXIT_OK = 0
 EXIT_FAILED = 1
+# run --with-perturbation completed, but a perturbation stage skipped for missing inputs.
+EXIT_PERTURBATION_SKIPPED = 2
 
 TEST_ROWS = EXPECTED_SPLIT_COUNTS["test"][0]
 REPORT_TOP_WORDS = 10
@@ -559,11 +562,34 @@ def relation_gaps(results_dir, rq_dir):
     return gaps
 
 
+def counterfactual_threshold_gaps(results_dir, rq_dir):
+    """Comparison techniques whose WP7 rows were scored at a threshold other than their locked one."""
+    path = Path(rq_dir) / RQ4_IDENTITY_COUNTERFACTUAL_CSV.name
+    if not path.exists():
+        return []
+    table = pd.read_csv(path)
+    off = []
+    for folder in comparison_technique_dirs(results_dir):
+        thresholds = table.loc[table["technique"] == folder.name, "threshold"]
+        locked = _locked_threshold(folder.name, results_dir)
+        if any(not _same_number(t, locked) for t in thresholds):
+            off.append(folder.name)
+    return off
+
+
 def stage_rq2_rq4_relation(ctx):
     """The RQ2-RQ4 rank relation over the comparison techniques; committed tables only."""
     if not in_comparison(ctx.technique, ctx.results_dir):
         return Skip(f"{ctx.technique} is outside the comparison; the relation is computed over the comparison "
                     "techniques only")
+    if "same_post_stability" in {name for name, _ in ctx.skipped}:
+        return Skip("same_post_stability was skipped in this run, so the common-post shares the relation reads "
+                    f"may be stale; {RQ2_RQ4_RELATION_CSV.name} is left as is")
+    off = counterfactual_threshold_gaps(ctx.results_dir, RQ_DIR)
+    if off:
+        return Skip(f"{RQ4_IDENTITY_COUNTERFACTUAL_CSV.name} was scored at a threshold other than the locked one "
+                    f"for {off}; {RQ2_RQ4_RELATION_CSV.name} is left as is and is stale until "
+                    "identity_counterfactual.py reruns for them")
     gaps = relation_gaps(ctx.results_dir, RQ_DIR)
     if gaps:
         return Skip("; ".join(gaps) + f". {RQ2_RQ4_RELATION_CSV.name} is left as is and is stale until those "
@@ -642,9 +668,21 @@ def run_chain(ctx, external_dir=None):
     if ctx.skipped:
         print(f"audit of {ctx.technique} complete; {len(ctx.skipped)} stage(s) skipped: "
               f"{', '.join(name for name, _ in ctx.skipped)}")
+        skipped_perturbation = [name for name, _ in ctx.skipped if name in PERTURBATION_STAGES]
+        if skipped_perturbation:
+            print(f"perturbation stages skipped this run ({', '.join(skipped_perturbation)}): their tables were "
+                  "not rewritten, so the cards show the outputs committed earlier, or \"not run\" where none exist")
     else:
         print(f"audit of {ctx.technique} complete")
     return True, None
+
+
+def perturbation_shortfall(ctx):
+    """Perturbation stages that were requested but skipped for a reason other than not being requested."""
+    if not ctx.with_perturbation:
+        return []
+    return [(name, reason) for name, reason in ctx.skipped
+            if name in PERTURBATION_STAGES and reason != NOT_REQUESTED]
 
 
 # ---------------------------------------------------------------------------
@@ -885,20 +923,44 @@ def _rq4(technique, rq_dir):
 SENSITIVITY_VARIANT = "exclude_ambiguous_only"
 
 
+def _missing_number(value):
+    if value is None:
+        return True
+    try:
+        return math.isnan(float(value))
+    except (TypeError, ValueError):
+        return False
+
+
+def _same_number(a, b, rel_tol=1e-5, abs_tol=1e-9):
+    """Equal within tolerance; NaN or None on both sides is equal, on one side is not."""
+    if _missing_number(a) or _missing_number(b):
+        return _missing_number(a) and _missing_number(b)
+    return math.isclose(float(a), float(b), rel_tol=rel_tol, abs_tol=abs_tol)
+
+
 def _rq4_sensitivity(technique, rq_dir, rq4):
     """RQ4 without the posts whose only identity matches are ambiguous words.
 
     The tool's full_lexicon row recomputes RQ4; it must agree with the RQ4
-    table, or one of the two is stale.
+    table, or one of the two is stale. The exclude_ambiguous_only row must be
+    the full_lexicon row minus its excluded posts: the excluded posts all have
+    an identity match, so the counts drop by exactly the excluded numbers and
+    the rate on posts without an identity term is unchanged. Recomputing the
+    excluded posts from the declared ambiguous list would need the post texts,
+    which the report does not read.
     """
     path = Path(rq_dir) / RQ4_IDENTITY_FPR_SENSITIVITY_CSV.name
     table = _read_table(path)
-    rows = table[(table["technique"] == technique) & (table["split"] == "test")].set_index("variant")
+    rows = table[(table["technique"] == technique) & (table["split"] == "test")]
+    if rows["variant"].duplicated().any():
+        raise AuditError(f"{_rel(path)} has more than one row per variant for {technique}; the table is stale")
+    rows = rows.set_index("variant")
     if not {"full_lexicon", SENSITIVITY_VARIANT} <= set(rows.index):
         raise _stale(path, technique, "tools/identity_sensitivity.py fpr")
     full = rows.loc["full_lexicon"]
     same = (int(full["n_negative_with_identity_terms"]) == rq4["n_negative_with_identity_terms"]
-            and all(math.isclose(float(full[c]), rq4[c] or 0.0, rel_tol=1e-5, abs_tol=1e-9)
+            and all(_same_number(full[c], rq4[c])
                     for c in ("threshold", "fpr_with_identity_terms", "fpr_without_identity_terms")))
     if not same:
         raise AuditError(
@@ -906,13 +968,30 @@ def _rq4_sensitivity(technique, rq_dir, rq4):
             "the table is stale. Rerun tools/identity_sensitivity.py fpr before reporting"
         )
     row = rows.loc[SENSITIVITY_VARIANT]
+    n_neg_x, n_pos_x = int(row["n_negative_excluded"]), int(row["n_positive_excluded"])
+    consistent = (
+        0 <= n_neg_x <= int(full["n_negative_with_identity_terms"])
+        and 0 <= n_pos_x <= int(full["n_positive_with_identity_terms"])
+        and int(row["n_negative"]) == int(full["n_negative"]) - n_neg_x
+        and int(row["n_negative_with_identity_terms"]) == int(full["n_negative_with_identity_terms"]) - n_neg_x
+        and int(row["n_positive_with_identity_terms"]) == int(full["n_positive_with_identity_terms"]) - n_pos_x
+        and all(_same_number(row[c], full[c]) for c in ("threshold", "fpr_without_identity_terms",
+                                                         "recall_without_identity_terms"))
+    )
+    if not consistent:
+        raise AuditError(
+            f"{_rel(path)} {SENSITIVITY_VARIANT} row for {technique} is not its full_lexicon row minus the "
+            "excluded posts; the table is stale. Rerun tools/identity_sensitivity.py fpr before reporting"
+        )
     n_with = int(row["n_negative_with_identity_terms"])
     return {
         "sources": [_rel(path)],
         "variant": SENSITIVITY_VARIANT,
-        "n_negative_excluded": int(row["n_negative_excluded"]),
+        "n_negative_excluded": n_neg_x,
+        "n_positive_excluded": n_pos_x,
         "n_negative_with_identity_terms": n_with,
         "n_negative_without_identity_terms": int(row["n_negative"]) - n_with,
+        "n_positive_with_identity_terms": int(row["n_positive_with_identity_terms"]),
         "fpr_with_identity_terms": _num(row["fpr_with_identity_terms"]),
         "fpr_without_identity_terms": _num(row["fpr_without_identity_terms"]),
         "fpr_ratio": _num(row["fpr_ratio"]),
@@ -936,7 +1015,18 @@ def _counterfactual_rows(rows, population=lambda row: row["population"]):
     return out
 
 
-def _wp7_unambiguous(technique, rq_dir):
+def _require_locked(rows, technique, locked, path, tool):
+    """Every counterfactual row must have been scored at the technique's locked threshold."""
+    off = sorted({float(t) for t in rows["threshold"] if not _same_number(t, locked)})
+    if off:
+        raise AuditError(
+            f"{_rel(path)} scored {technique} at threshold {off} but the locked threshold is {locked}; "
+            f"the table is stale. Rerun {tool} --technique {technique} before reporting"
+        )
+
+
+def _wp7_unambiguous(technique, rq_dir, locked, sensitivity):
+    """The restricted-population remove rows; their n must be the sensitivity table's identity-term counts."""
     path = Path(rq_dir) / RQ4_IDENTITY_COUNTERFACTUAL_SENSITIVITY_CSV.name
     if not path.exists():
         return {"sources": [], "status": "not run", "rows": []}
@@ -944,11 +1034,22 @@ def _wp7_unambiguous(technique, rq_dir):
     rows = table[(table["technique"] == technique) & (table["operation"] == "remove")]
     if rows.empty:
         return {"sources": [_rel(path)], "status": "not run", "rows": []}
+    tool = "tools/identity_sensitivity.py counterfactual"
+    _require_locked(rows, technique, locked, path, tool)
+    expected = {"non_extremist": sensitivity["n_negative_with_identity_terms"],
+                "extremist": sensitivity["n_positive_with_identity_terms"]}
+    found = {row["population"]: int(row["n_posts"]) for _, row in rows.iterrows()}
+    if len(rows) != len(found) or found != expected:
+        raise AuditError(
+            f"{_rel(path)} remove rows for {technique} cover {found} posts but "
+            f"{RQ4_IDENTITY_FPR_SENSITIVITY_CSV.name} ({SENSITIVITY_VARIANT}) has {expected} with an "
+            f"unambiguous identity match; one of them is stale. Rerun {tool} and identity_sensitivity.py fpr"
+        )
     return {"sources": [_rel(path)], "status": "run",
             "rows": _counterfactual_rows(rows, lambda row: f"{row['population']}, unambiguous match")}
 
 
-def _wp7(technique, rq_dir):
+def _wp7(technique, rq_dir, locked, sensitivity):
     path = Path(rq_dir) / RQ4_IDENTITY_COUNTERFACTUAL_CSV.name
     payload = {"sources": [], "status": "not run", "rows": []}
     if path.exists():
@@ -956,15 +1057,14 @@ def _wp7(technique, rq_dir):
         rows = table[(table["technique"] == technique) & (table["operation"] == "remove")]
         payload["sources"] = [_rel(path)]
         if not rows.empty:
+            _require_locked(table[table["technique"] == technique], technique, locked, path,
+                            "tools/identity_counterfactual.py")
             payload.update(status="run", rows=_counterfactual_rows(rows))
-    payload["unambiguous_population"] = _wp7_unambiguous(technique, rq_dir)
+    payload["unambiguous_population"] = _wp7_unambiguous(technique, rq_dir, locked, sensitivity)
     return payload
 
 
 FAITHFULNESS_POPULATION = "shared"  # the primary Holm family (faithfulness.py)
-# Columns a table row must share with the technique's JSON, or the table is stale.
-FAITHFULNESS_MATCH_COLUMNS = ("threshold", "n_posts", "n_flagged", "mean_drop_topk", "mean_drop_random",
-                              "drop_minus_random", "wilcoxon_p")
 
 
 def _locked_threshold(technique, results_dir):
@@ -991,16 +1091,58 @@ def _faithfulness(technique, results_dir, rq_dir):
         raise _stale(path, technique, "tools/faithfulness.py --rebuild-table")
     with open(json_path) as handle:
         payload = json.load(handle)
-    keyed = {(r["population"], int(r["k"])): r for _, r in rows.iterrows()}
-    for expected in payload["rows"]:
-        row = keyed.get((expected["population"], int(expected["k"])))
-        differs = row is None or any(
-            not math.isclose(float(row[c]), float(expected[c]), rel_tol=1e-5, abs_tol=1e-12)
-            for c in FAITHFULNESS_MATCH_COLUMNS if expected.get(c) is not None)
+    rebuild = "Rerun tools/faithfulness.py --rebuild-table before reporting"
+    rerun_all = "Rerun tools/faithfulness.py --technique T for every comparison technique before reporting"
+    comparison = [d.name for d in comparison_technique_dirs(results_dir)]
+    inside = technique in comparison
+
+    # The shared population is the posts every comparison technique explained; a changed comparison changes it.
+    if list(payload.get("shared_population_from") or []) != comparison:
+        raise AuditError(
+            f"{_rel(json_path)} took its shared population from {payload.get('shared_population_from')} but the "
+            f"comparison is now {comparison}; it is stale. {rerun_all}"
+        )
+    # Holm runs over every comparison technique's rows; a partial table gives the wrong family.
+    if inside:
+        absent = sorted(set(comparison) - set(table["technique"]))
+        if absent:
+            raise AuditError(f"{_rel(path)} has faithfulness rows for some comparison techniques but none for "
+                             f"{absent}; the Holm family is incomplete and the table is stale. {rerun_all}")
+    sizes = set()
+    for other in comparison:
+        other_json = Path(results_dir) / other / FAITHFULNESS_FILENAME.format(split="test")
+        if other_json.exists():
+            with open(other_json) as handle:
+                sizes.add(int(json.load(handle)["n_posts_shared"]))
+    if len(sizes) != 1:
+        raise AuditError(f"the comparison techniques' faithfulness JSONs give {sorted(sizes) or 'no'} shared-set "
+                         f"size(s); the shared population is not one set. {rerun_all}")
+    n_shared_set = sizes.pop()
+
+    # Every numeric row field, and the derived columns, must be the JSON's.
+    from faithfulness import DERIVED_COLUMNS, ROW_COLUMNS, derive_columns
+
+    def key(row):
+        return row["population"], int(row["k"])
+
+    table_keys = [key(r) for _, r in rows.iterrows()]
+    json_keys = [key(r) for r in payload["rows"]]
+    if len(set(table_keys)) != len(table_keys) or set(table_keys) != set(json_keys):
+        raise AuditError(f"{_rel(path)} rows for {technique} {sorted(table_keys)} are not the (population, k) "
+                         f"rows of {_rel(json_path)} {sorted(json_keys)}; the table is stale. {rebuild}")
+    keyed = {key(r): r for _, r in rows.iterrows()}
+    expected_rows = derive_columns(pd.DataFrame(payload["rows"]))
+    for i, expected in enumerate(payload["rows"]):
+        row = keyed[key(expected)]
+        columns = [c for c in ROW_COLUMNS if isinstance(expected.get(c), (int, float, type(None)))
+                   and not isinstance(expected.get(c), bool)]
+        values = [(c, expected.get(c)) for c in columns]
+        values += [(c, expected_rows.loc[i, c]) for c in DERIVED_COLUMNS]
+        differs = [c for c, value in values if not _same_number(row[c], value, abs_tol=1e-12)]
         if differs:
             raise AuditError(
-                f"{_rel(path)} does not match {_rel(json_path)} for {expected['population']} k={expected['k']}; "
-                "the table is stale. Rerun tools/faithfulness.py --rebuild-table before reporting"
+                f"{_rel(path)} does not match {_rel(json_path)} for {expected['population']} k={expected['k']} "
+                f"({', '.join(differs)}); the table is stale. {rebuild}"
             )
     locked = _locked_threshold(technique, results_dir)
     if not math.isclose(float(payload["threshold"]), locked, abs_tol=1e-9):
@@ -1008,10 +1150,31 @@ def _faithfulness(technique, results_dir, rq_dir):
             f"{_rel(json_path)} was computed at threshold {payload['threshold']} but the locked threshold is "
             f"{locked}; it is stale. Rerun tools/faithfulness.py --technique {technique} before reporting"
         )
-    inside = in_comparison(technique, results_dir)
-    family = table[table["population"] == FAITHFULNESS_POPULATION]
-    family = family[family["technique"].map(lambda t: in_comparison(t, results_dir) == inside
-                                            and (inside or t == technique))]
+
+    # The stored Holm p must be Holm over the current family: the comparison rows of the same
+    # population, or this technique's own rows when it is outside the comparison.
+    from mcnemar_pairs import holm_adjust
+
+    def family_of(population):
+        block = table[table["population"] == population]
+        members = block["technique"].isin(comparison) if inside else block["technique"] == technique
+        return block[members]
+
+    for population in sorted(set(rows["population"])):
+        block = family_of(population)
+        p = pd.to_numeric(block["wilcoxon_p"], errors="coerce")
+        recomputed = pd.Series(np.nan, index=block.index)
+        if p.notna().any():
+            recomputed[p.notna()] = holm_adjust(p[p.notna()].to_numpy())
+        own = block["technique"] == technique
+        wrong = [int(block.loc[i, "k"]) for i in block.index[own]
+                 if not _same_number(block.loc[i, "wilcoxon_p_holm"], recomputed[i], abs_tol=1e-300)]
+        if wrong:
+            raise AuditError(
+                f"{_rel(path)} wilcoxon_p_holm for {technique} ({population}, k={wrong}) is not Holm over the "
+                f"current family of {len(block)} rows; the table is stale. {rebuild}"
+            )
+    family = family_of(FAITHFULNESS_POPULATION)
     shared = rows[rows["population"] == FAITHFULNESS_POPULATION].sort_values("k")
     out = [{
         "k": int(r["k"]),
@@ -1030,6 +1193,7 @@ def _faithfulness(technique, results_dir, rq_dir):
         "status": "run",
         "population": FAITHFULNESS_POPULATION,
         "n_posts_shared": int(payload["n_posts_shared"]),
+        "n_posts_shared_set": n_shared_set,
         "n_posts_explained": int(payload["n_posts_explained"]),
         "n_random_seeds": len(payload["random_seeds"]),
         "threshold": _num(payload["threshold"]),
@@ -1056,9 +1220,10 @@ def build_report(technique, results_dir=None, rq_dir=None):
         "faithfulness": _faithfulness(technique, results_dir, rq_dir),
         "rq3": _rq3(technique, results_dir, rq_dir),
         "rq4": _rq4(technique, rq_dir),
-        "wp7_counterfactual": _wp7(technique, rq_dir),
     }
-    payload["rq4_ambiguous_terms_sensitivity"] = _rq4_sensitivity(technique, rq_dir, payload["rq4"])
+    sensitivity = _rq4_sensitivity(technique, rq_dir, payload["rq4"])
+    payload["rq4_ambiguous_terms_sensitivity"] = sensitivity
+    payload["wp7_counterfactual"] = _wp7(technique, rq_dir, _locked_threshold(technique, results_dir), sensitivity)
     assert_text_free(payload)
     return payload
 
@@ -1178,8 +1343,9 @@ def _faithfulness_lines(faith):
     lines += [
         f"Sources: {', '.join(f'`{s}`' for s in faith['sources'])}.",
         "",
-        f"Deletion test on the {faith['n_posts_shared']} test posts that every comparison technique explained "
-        f"(this technique explained {faith['n_posts_explained']} in all). For each k, the k words the post's own "
+        f"Deletion test on {faith['n_posts_shared']} of the {faith['n_posts_shared_set']} test posts that every "
+        f"comparison technique explained (this technique explained {faith['n_posts_explained']} in all). "
+        "For each k, the k words the post's own "
         "explanation ranks highest toward EXTREMIST are deleted, against deleting as many random words of the "
         f"same post ({faith['n_random_seeds']} seeds). Drop is p(extremist) before minus after; n counts the "
         "posts with at least one positive word. The restored predictor matched the committed probabilities "
@@ -1246,7 +1412,8 @@ def _wp7_lines(wp7):
             "",
             "Rows marked `unambiguous match` are the posts that keep at least one identity match outside the "
             "ambiguous list, with every match removed. Their Holm p values are over the sensitivity table's own "
-            "rows, not the WP7 family; a smaller population lowers power without changing the effect size.",
+            "rows, not the WP7 family. A smaller population has less power; its effect size is that of the "
+            "restricted posts.",
         ]
     return lines
 
@@ -1421,7 +1588,14 @@ def main(argv=None):
     if args.command == "run":
         ctx = Context(args.technique, args.with_perturbation, args.device, args.sequential_checkpoints)
         ok, _ = run_chain(ctx)
-        return EXIT_OK if ok else EXIT_FAILED
+        if not ok:
+            return EXIT_FAILED
+        shortfall = perturbation_shortfall(ctx)
+        if shortfall:
+            print(f"--with-perturbation was given but {', '.join(n for n, _ in shortfall)} did not run; "
+                  f"exit {EXIT_PERTURBATION_SKIPPED}")
+            return EXIT_PERTURBATION_SKIPPED
+        return EXIT_OK
 
     techniques = [args.technique] if args.technique else [d.name for d in technique_dirs()]
     try:
