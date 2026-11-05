@@ -258,24 +258,38 @@ extremist framing lexicon (seeded from single-word entries of an extremism
 lexicon) matches almost none of the top words, and the identity-term share
 is 0.000 [C124] to 0.174 [C154]. Slurs take a small share: no test top-50
 list holds more than 1 [C293] slur, and its share of positive mass is at most
-0.026 [C292] on test (0.052 [C294] on validation). In every list but 03's the
-slur is the same racial slur, which occurs in two explained test posts. The
-transformers' slur shares (0.026 [C288], 0.021 [C290]) are the largest, but they
-rest on that one word, and 07's two runs differ by about as much (SD
-0.013 [C289]), so no technique is said to rely on slurs more than another.
-The RQ2 hypothesis that the classical models put more mass on identity terms
-and slurs than the transformers is not supported: the ensemble (11) has the
-largest identity share and both transformers the largest slur shares. The
-slur list covers HurtLex's conservative English ethnic and sexual-orientation
-slurs only; a slur outside it counts as topical. The bootstrap
+0.026 [C292] on test (0.052 [C294] on validation). Each whole-model test list
+except 03's (which holds none) contains the same racial slur, from two
+explained test posts; among 11's members, the list of member B holds a
+different slur instead (Table 5). The transformers' slur shares
+(0.026 [C288], 0.021 [C290]) are the largest. Under the preregistered rule
+(section 5 of the plan: a difference counts if it exceeds the pooled two-run
+SD) most slur differences pass, among them 07 and 11 against 01, 02 and 06,
+because the two-run SDs of the slur share are tiny. Under the bootstrap
+check reported alongside they do not: every technique's slur-share interval
+starts at 0.000 [C295] and ends between 0.015 [C296] and 0.065 [C297], so the
+intervals all overlap. The slur ordering therefore passes the primary rule
+only, rests on one word in two posts, and is not used to judge the RQ2
+hypothesis. On identity terms, the part both checks can address, the
+hypothesis that the classical models put more mass on identity terms than
+the transformers is not supported: the ensemble (11) has the largest
+identity share. The slur list covers HurtLex's conservative English ethnic
+and sexual-orientation slurs only; a slur outside it counts as topical. The bootstrap
 SDs (0.016 [C115] to 0.036 [C133]) are larger than the two-run SDs (0.002 [C156] to
 0.023 [C126]), so the SD the decision rule names understates post-sampling
-spread. Multi-word lexicon entries cannot match word-level artifacts; the
-frozen lexicons contain 3 [C820] such entries, all spaced spellings of one
-slur family whose closed spellings are also listed, so the
-loss to word-level matching is small.[^cov]
-**TODO(author):** decide whether the section 5 difference rule uses the
-two-run SD (as preregistered) or the bootstrap intervals.
+spread. Lexicon entries that the word-level masker splits into several
+tokens (a space, a hyphen or other punctuation) cannot match a word-level
+artifact: the frozen lexicons contain 48 [C820] such entries, 9 [C821] of the
+58 slur entries (spaced and hyphenated spellings) and 39 [C822] of the 382
+framing entries (hyphenated words such as `neo-nazi`, numeric codes, domain
+names and symbols). They still match post text in the RQ4 tools. In the
+slur list, the spaced and hyphenated spellings of two families also have a
+closed one-token spelling that does match, and two hyphenated compounds
+have none; in the framing list the loss is larger and is one more reason
+the framing share is near zero.[^cov]
+Per the author decision on the section 5 rule, the preregistered two-run SD
+stays the primary criterion and the bootstrap intervals are reported
+alongside as a stricter check; the text says which differences pass both.
 
 The identity lexicon also misses identity references, though the evidence is
 thin. Across the eight top-50 lists there are 26 [C700] candidate
@@ -503,18 +517,26 @@ Of the 280 [C465] non-extremist test posts, 68 [C464] contain at least one
 identity-lexicon match (84 [C466] extremist posts do).[^rq4n] Every technique
 has a higher false-positive rate on those 68 [C464] than on the other
 212 [C474] (Table 7). The ratio is 1.87 [C420] to 4.16 [C460]. Unadjusted Fisher
-exact p is below 0.05 for 04, 05, 06 and 11. 06 sits at the boundary
-(0.049 [C445]) and rests on a single post: one of its false positives
-matches only `aliens`, the term added to the identity lexicon at the WP3
-freeze; without that term the post would count on the other side of the
-ratio. With so few such posts, only
+exact p is below 0.05 for 04, 05, 06 and 11, and none of the four survives
+Holm over the eight tests: the smallest, 11's 0.0071 [C461], becomes about
+0.057 (eight times 0.0071). "Four" counts unadjusted p only. 06 sits at the
+boundary (0.049 [C445]) and rests on a single post. One of its false
+positives matches only `aliens`, which was added to the identity lexicon at
+the WP3 freeze; under the lexicon before the freeze 06 was not significant
+(p = 0.15), and without the term the post would count on the other side of
+the ratio. The term was taken from 06's own test top-50 list of lexicon
+gaps (section 6.3), so the addition is not independent of 06's results.
+It is also not a neutral reference: in all 25 posts of the dataset that
+contain it, it co-occurs with "illegal" (a count from `data/dataset.csv`,
+not an artifact), so it marks a loaded phrase rather than a group name.
+Whether it stays in the identity list is an author decision. With so few such posts, only
 large ratios are detectable, so a non-significant ratio is not evidence that
 the effect is absent. The identity matches come from the frozen lexicon. That the point estimate exceeds 1 for
 every technique, classical or transformer, is consistent with the bias
 being learned from the training data rather than introduced by one
 architecture, as Davidson et al. (2019) found for dialect bias across five
 abuse datasets; only four of the eight ratios reach unadjusted Fisher
-p < 0.05, one of them barely.
+p < 0.05, one of them barely, and none after Holm.
 Threshold-free subgroup and BPSN/BNSP AUCs (Borkan et al., 2019) would
 complement these rates and can be computed from the committed
 probabilities; they are not reported here.
@@ -713,7 +735,7 @@ Resampling noisy ratios also pulls a rank correlation toward zero, so these
 figures describe how fragile the ordering is; they are not an interval for
 rho. RQ4 reading: every technique has a higher FPR on benign posts that
 mention a community (Fisher p < 0.05, unadjusted, for four of eight, one at
-the boundary); for
+the boundary, and for none after Holm); for
 the classical word-level techniques the identity term behaves as evidence of
 extremism under both edits; for the transformers the removal effect is not
 reproduced by the stricter substitution control; and the cross-technique
@@ -898,8 +920,14 @@ The perturbation stages cannot be reproduced by a reader until they are.
 ## Limitations specific to these results
 
 Labels are post-level and features text-only; one dataset and one frozen
-split; a small test split; category shares depend on lexicons that are not
-yet frozen; SHAP over subword models is aggregated to words with a
+split; a small test split; category shares depend on lexicons frozen at
+WP3, whose contents are curation choices. The slur list counts reclaimed and
+in-group spellings of a racial slur (among `data/lexicons/slurs.txt` lines 85 to
+90) as slurs, so posts in a dialect that uses them in-group are scored as
+slur use, the dialect-bias risk Sap et al. (2019) describe; and it keeps
+the four entries of one racial-typology family (lines 80 to 83), which are
+also used as a disability insult, although cognitive-disability insults
+are otherwise excluded. SHAP over subword models is aggregated to words with a
 word-level masker (Kokalj et al., 2021); the pipeline check compares
 against known coefficients, and the randomization sanity checks of Adebayo
 et al. (2018) were not run; the identity lexicon does not capture
@@ -921,8 +949,9 @@ and cite it before submission.
 1. Notebook 12 (plain RoBERTa control): run it, rerun RQ1 (Holm family
    with 12's pairs), RQ3 and the relation, then revise sections 5 and 7.
 2. (Done 2026-11-04: WP3 lexicon freeze, RQ2 and RQ4 re-run.)
-3. Section 5 rule: two-run SD (preregistered) or bootstrap intervals for
-   share differences.
+3. (Decided 2026-11-04: the two-run SD rule stays primary and the bootstrap
+   intervals are reported alongside; sections 6 and 7 say which differences
+   pass both.)
 4. Validation-split member runs for 11, if RQ3 prose needs member SDs.
 5. WP9 (layer-wise probes) and WP10 (zero-shot LLM, data-sharing decision).
 6. A qualitative read of the shared errors, outside the repository; evidence

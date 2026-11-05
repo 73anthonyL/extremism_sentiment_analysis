@@ -29,11 +29,11 @@ Format (the checker's docstring is the reference):
   significant figures; `-` an exact string (booleans case-insensitive),
   never for a number.
 
-Id blocks: C001 to C096 RQ1; C100 to C294 RQ2 (C260 to C291 are across-run
+Id blocks: C001 to C096 RQ1; C100 to C297 RQ2 (C260 to C291 are across-run
 SDs and the slur column); C300 to C385 RQ3 shares and stability; C400 to C474 RQ4 FPR; C500 to
 C670 WP7 and the RQ2-RQ4 relation; C700 to C704 lexicon gaps; C710 to C740
 training recipes of 07 and the members of 11; C800 to C819 framework card and
-data.
+data; C820 to C822 lexicon coverage.
 
 | id | artifact | selector | column | value | decimals |
 |---|---|---|---|---|---|
@@ -320,6 +320,9 @@ data.
 | C292 | `results_summary/rq/rq3_reliance_comparison.csv` | `role=whole;split=test` | `max(share_of_positive_mass__slur)@8` | 0.026 | 3 |
 | C293 | `results_summary/rq/rq2_category_shares.csv` | `category=slur;split=test` | `max(n_words)@12` | 1 | 0 |
 | C294 | `results_summary/rq/rq3_reliance_comparison.csv` | `role=whole;split=validation` | `max(share_of_positive_mass__slur)@8` | 0.052 | 3 |
+| C295 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `category=slur;split=test;post_set=own;measure=share_of_positive_mass` | `max(pct_low)@8` | 0.000 | 3 |
+| C296 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `category=slur;split=test;post_set=own;measure=share_of_positive_mass` | `min(pct_high)@8` | 0.015 | 3 |
+| C297 | `results_summary/rq/rq2_bootstrap_category_shares.csv` | `category=slur;split=test;post_set=own;measure=share_of_positive_mass` | `max(pct_high)@8` | 0.065 | 3 |
 | C300 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__extremist_framing` | 0.030 | 3 |
 | C301 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__identity_term` | 0.070 | 3 |
 | C302 | `results_summary/rq/rq3_reliance_comparison.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;role=whole;split=test` | `share_of_positive_mass__topical` | 0.873 | 3 |
@@ -696,4 +699,6 @@ data.
 | C817 | `results_summary/foundation/split_label_distribution.csv` | `split=train;label=0` | `split_count` | 2099 | 0 |
 | C818 | `results_summary/foundation/split_label_distribution.csv` | `split=test;label=0` | `split_count` | 450 | 0 |
 | C819 | `results_summary/rq/report_cards/01_LOG-REG_TF-IDF.json` | `-` | `wp7_counterfactual.rows.[population=non_extremist].n_flagged_original` | 11 | 0 |
-| C820 | `results_summary/rq/rq2_lexicon_coverage.csv` | `*` | `sum(n_multi_word_unmatchable)@3` | 3 | 0 |
+| C820 | `results_summary/rq/rq2_lexicon_coverage.csv` | `*` | `sum(n_multi_word_unmatchable)@3` | 48 | 0 |
+| C821 | `results_summary/rq/rq2_lexicon_coverage.csv` | `category=slur` | `n_multi_word_unmatchable` | 9 | 0 |
+| C822 | `results_summary/rq/rq2_lexicon_coverage.csv` | `category=extremist_framing` | `n_multi_word_unmatchable` | 39 | 0 |
