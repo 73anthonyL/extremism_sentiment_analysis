@@ -249,3 +249,56 @@ class TestOutputs:
                         path, results)
         assert sorted(pd.read_csv(path)["technique"].unique()) == ["01_A", "02_B"]
         assert len(pd.read_csv(path)) == 4
+
+
+def _payloads_with_p(techniques, p_by_technique, results_dir):
+    """Payloads whose rows carry chosen Wilcoxon p-values (population-major, then k)."""
+    frame = _frame(_posts())
+    shared = set(frame["row_id"].iloc[:20])
+    payloads = []
+    for technique in techniques:
+        model = _fake_model()
+        model.technique = technique
+        payload = analyze(technique, model, frame, 0.5, shared, k_values=(1, 3), seeds=(1, 2))
+        for row, p in zip(payload["rows"], p_by_technique[technique]):
+            row["wilcoxon_p"] = p
+        payloads.append(payload)
+    return payloads
+
+
+class TestHolm:
+    P = {
+        "01_A": [0.001, 0.04, 0.01, 0.03],   # explained k1, k3; shared k1, k3
+        "02_B": [0.02, 0.002, 0.05, 0.004],
+        "03_C": [0.03, 0.01, 0.02, 0.04],
+    }
+
+    def _expected(self, table, techniques, population):
+        block = table[(table["population"] == population) & table["technique"].isin(techniques)]
+        return block, fa.holm_adjust(block["wilcoxon_p"].to_numpy())
+
+    def test_holm_equals_holm_adjust_per_population(self, tmp_path):
+        results = tmp_path / "results_summary"
+        results.mkdir()
+        path = write_table(_payloads_with_p(("01_A", "02_B"), self.P, results), tmp_path / "t.csv", results)
+        table = pd.read_csv(path)
+        for population in ("explained", "shared"):
+            block, expected = self._expected(table, ("01_A", "02_B"), population)
+            assert len(block) == 4
+            np.testing.assert_allclose(block["wilcoxon_p_holm"].to_numpy(), expected, rtol=1e-5)
+        # The identity (p_holm == p) would pass a bounds check; it cannot pass this one.
+        assert not np.allclose(table["wilcoxon_p_holm"], table["wilcoxon_p"])
+
+    def test_technique_outside_the_comparison_forms_its_own_family(self, tmp_path):
+        results = tmp_path / "results_summary"
+        (results / "03_C").mkdir(parents=True)
+        (results / "03_C" / "best_config.json").write_text(json.dumps({"in_comparison": False}))
+        payloads = _payloads_with_p(("01_A", "02_B", "03_C"), self.P, results)
+        table = pd.read_csv(write_table(payloads, tmp_path / "t.csv", results))
+        for population in ("explained", "shared"):
+            block, expected = self._expected(table, ("01_A", "02_B"), population)
+            np.testing.assert_allclose(block["wilcoxon_p_holm"].to_numpy(), expected, rtol=1e-5)
+            own, own_expected = self._expected(table, ("03_C",), population)
+            assert len(own) == 2
+            np.testing.assert_allclose(own["wilcoxon_p_holm"].to_numpy(), own_expected, rtol=1e-5)
+
