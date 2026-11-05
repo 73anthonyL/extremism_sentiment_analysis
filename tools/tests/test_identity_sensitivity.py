@@ -214,8 +214,17 @@ class TestLexiconGaps:
         found, summary = lexicon_gaps("11_T", frame, "run", lexicons, frozenset({"white"}), top_k=5)
         assert [c["word"] for c in found] == ["whites", "stopwhitegenocide"]
         assert found[1]["other_lexicon_category"] == "extremist_framing"
+        assert found[0]["related_entry_ambiguous"] and found[1]["related_entry_ambiguous"]
+        assert found[0]["low_support"] and found[1]["low_support"]       # support 2 and 1
         assert summary["n_identity_term"] == 2 and summary["n_identity_term_ambiguous"] == 1
         assert summary["ambiguous_words"] == "white"
+
+    def test_gap_flags_for_unambiguous_entry_and_high_support(self):
+        lexicons = {"slur": [], "extremist_framing": [], "identity_term": ["white", "muslim"]}
+        frame = pd.DataFrame({"word": ["muslims"], "mean_abs_attribution": [0.5],
+                              "mean_attribution": [0.5], "support": [3]})
+        found, _ = lexicon_gaps("11_T", frame, "run", lexicons, frozenset({"white"}), top_k=1)
+        assert found[0]["related_entry_ambiguous"] is False and found[0]["low_support"] is False
 
 
 def test_cli_refuses_a_bad_ambiguous_list(monkeypatch, capsys, tmp_path):

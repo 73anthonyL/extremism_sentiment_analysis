@@ -47,7 +47,14 @@ lexicon-gaps    for each technique's whole-model test attribution run, the
                               characters as part of a longer token (hashtags)
                   group_noun  in GROUP_NOUN_CANDIDATES, generic group nouns
                 It also counts how many top-K identity words are ambiguous.
-                The candidates are for human review; nothing is added.
+                related_entry_ambiguous marks candidates derived from an entry
+                on the ambiguous list (whites, stopwhitegenocide from 'white');
+                a plural such as 'whites' is far less ambiguous than the
+                singular colour word, so these are still worth reviewing.
+                low_support marks support <= LOW_SUPPORT_MAX posts: weak
+                evidence. Hashtag compounds may belong in extremist_framing
+                rather than identity terms. The candidates are for human
+                review; nothing is added.
 
 Text is held in memory only. Outputs carry counts, rates, p values and
 vocabulary words (which the committed attribution artifacts already carry);
@@ -121,6 +128,7 @@ GROUP_NOUN_CANDIDATES = (
     "nationalities", "religion", "religions", "tribe", "tribes", "alien", "aliens",
 )
 COMPOUND_MIN_ENTRY_LENGTH = 5
+LOW_SUPPORT_MAX = 2
 DEFAULT_TOP_K = 50
 TEST_SPLIT = "test"
 
@@ -177,7 +185,8 @@ CF_TABLE_COLUMNS = CF_ROW_COLUMNS + (
 )
 
 GAP_COLUMNS = ("technique", "run_id", "top_k", "rank", "word", "rule", "related_entry",
-               "other_lexicon_category", "mean_abs_attribution", "support")
+               "related_entry_ambiguous", "other_lexicon_category", "mean_abs_attribution",
+               "support", "low_support")
 TOP_K_COLUMNS = ("technique", "run_id", "top_k", "n_identity_term", "n_identity_term_ambiguous",
                  "ambiguous_words", "n_gap_candidates", "gap_words")
 
@@ -425,8 +434,10 @@ def lexicon_gaps(technique, frame, run_id, lexicons, ambiguous, top_k=DEFAULT_TO
         candidates.append({
             "technique": technique, "run_id": run_id, "top_k": int(top_k), "rank": rank,
             "word": word, "rule": rule[0], "related_entry": rule[1],
+            "related_entry_ambiguous": bool(rule[1]) and rule[1] in ambiguous,
             "other_lexicon_category": ";".join(other),
             "mean_abs_attribution": float(row.mean_abs_attribution), "support": int(row.support),
+            "low_support": int(row.support) <= LOW_SUPPORT_MAX,
         })
     summary = {
         "technique": technique, "run_id": run_id, "top_k": int(top_k),
