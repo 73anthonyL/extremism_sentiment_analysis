@@ -172,6 +172,14 @@ RQ4_IDENTITY_COUNTERFACTUAL_SENSITIVITY_CSV = RQ_DIR / "rq4_identity_counterfact
 RQ2_IDENTITY_LEXICON_GAPS_SENSITIVITY_CSV = RQ_DIR / "rq2_identity_lexicon_gaps_sensitivity.csv"
 RQ2_IDENTITY_TOP_K_SENSITIVITY_CSV = RQ_DIR / "rq2_identity_top_k_sensitivity.csv"
 
+# WP7b identity-term swap (tools/identity_swap.py). The swap map is
+# preregistered in docs/preregistrations/WP7b_identity_swap.md; it is not a
+# lexicon and no RQ2/RQ4 tool reads it.
+IDENTITY_SWAP_MAP_CSV = LEXICON_DIR / "identity_swap_pairs.csv"
+RQ4_IDENTITY_SWAP_CSV = RQ_DIR / "rq4_identity_swap.csv"
+RQ4_IDENTITY_SWAP_DIRECTIONS_CSV = RQ_DIR / "rq4_identity_swap_directions.csv"
+IDENTITY_SWAP_FILENAME = "identity_swap_{split}.json"
+
 # Post-level bootstrap intervals for the descriptive RQ2/RQ3 numbers and the
 # RQ2-RQ4 relation; written by tools/bootstrap_uncertainty.py.
 RQ2_BOOTSTRAP_CATEGORY_SHARES_CSV = RQ_DIR / "rq2_bootstrap_category_shares.csv"
