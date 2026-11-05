@@ -622,7 +622,9 @@ def write_table(payloads, path=None, results_dir=None, replace=False):
     path = Path(RQ2_FAITHFULNESS_CSV if path is None else path)
     new = pd.DataFrame([row for p in payloads for row in p["rows"]])[list(ROW_COLUMNS)]
     if path.exists() and not replace:
-        existing = pd.read_csv(path)
+        # round_trip: pandas' default float parser can be one ulp off, and a Holm product that
+        # lands on a rounding tie then prints differently from a rebuild from the JSONs.
+        existing = pd.read_csv(path, float_precision="round_trip")
         if list(existing.columns) != list(TABLE_COLUMNS):
             raise FaithfulnessError(f"{path.name}: columns differ from this version of the tool; rerun every technique")
         existing = existing[~existing["technique"].isin(new["technique"])][list(ROW_COLUMNS)]

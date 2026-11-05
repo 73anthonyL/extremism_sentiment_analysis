@@ -356,3 +356,21 @@ class TestDerivedAndRebuild:
         with pytest.raises(FaithfulnessError, match="rows lack"):
             fa.rebuild_table(results, tmp_path / "t.csv")
         assert not (tmp_path / "t.csv").exists()
+
+
+def test_merging_one_technique_equals_a_rebuild_byte_for_byte(tmp_path):
+    """A --technique run merges into the table it reads back; that must equal a rebuild from the JSONs.
+
+    The committed rows include a Holm product on a %.6g rounding tie (5 x 4.67719e-30), which
+    pandas' default float parser, one ulp off, used to print as 2.3386e-29 instead of 2.33859e-29.
+    """
+    from repo_paths import RESULTS_DIR
+
+    paths = sorted(RESULTS_DIR.glob("*/faithfulness_test.json"))
+    if len(paths) < 2:
+        pytest.skip("committed faithfulness JSONs not present")
+    payloads = [json.loads(p.read_text()) for p in paths]
+    rebuilt = write_table(payloads, tmp_path / "t.csv", RESULTS_DIR, replace=True).read_text()
+    for payload in payloads:
+        merged = write_table([payload], tmp_path / "t.csv", RESULTS_DIR).read_text()
+        assert merged == rebuilt, payload["technique"]
