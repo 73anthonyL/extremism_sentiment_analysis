@@ -41,16 +41,23 @@ Method
                       probability artifacts at each technique's locked
                       threshold, with identity matches found as
                       `identity_fpr.py` finds them. The two resamples are
-                      independent. A replicate with no false positive on
-                      either side for some technique (ratio 0/0) has no
-                      ranking and is dropped (n_reps_valid); one with false
-                      positives only on identity-term posts ranks as +inf.
+                      independent, so the explained posts are not nested in
+                      the resampled test rows; the coupling would change
+                      little, since the replicate spread comes mainly from
+                      the FPR ratios. A replicate with no false positive on
+                      either side for some technique (ratio 0/0), or with an
+                      empty group, has no ranking and is dropped
+                      (n_reps_valid); one with false positives only on
+                      identity-term posts ranks as +inf.
 
     Within a split, one draw over each distinct post set is shared by every
     technique that explained that set (the common posts are one draw for all
     techniques; the 450-post classical runs share one draw), and one draw of
     the test rows is shared by every technique's FPR ratio. That pairing is
     what makes the paired differences meaningful.
+
+    The bootstrap covers post sampling only: not the SHAP seed, the
+    explainer budget, the training seed or another split.
 
 Identity check
     Before any replicate the tool rebuilds every statistic with weight one per
@@ -74,23 +81,36 @@ Outputs (results_summary/rq/, text-free: technique names, measures and numbers; 
                                           contrast technique minus each other
                                           technique on the common posts: identity
                                           share, single-post share, split Spearman.
-                                          Descriptive, not a test.
-    Each row has point, boot_mean, boot_sd, ci_low, ci_high (percentile),
-    point_inside_ci, ci_level, n_reps, n_reps_valid, seed. boot_mean and
-    boot_sd are empty when a replicate is infinite (an FPR ratio over a zero
-    baseline; n_reps_infinite counts them).
+                                          role descriptive_post_sampling_only: not a
+                                          test, and not the section 5 difference
+                                          criterion (which uses the across-run SD
+                                          of rq3_stability.csv).
+    Each row has point, interval_kind, boot_median, boot_mean, boot_sd,
+    pct_low, pct_high (percentiles of the replicates), pct_high_censored,
+    pct_level, point_inside_interval, share_reps_below_point, n_reps,
+    n_reps_valid, n_reps_infinite, seed.
 
-Reading the intervals
-    The percentile interval is trustworthy for smooth statistics (category
-    shares, Spearman agreement, differences of these). Top-K set statistics
-    (Jaccard, the single-post share, the half-mass count) are discrete and
-    shift under resampling: a post drawn twice raises support, a post left
-    out removes rare words, and the top-K reshuffles. Where the shift is large
-    the point falls outside its own interval; `point_inside_ci` false marks
-    those rows, and their intervals are a rough spread, not a coverage
-    statement. A rank correlation over eight noisy ratios is attenuated
-    under resampling, so the relation's boot_mean sits well below the point;
-    the interval is the honest range, the boot_mean is not an estimate.
+Reading the intervals (interval_kind)
+    percentile_ci      Smooth statistics whose replicates centre on the
+                       point: category shares, Spearman agreement, the
+                       identity-share and Spearman differences, each
+                       technique's FPR ratio. The percentile bounds are read
+                       as an approximate confidence interval.
+    replicate_spread   Statistics whose replicates do not centre on the point,
+                       so the percentile bounds are NOT a confidence interval,
+                       only the spread of the replicates. Top-K sets and
+                       counts (Jaccard, the single-post share and its
+                       difference, the half-mass count) shift under
+                       resampling: a post drawn twice raises support, a post
+                       left out removes rare words, the top-K reshuffles. The
+                       relation rho is attenuated: resampling eight noisy FPR
+                       ratios scrambles their ranking, so most replicates
+                       fall below the point (share_reps_below_point). Its rows
+                       are a sensitivity of the ranking to test-row and post
+                       resampling; report the replicate median, the share
+                       below the point and share_reps_rho_above_zero_not_a_p_value
+                       (the share of replicates with rho > 0, which is not a
+                       one-sided p-value), never the bounds as a 95% CI.
 
 Refusals: everything `same_post_stability.load_whole_runs` refuses; a missing
 committed table; identity statistics that do not reproduce a committed table;
@@ -157,8 +177,14 @@ WORD_ATOL = 1e-8
 
 SAME_POST_MEASURES = ("share_single_post_top_k_positive", "n_words_half_positive_mass")
 AGREEMENT_MEASURES = ("spearman_mean_abs_attribution", "jaccard_top_k_abs", "jaccard_top_k_positive")
-INTERVAL_COLUMNS = ("point", "boot_mean", "boot_sd", "ci_low", "ci_high", "point_inside_ci", "ci_level",
-                    "n_reps", "n_reps_valid", "seed")
+INTERVAL_KINDS = ("percentile_ci", "replicate_spread")
+# Statistics whose replicates do not centre on the point: discrete top-K sets and counts.
+SPREAD_MEASURES = ("share_single_post_top_k_positive", "n_words_half_positive_mass",
+                   "jaccard_top_k_abs", "jaccard_top_k_positive")
+DIFFERENCE_ROLE = "descriptive_post_sampling_only"
+INTERVAL_COLUMNS = ("point", "interval_kind", "boot_median", "boot_mean", "boot_sd", "pct_low", "pct_high",
+                    "pct_high_censored", "pct_level", "point_inside_interval", "share_reps_below_point",
+                    "n_reps", "n_reps_valid", "n_reps_infinite", "seed")
 FORBIDDEN_COLUMNS = ("row_id", "text", "text_hash", "token", "word", "position")
 
 
@@ -317,7 +343,11 @@ def fpr_inputs(techniques, processed, terms, probs, thresholds):
 
 
 def fpr_ratios(inputs, counts):
-    """FPR ratio per technique for each row of `counts` (reps x rows). 0/0 -> nan, x/0 -> +inf."""
+    """FPR ratio per technique for each row of `counts` (reps x rows).
+
+    No false positive without identity terms but some with them -> +inf; none on
+    either side -> nan; a group with no negatives at all -> nan (never inf).
+    """
     result = {}
     for technique, (with_id, without_id, pred) in inputs.items():
         n_with, n_without = counts @ with_id, counts @ without_id
@@ -326,9 +356,10 @@ def fpr_ratios(inputs, counts):
         # techniques with the same count ratio tie exactly, as they do in the committed table.
         with np.errstate(divide="ignore", invalid="ignore"):
             ratio = (fp_with * n_without) / (n_with * fp_without)
-        ratio = np.where((n_with == 0) | (n_without == 0), np.nan, ratio)
-        ratio = np.where((n_with > 0) & (fp_without == 0) & (fp_with > 0), np.inf, ratio)
+        ratio = np.where((fp_without == 0) & (fp_with > 0), np.inf, ratio)
         ratio = np.where((fp_without == 0) & (fp_with == 0), np.nan, ratio)
+        # An empty group has no rate: nan wins over inf.
+        ratio = np.where((n_with == 0) | (n_without == 0), np.nan, ratio)
         result[technique] = ratio
     return result
 
@@ -506,22 +537,46 @@ class Design:
         return len(self.own_set(technique, split) if post_set == "own" else self.common[split])
 
 
-def interval(point, samples, ci, seed):
+def interval(point, samples, ci, seed, kind):
+    """Summary of one statistic's replicates.
+
+    `kind` is `percentile_ci` (a smooth statistic whose percentile interval is
+    read as a confidence interval) or `replicate_spread` (a discrete or
+    attenuated statistic whose replicates do not centre on the point; the
+    bounds are the spread of the replicates, not a confidence interval).
+    nan replicates are dropped (n_reps_valid). +inf replicates are kept and
+    counted (n_reps_infinite); the bounds are order statistics, never
+    interpolated across inf, and a bound that would be inf is replaced by the
+    largest finite replicate with pct_high_censored true. boot_mean and
+    boot_sd are empty when any replicate is infinite.
+    """
+    if kind not in INTERVAL_KINDS:
+        raise BootstrapError(f"unknown interval kind {kind}")
     samples = np.asarray(samples, float)
-    finite = samples[~np.isnan(samples)]
+    valid = np.sort(samples[~np.isnan(samples)])
+    infinite = int(np.isinf(valid).sum())
     alpha = (1.0 - ci) / 2.0
-    if len(finite):
-        with np.errstate(invalid="ignore"):
-            low, high = np.percentile(finite, [100 * alpha, 100 * (1 - alpha)])
-            all_finite = finite[np.isfinite(finite)]
-        mean = float(np.mean(all_finite)) if len(all_finite) == len(finite) else np.nan
-        sd = float(np.std(all_finite, ddof=1)) if len(all_finite) == len(finite) and len(finite) > 1 else np.nan
-    else:
-        low = high = mean = sd = np.nan
-    inside = bool(len(finite)) and bool(low - 1e-12 <= point <= high + 1e-12)
-    return {"point": float(point), "boot_mean": mean, "boot_sd": sd, "ci_low": float(low),
-            "ci_high": float(high), "point_inside_ci": inside, "ci_level": ci, "n_reps": int(len(samples)),
-            "n_reps_valid": int(len(finite)), "seed": int(seed)}
+    low = high = mean = sd = median = below = np.nan
+    censored = False
+    if len(valid):
+        method = "linear" if infinite == 0 else "inverted_cdf"
+        low, median, high = np.percentile(valid, [100 * alpha, 50.0, 100 * (1 - alpha)], method=method)
+        finite = valid[np.isfinite(valid)]
+        if np.isinf(high):
+            high, censored = (float(finite.max()) if len(finite) else np.nan), True
+        if np.isinf(low):
+            low = float(finite.min()) if len(finite) else np.nan
+        if infinite == 0:
+            mean = float(np.mean(valid))
+            sd = float(np.std(valid, ddof=1)) if len(valid) > 1 else np.nan
+        below = float(np.mean(valid < point - 1e-12))
+    # A censored upper bound stands for +inf, so anything above the low bound is inside.
+    inside = bool(len(valid)) and bool(low - 1e-12 <= point and (censored or point <= high + 1e-12))
+    return {"point": float(point), "interval_kind": kind, "boot_median": float(median), "boot_mean": mean,
+            "boot_sd": sd, "pct_low": float(low), "pct_high": float(high), "pct_high_censored": censored,
+            "pct_level": ci, "point_inside_interval": inside, "share_reps_below_point": below,
+            "n_reps": int(len(samples)), "n_reps_valid": int(len(valid)), "n_reps_infinite": infinite,
+            "seed": int(seed)}
 
 
 def build(runs, lexicons, committed, top_k=DEFAULT_TOP_K, reps=DEFAULT_REPS, seed=RANDOM_SEED,
@@ -556,14 +611,14 @@ def build(runs, lexicons, committed, top_k=DEFAULT_TOP_K, reps=DEFAULT_REPS, see
                                   "n_posts": design.n_posts(technique, split, post_set), "top_k": top_k,
                                   "category": category, "measure": "share_of_positive_mass",
                                   **interval(values[c], samples["categories"][(technique, split, post_set)][:, c],
-                                             ci, seed)})
+                                             ci, seed, "percentile_ci")})
     for (technique, split, post_set), values in point["same_post"].items():
         for m, measure in enumerate(SAME_POST_MEASURES):
             same_rows.append({"technique": technique, "split": split, "post_set": post_set,
                               "n_posts": design.n_posts(technique, split, post_set), "top_k": top_k,
                               "measure": measure,
                               **interval(values[m], samples["same_post"][(technique, split, post_set)][:, m],
-                                         ci, seed)})
+                                         ci, seed, _kind(measure))})
     for (technique, post_set), values in point["agreement"].items():
         for m, measure in enumerate(AGREEMENT_MEASURES):
             agreement_rows.append({"technique": technique, "post_set": post_set,
@@ -571,7 +626,7 @@ def build(runs, lexicons, committed, top_k=DEFAULT_TOP_K, reps=DEFAULT_REPS, see
                                    "n_posts_validation": design.n_posts(technique, "validation", post_set),
                                    "top_k": top_k, "measure": measure,
                                    **interval(values[m], samples["agreement"][(technique, post_set)][:, m],
-                                              ci, seed)})
+                                              ci, seed, _kind(measure))})
 
     differences = paired_differences(design, point, samples, contrasts, ci, seed)
     relation = relation_rows(design, point, samples, fpr, committed, reps, row_rng, ci, seed)
@@ -582,6 +637,10 @@ def build(runs, lexicons, committed, top_k=DEFAULT_TOP_K, reps=DEFAULT_REPS, see
         "relation": relation,
         "differences": differences,
     }
+
+
+def _kind(measure):
+    return "replicate_spread" if measure in SPREAD_MEASURES else "percentile_ci"
 
 
 def paired_differences(design, point, samples, contrasts, ci, seed):
@@ -606,8 +665,9 @@ def paired_differences(design, point, samples, contrasts, ci, seed):
                 rows.append({"measure": measure, "split": split, "post_set": "common",
                              "n_posts": design.n_posts(contrast, "test", "common"),
                              "top_k": design.top_k, "technique": contrast, "reference_technique": reference,
-                             "role": "descriptive",
-                             **interval(point[kind][ka][column] - point[kind][kb][column], diff, ci, seed)})
+                             "role": DIFFERENCE_ROLE,
+                             **interval(point[kind][ka][column] - point[kind][kb][column], diff, ci, seed,
+                                        _kind(measure))})
     return pd.DataFrame(rows)
 
 
@@ -648,16 +708,15 @@ def relation_rows(design, point, samples, fpr, committed, reps, row_rng, ci, see
             rho = np.array([rank_rho(x, y) for x, y in zip(xs, ys)])
             rows.append({"quantity": "spearman_rho", "x_measure": x_names[post_set], "y_measure": "fpr_ratio",
                          "technique": "", "resampled": scheme, "n_techniques": len(techniques),
-                         "share_reps_rho_positive": float(np.mean(rho[~np.isnan(rho)] > 0)),
-                         **interval(rhos[x_names[post_set]], rho, ci, seed)})
+                         # The share of replicates with rho > 0: a description of the spread, not a p-value.
+                         "share_reps_rho_above_zero_not_a_p_value": float(np.mean(rho[~np.isnan(rho)] > 0)),
+                         **interval(rhos[x_names[post_set]], rho, ci, seed, "replicate_spread")})
     for t, technique in enumerate(techniques):
         rows.append({"quantity": "fpr_ratio", "x_measure": "", "y_measure": "fpr_ratio", "technique": technique,
-                     "resampled": "rows_only", "n_techniques": 1, "share_reps_rho_positive": np.nan,
-                     "n_reps_infinite": int(np.isinf(ratio_samples[:, t]).sum()),
-                     **interval(point_ratio[technique], ratio_samples[:, t], ci, seed)})
-    frame = pd.DataFrame(rows)
-    frame["n_reps_infinite"] = frame["n_reps_infinite"].fillna(0).astype(int)
-    return frame
+                     "resampled": "rows_only", "n_techniques": 1,
+                     "share_reps_rho_above_zero_not_a_p_value": np.nan,
+                     **interval(point_ratio[technique], ratio_samples[:, t], ci, seed, "percentile_ci")})
+    return pd.DataFrame(rows)
 
 
 # ---------------------------------------------------------------------------
@@ -750,7 +809,9 @@ def main():
     relation = tables["relation"]
     for _, row in relation[relation["quantity"] == "spearman_rho"].iterrows():
         print(f"{row['x_measure']} vs fpr_ratio [{row['resampled']}]: rho {row['point']:.3f}, "
-              f"{row['ci_level']:.0%} CI {row['ci_low']:.3f} to {row['ci_high']:.3f} "
+              f"replicate median {row['boot_median']:.3f}, {row['share_reps_below_point']:.0%} of replicates "
+              f"below the point, rho > 0 in {row['share_reps_rho_above_zero_not_a_p_value']:.0%}; "
+              f"replicate spread {row['pct_low']:.3f} to {row['pct_high']:.3f} (not a confidence interval) "
               f"({row['n_reps_valid']}/{row['n_reps']} valid replicates)")
     return 0
 

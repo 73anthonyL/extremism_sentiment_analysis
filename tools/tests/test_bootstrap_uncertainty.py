@@ -18,6 +18,7 @@ from bootstrap_uncertainty import (
     check_text_free,
     fpr_inputs,
     fpr_ratios,
+    interval,
     write_tables,
 )
 from conftest import base_meta
@@ -84,10 +85,18 @@ def external_dir(tmp_path):
 
 @pytest.fixture
 def setup(results_dir, external_dir):
-    """Four techniques (three on every post, one on a sample) with committed tables built by the real tools."""
+    return _setup(results_dir, external_dir)
+
+
+def _setup(results_dir, external_dir, duplicate_of_first=False):
+    """Four techniques (three on every post, one on a sample) with committed tables built by the real tools.
+
+    With duplicate_of_first, 02_B's per-post attributions are 01_A's under another name.
+    """
     paths = {}
     for k, technique in enumerate(CLASSICAL):
-        test, val = _posts(TEST_ALL, 1 + 3 * k), _posts(VAL_ALL, 2 + 3 * k)
+        kk = 0 if duplicate_of_first and technique == "02_B" else k
+        test, val = _posts(TEST_ALL, 1 + 3 * kk), _posts(VAL_ALL, 2 + 3 * kk)
         paths[(technique, "test")] = _write(results_dir, external_dir, technique, "test", test)
         paths[(technique, "validation")] = _write(results_dir, external_dir, technique, "validation", val)
     test, val = _posts(TEST_SAMPLE, 11), _posts(VAL_SAMPLE, 12)
@@ -124,9 +133,18 @@ def setup(results_dir, external_dir):
             "results_dir": results_dir, "external_dir": external_dir}
 
 
-def _build(setup, reps=30, seed=30, committed=None, runs=None):
+def _build(setup, reps=30, seed=30, committed=None, runs=None, contrasts=(TRANSFORMER,)):
     return build(runs or setup["runs"], LEXICONS, committed or setup["committed"], top_k=TOP_K, reps=reps,
-                 seed=seed, fpr=setup["fpr"], contrasts=(TRANSFORMER,))
+                 seed=seed, fpr=setup["fpr"], contrasts=contrasts)
+
+
+def _tamper(setup, name, mask, column, delta):
+    committed = dict(setup["committed"])
+    frame = committed[name].copy()
+    rows = frame.index[mask(frame)]
+    frame.loc[rows[0], column] += delta
+    committed[name] = frame
+    return committed
 
 
 class TestIdentity:
@@ -163,12 +181,36 @@ class TestIdentity:
         tables = _build(setup)
         for name in ("categories", "same_post", "agreement", "differences"):
             frame = tables[name]
-            assert len(frame) and (frame["ci_low"] <= frame["ci_high"] + 1e-12).all()
+            assert len(frame) and (frame["pct_low"] <= frame["pct_high"] + 1e-12).all()
+            assert np.isfinite(frame["pct_high"]).all()
             assert (frame["n_reps"] == 30).all()
         assert set(tables["differences"]["reference_technique"]) == set(CLASSICAL)
-        assert (tables["differences"]["role"] == "descriptive").all()
+        assert (tables["differences"]["role"] == "descriptive_post_sampling_only").all()
         rho = tables["relation"][tables["relation"]["quantity"] == "spearman_rho"]
         assert set(rho["resampled"]) == {"posts_and_rows", "posts_only", "rows_only"}
+        # The relation is a sensitivity, never labelled a confidence interval.
+        assert (rho["interval_kind"] == "replicate_spread").all()
+        assert "share_reps_rho_positive" not in tables["relation"].columns
+        assert not any(c.startswith("ci_") for name in tables for c in tables[name].columns)
+
+    def test_rows_only_resamples_the_ratios_and_posts_only_does_not(self, setup):
+        rho = _build(setup)["relation"].query("quantity == 'spearman_rho'").set_index(["x_measure", "resampled"])
+        for x_measure in ("identity_share_positive_mass", "identity_share_positive_mass_common_posts"):
+            for scheme in ("rows_only", "posts_and_rows"):
+                row = rho.loc[(x_measure, scheme)]
+                assert row["boot_sd"] > 1e-6 and row["pct_high"] - row["pct_low"] > 1e-6
+        ratios = _build(setup)["relation"].query("quantity == 'fpr_ratio'")
+        assert (ratios["pct_high"] > ratios["pct_low"]).all()
+
+    def test_a_technique_duplicated_under_two_names_gives_a_zero_width_difference(self, results_dir, external_dir):
+        # 02_B is 01_A renamed: on shared draws every paired difference is exactly zero.
+        setup = _setup(results_dir, external_dir, duplicate_of_first=True)
+        differences = _build(setup, contrasts=("02_B",))["differences"]
+        pair = differences[differences["reference_technique"] == "01_A"]
+        assert len(pair) == 3
+        assert np.allclose(pair[["point", "pct_low", "pct_high", "boot_sd"]].to_numpy(float), 0.0)
+        other = differences[differences["reference_technique"] == "03_C"]
+        assert (other["pct_high"] - other["pct_low"] > 0).any()
 
 
 class TestDeterminism:
@@ -179,7 +221,7 @@ class TestDeterminism:
 
     def test_different_seed_different_intervals(self, setup):
         a, b = _build(setup, seed=7), _build(setup, seed=8)
-        assert not a["categories"]["ci_low"].equals(b["categories"]["ci_low"])
+        assert not a["categories"]["pct_low"].equals(b["categories"]["pct_low"])
         assert np.allclose(a["categories"]["point"], b["categories"]["point"])
 
 
@@ -226,6 +268,25 @@ class TestRefusals:
         with pytest.raises(BootstrapError, match="rq2_rq4_relation"):
             _build(setup, reps=2, committed=committed)
 
+    def test_stale_same_post_category_table_is_refused(self, setup):
+        committed = _tamper(setup, "rq2_same_post_category_shares",
+                            lambda f: (f["post_set"] == "common") & (f["technique"] == "02_B"),
+                            "share_of_positive_mass", 0.05)
+        with pytest.raises(BootstrapError, match="rq2_same_post_category_shares"):
+            _build(setup, reps=2, committed=committed)
+
+    @pytest.mark.parametrize("measure, delta", [("share_single_post_top_k_positive", 0.1),
+                                                ("n_words_half_positive_mass", 1)])
+    def test_stale_same_post_support_is_refused(self, setup, measure, delta):
+        committed = _tamper(setup, "rq2_same_post_support", lambda f: f["technique"] == "03_C", measure, delta)
+        with pytest.raises(BootstrapError, match="rq2_same_post_support"):
+            _build(setup, reps=2, committed=committed)
+
+    def test_fpr_ratio_that_does_not_reproduce_is_refused(self, setup):
+        committed = _tamper(setup, "rq4_identity_fpr", lambda f: f["technique"] == "01_A", "fpr_ratio", 0.3)
+        with pytest.raises(BootstrapError, match="rq4_identity_fpr"):
+            _build(setup, reps=2, committed=committed)
+
     def test_missing_committed_table_is_refused(self, setup):
         committed = {k: v for k, v in setup["committed"].items() if k != "rq2_same_post_support"}
         with pytest.raises(BootstrapError, match="rq2_same_post_support is missing"):
@@ -262,6 +323,25 @@ class TestFprRatio:
         committed = setup["committed"]["rq4_identity_fpr"].set_index("technique")["fpr_ratio"]
         for technique, value in ratios.items():
             assert value[0] == pytest.approx(committed[technique])
+
+    def test_empty_group_is_missing_not_infinite(self):
+        # No negatives without identity terms at all: nan must win over inf.
+        with_id = np.array([1.0, 1.0, 0.0])
+        inputs = {"a": (with_id, np.zeros(3), np.array([1.0, 0.0, 0.0]))}
+        assert np.isnan(fpr_ratios(inputs, np.ones((1, 3)))["a"][0])
+
+    def test_infinite_replicates_keep_the_bounds_finite(self):
+        samples = np.concatenate([np.linspace(1.0, 3.0, 90), np.full(10, np.inf), [np.nan]])
+        row = interval(2.0, samples, 0.95, 30, "percentile_ci")
+        assert np.isfinite(row["pct_low"]) and np.isfinite(row["pct_high"])
+        assert row["pct_high"] == pytest.approx(3.0) and row["pct_high_censored"]
+        assert row["n_reps_infinite"] == 10 and row["n_reps_valid"] == 100
+        assert np.isnan(row["boot_mean"]) and np.isfinite(row["boot_median"])
+        assert row["point_inside_interval"]
+        finite = interval(2.0, np.linspace(1.0, 3.0, 101), 0.95, 30, "percentile_ci")
+        assert not finite["pct_high_censored"] and finite["share_reps_below_point"] == pytest.approx(50 / 101)
+        with pytest.raises(BootstrapError, match="interval kind"):
+            interval(2.0, samples, 0.95, 30, "confidence")
 
     def test_zero_baseline_is_infinite_and_zero_over_zero_is_missing(self):
         with_id = np.array([1.0, 1.0, 0.0, 0.0])
