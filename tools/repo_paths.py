@@ -171,3 +171,11 @@ RQ4_IDENTITY_FPR_SENSITIVITY_CSV = RQ_DIR / "rq4_identity_fpr_sensitivity.csv"
 RQ4_IDENTITY_COUNTERFACTUAL_SENSITIVITY_CSV = RQ_DIR / "rq4_identity_counterfactual_sensitivity.csv"
 RQ2_IDENTITY_LEXICON_GAPS_SENSITIVITY_CSV = RQ_DIR / "rq2_identity_lexicon_gaps_sensitivity.csv"
 RQ2_IDENTITY_TOP_K_SENSITIVITY_CSV = RQ_DIR / "rq2_identity_top_k_sensitivity.csv"
+
+# Post-level bootstrap intervals for the descriptive RQ2/RQ3 numbers and the
+# RQ2-RQ4 relation; written by tools/bootstrap_uncertainty.py.
+RQ2_BOOTSTRAP_CATEGORY_SHARES_CSV = RQ_DIR / "rq2_bootstrap_category_shares.csv"
+RQ2_BOOTSTRAP_SAME_POST_CSV = RQ_DIR / "rq2_bootstrap_same_post.csv"
+RQ3_BOOTSTRAP_SPLIT_AGREEMENT_CSV = RQ_DIR / "rq3_bootstrap_split_agreement.csv"
+RQ2_RQ4_BOOTSTRAP_RELATION_CSV = RQ_DIR / "rq2_rq4_bootstrap_relation.csv"
+RQ2_RQ3_BOOTSTRAP_PAIRED_DIFFERENCES_CSV = RQ_DIR / "rq2_rq3_bootstrap_paired_differences.csv"
