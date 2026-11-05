@@ -31,9 +31,10 @@ Format (the checker's docstring is the reference):
 
 Id blocks: C001 to C096 RQ1; C100 to C297 RQ2 (C260 to C291 are across-run
 SDs and the slur column); C300 to C385 RQ3 shares and stability; C400 to C474 RQ4 FPR; C500 to
-C670 WP7 and the RQ2-RQ4 relation; C700 to C704 lexicon gaps; C710 to C740
-training recipes of 07 and the members of 11; C800 to C819 framework card and
-data; C820 to C822 lexicon coverage.
+C670 WP7 and the RQ2-RQ4 relation; C671 to C697 WP7b prose; C700 to C704
+lexicon gaps; C710 to C740 training recipes of 07 and the members of 11; C800
+to C819 framework card and data; C820 to C822 lexicon coverage; C900 to C979
+WP7b Table 9.
 
 | id | artifact | selector | column | value | decimals |
 |---|---|---|---|---|---|
@@ -647,6 +648,33 @@ data; C820 to C822 lexicon coverage.
 | C668 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=substitute` | `wilcoxon_p_holm` | 1.4e-3 | s2 |
 | C669 | `results_summary/rq/rq4_identity_counterfactual.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=non_extremist;operation=substitute` | `mean_delta` | 0.038 | 3 |
 | C670 | `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv` | `*` | `count()` | 32 | 0 |
+| C671 | `results_summary/07_TWITTER-ROBERTA_FINE-TUNE/identity_swap_test.json` | `-` | `n_population` | 68 | 0 |
+| C672 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=non_extremist;operation=swap` | `n_posts` | 23 | 0 |
+| C673 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=extremist;operation=swap` | `n_posts` | 45 | 0 |
+| C674 | `results_summary/rq/rq4_identity_swap.csv` | `*` | `count()` | 48 | 0 |
+| C675 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=extremist;operation=swap` | `n_variants` | 3 | 0 |
+| C676 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=swap` | `n_flagged_original` | 34 | 0 |
+| C677 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=swap` | `n_flagged_counterfactual` | 34 | 0 |
+| C678 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=swap` | `n_flagged_original` | 38 | 0 |
+| C679 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=swap` | `n_flagged_counterfactual` | 38 | 0 |
+| C680 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=substitute` | `wilcoxon_p_holm` | 8.1e-6 | s2 |
+| C681 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=substitute` | `wilcoxon_p_holm` | 0.12 | 2 |
+| C682 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=non_extremist;operation=swap` | `median_delta` | -0.002 | 3 |
+| C683 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=non_extremist;operation=swap` | `median_delta` | -0.006 | 3 |
+| C684 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=non_extremist;operation=swap` | `n_flagged_original` | 2 | 0 |
+| C685 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=non_extremist;operation=swap` | `n_flagged_counterfactual` | 4 | 0 |
+| C686 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=non_extremist;operation=swap` | `n_flagged_original` | 3 | 0 |
+| C687 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=non_extremist;operation=swap` | `n_flagged_counterfactual` | 7 | 0 |
+| C688 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=non_extremist;operation=remove` | `mean_abs_delta` | 0.051 | 3 |
+| C689 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=extremist;operation=remove` | `mean_abs_delta` | 0.064 | 3 |
+| C690 | `results_summary/rq/rq4_identity_swap.csv` | `technique=02_LIN-SVM_TF-IDF;population=non_extremist;operation=remove` | `mean_abs_delta` | 0.034 | 3 |
+| C691 | `results_summary/rq/rq4_identity_swap.csv` | `technique=02_LIN-SVM_TF-IDF;population=extremist;operation=remove` | `mean_abs_delta` | 0.045 | 3 |
+| C692 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=swap` | `verification_max_abs_diff` | 1.4e-3 | s2 |
+| C693 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=swap` | `verification_max_abs_diff` | 7.7e-4 | s2 |
+| C694 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=remove` | `wilcoxon_p_holm` | 3.7e-4 | s2 |
+| C695 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=remove` | `wilcoxon_p_holm` | 6.4e-9 | s2 |
+| C696 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=swap` | `median_delta` | 1.7e-5 | s2 |
+| C697 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=swap` | `median_delta` | 3.4e-4 | s2 |
 | C700 | `results_summary/rq/rq2_identity_top_k_sensitivity.csv` | `*` | `sum(n_gap_candidates)@8` | 27 | 0 |
 | C701 | `results_summary/rq/rq2_identity_lexicon_gaps_sensitivity.csv` | `*` | `count()` | 27 | 0 |
 | C702 | `results_summary/rq/rq2_identity_top_k_sensitivity.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL` | `n_gap_candidates` | 6 | 0 |
@@ -702,3 +730,83 @@ data; C820 to C822 lexicon coverage.
 | C820 | `results_summary/rq/rq2_lexicon_coverage.csv` | `*` | `sum(n_multi_word_unmatchable)@3` | 48 | 0 |
 | C821 | `results_summary/rq/rq2_lexicon_coverage.csv` | `category=slur` | `n_multi_word_unmatchable` | 9 | 0 |
 | C822 | `results_summary/rq/rq2_lexicon_coverage.csv` | `category=extremist_framing` | `n_multi_word_unmatchable` | 39 | 0 |
+| C900 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=non_extremist;operation=remove` | `mean_delta` | 0.043 | 3 |
+| C901 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=non_extremist;operation=substitute` | `mean_delta` | 0.059 | 3 |
+| C902 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=non_extremist;operation=swap` | `mean_delta` | -0.011 | 3 |
+| C903 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=non_extremist;operation=swap` | `mean_abs_delta` | 0.046 | 3 |
+| C904 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=non_extremist;operation=swap` | `wilcoxon_p_holm` | 1.00 | 2 |
+| C905 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=extremist;operation=remove` | `mean_delta` | 0.059 | 3 |
+| C906 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=extremist;operation=substitute` | `mean_delta` | 0.079 | 3 |
+| C907 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=extremist;operation=swap` | `mean_delta` | 0.026 | 3 |
+| C908 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=extremist;operation=swap` | `mean_abs_delta` | 0.048 | 3 |
+| C909 | `results_summary/rq/rq4_identity_swap.csv` | `technique=01_LOG-REG_TF-IDF;population=extremist;operation=swap` | `wilcoxon_p_holm` | 0.13 | 2 |
+| C910 | `results_summary/rq/rq4_identity_swap.csv` | `technique=02_LIN-SVM_TF-IDF;population=non_extremist;operation=remove` | `mean_delta` | 0.030 | 3 |
+| C911 | `results_summary/rq/rq4_identity_swap.csv` | `technique=02_LIN-SVM_TF-IDF;population=non_extremist;operation=substitute` | `mean_delta` | 0.041 | 3 |
+| C912 | `results_summary/rq/rq4_identity_swap.csv` | `technique=02_LIN-SVM_TF-IDF;population=non_extremist;operation=swap` | `mean_delta` | -0.002 | 3 |
+| C913 | `results_summary/rq/rq4_identity_swap.csv` | `technique=02_LIN-SVM_TF-IDF;population=non_extremist;operation=swap` | `mean_abs_delta` | 0.026 | 3 |
+| C914 | `results_summary/rq/rq4_identity_swap.csv` | `technique=02_LIN-SVM_TF-IDF;population=non_extremist;operation=swap` | `wilcoxon_p_holm` | 1.00 | 2 |
+| C915 | `results_summary/rq/rq4_identity_swap.csv` | `technique=02_LIN-SVM_TF-IDF;population=extremist;operation=remove` | `mean_delta` | 0.040 | 3 |
+| C916 | `results_summary/rq/rq4_identity_swap.csv` | `technique=02_LIN-SVM_TF-IDF;population=extremist;operation=substitute` | `mean_delta` | 0.054 | 3 |
+| C917 | `results_summary/rq/rq4_identity_swap.csv` | `technique=02_LIN-SVM_TF-IDF;population=extremist;operation=swap` | `mean_delta` | 0.016 | 3 |
+| C918 | `results_summary/rq/rq4_identity_swap.csv` | `technique=02_LIN-SVM_TF-IDF;population=extremist;operation=swap` | `mean_abs_delta` | 0.035 | 3 |
+| C919 | `results_summary/rq/rq4_identity_swap.csv` | `technique=02_LIN-SVM_TF-IDF;population=extremist;operation=swap` | `wilcoxon_p_holm` | 0.21 | 2 |
+| C920 | `results_summary/rq/rq4_identity_swap.csv` | `technique=03_SLP_TF-IDF;population=non_extremist;operation=remove` | `mean_delta` | 0.009 | 3 |
+| C921 | `results_summary/rq/rq4_identity_swap.csv` | `technique=03_SLP_TF-IDF;population=non_extremist;operation=substitute` | `mean_delta` | 0.009 | 3 |
+| C922 | `results_summary/rq/rq4_identity_swap.csv` | `technique=03_SLP_TF-IDF;population=non_extremist;operation=swap` | `mean_delta` | -0.002 | 3 |
+| C923 | `results_summary/rq/rq4_identity_swap.csv` | `technique=03_SLP_TF-IDF;population=non_extremist;operation=swap` | `mean_abs_delta` | 0.008 | 3 |
+| C924 | `results_summary/rq/rq4_identity_swap.csv` | `technique=03_SLP_TF-IDF;population=non_extremist;operation=swap` | `wilcoxon_p_holm` | 1.00 | 2 |
+| C925 | `results_summary/rq/rq4_identity_swap.csv` | `technique=03_SLP_TF-IDF;population=extremist;operation=remove` | `mean_delta` | 0.012 | 3 |
+| C926 | `results_summary/rq/rq4_identity_swap.csv` | `technique=03_SLP_TF-IDF;population=extremist;operation=substitute` | `mean_delta` | 0.015 | 3 |
+| C927 | `results_summary/rq/rq4_identity_swap.csv` | `technique=03_SLP_TF-IDF;population=extremist;operation=swap` | `mean_delta` | 0.004 | 3 |
+| C928 | `results_summary/rq/rq4_identity_swap.csv` | `technique=03_SLP_TF-IDF;population=extremist;operation=swap` | `mean_abs_delta` | 0.008 | 3 |
+| C929 | `results_summary/rq/rq4_identity_swap.csv` | `technique=03_SLP_TF-IDF;population=extremist;operation=swap` | `wilcoxon_p_holm` | 0.021 | 3 |
+| C930 | `results_summary/rq/rq4_identity_swap.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;population=non_extremist;operation=remove` | `mean_delta` | 0.060 | 3 |
+| C931 | `results_summary/rq/rq4_identity_swap.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;population=non_extremist;operation=substitute` | `mean_delta` | 0.072 | 3 |
+| C932 | `results_summary/rq/rq4_identity_swap.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;population=non_extremist;operation=swap` | `mean_delta` | 0.003 | 3 |
+| C933 | `results_summary/rq/rq4_identity_swap.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;population=non_extremist;operation=swap` | `mean_abs_delta` | 0.021 | 3 |
+| C934 | `results_summary/rq/rq4_identity_swap.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;population=non_extremist;operation=swap` | `wilcoxon_p_holm` | 1.00 | 2 |
+| C935 | `results_summary/rq/rq4_identity_swap.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;population=extremist;operation=remove` | `mean_delta` | 0.058 | 3 |
+| C936 | `results_summary/rq/rq4_identity_swap.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;population=extremist;operation=substitute` | `mean_delta` | 0.086 | 3 |
+| C937 | `results_summary/rq/rq4_identity_swap.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;population=extremist;operation=swap` | `mean_delta` | 0.011 | 3 |
+| C938 | `results_summary/rq/rq4_identity_swap.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;population=extremist;operation=swap` | `mean_abs_delta` | 0.031 | 3 |
+| C939 | `results_summary/rq/rq4_identity_swap.csv` | `technique=04_CHAR-TF-IDF_LIN-SVM;population=extremist;operation=swap` | `wilcoxon_p_holm` | 0.44 | 2 |
+| C940 | `results_summary/rq/rq4_identity_swap.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;population=non_extremist;operation=remove` | `mean_delta` | 0.064 | 3 |
+| C941 | `results_summary/rq/rq4_identity_swap.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;population=non_extremist;operation=substitute` | `mean_delta` | 0.074 | 3 |
+| C942 | `results_summary/rq/rq4_identity_swap.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;population=non_extremist;operation=swap` | `mean_delta` | 0.008 | 3 |
+| C943 | `results_summary/rq/rq4_identity_swap.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;population=non_extremist;operation=swap` | `mean_abs_delta` | 0.021 | 3 |
+| C944 | `results_summary/rq/rq4_identity_swap.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;population=non_extremist;operation=swap` | `wilcoxon_p_holm` | 0.54 | 2 |
+| C945 | `results_summary/rq/rq4_identity_swap.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;population=extremist;operation=remove` | `mean_delta` | 0.061 | 3 |
+| C946 | `results_summary/rq/rq4_identity_swap.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;population=extremist;operation=substitute` | `mean_delta` | 0.082 | 3 |
+| C947 | `results_summary/rq/rq4_identity_swap.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;population=extremist;operation=swap` | `mean_delta` | 0.022 | 3 |
+| C948 | `results_summary/rq/rq4_identity_swap.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;population=extremist;operation=swap` | `mean_abs_delta` | 0.036 | 3 |
+| C949 | `results_summary/rq/rq4_identity_swap.csv` | `technique=05_WORD-CHAR-TF-IDF_LIN-SVM;population=extremist;operation=swap` | `wilcoxon_p_holm` | 0.016 | 3 |
+| C950 | `results_summary/rq/rq4_identity_swap.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;population=non_extremist;operation=remove` | `mean_delta` | 0.056 | 3 |
+| C951 | `results_summary/rq/rq4_identity_swap.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;population=non_extremist;operation=substitute` | `mean_delta` | 0.053 | 3 |
+| C952 | `results_summary/rq/rq4_identity_swap.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;population=non_extremist;operation=swap` | `mean_delta` | 0.027 | 3 |
+| C953 | `results_summary/rq/rq4_identity_swap.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;population=non_extremist;operation=swap` | `mean_abs_delta` | 0.033 | 3 |
+| C954 | `results_summary/rq/rq4_identity_swap.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;population=non_extremist;operation=swap` | `wilcoxon_p_holm` | 2.1e-4 | s2 |
+| C955 | `results_summary/rq/rq4_identity_swap.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;population=extremist;operation=remove` | `mean_delta` | 0.036 | 3 |
+| C956 | `results_summary/rq/rq4_identity_swap.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;population=extremist;operation=substitute` | `mean_delta` | 0.048 | 3 |
+| C957 | `results_summary/rq/rq4_identity_swap.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;population=extremist;operation=swap` | `mean_delta` | 0.027 | 3 |
+| C958 | `results_summary/rq/rq4_identity_swap.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;population=extremist;operation=swap` | `mean_abs_delta` | 0.042 | 3 |
+| C959 | `results_summary/rq/rq4_identity_swap.csv` | `technique=06_FASTTEXT-EMB_LOG-REG;population=extremist;operation=swap` | `wilcoxon_p_holm` | 5.6e-3 | s2 |
+| C960 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=non_extremist;operation=remove` | `mean_delta` | 0.055 | 3 |
+| C961 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=non_extremist;operation=substitute` | `mean_delta` | -0.002 | 3 |
+| C962 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=non_extremist;operation=swap` | `mean_delta` | -0.100 | 3 |
+| C963 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=non_extremist;operation=swap` | `mean_abs_delta` | 0.110 | 3 |
+| C964 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=non_extremist;operation=swap` | `wilcoxon_p_holm` | 0.087 | 3 |
+| C965 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=remove` | `mean_delta` | 0.069 | 3 |
+| C966 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=substitute` | `mean_delta` | 0.043 | 3 |
+| C967 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=swap` | `mean_delta` | 0.006 | 3 |
+| C968 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=swap` | `mean_abs_delta` | 0.044 | 3 |
+| C969 | `results_summary/rq/rq4_identity_swap.csv` | `technique=07_TWITTER-ROBERTA_FINE-TUNE;population=extremist;operation=swap` | `wilcoxon_p_holm` | 1.00 | 2 |
+| C970 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=non_extremist;operation=remove` | `mean_delta` | 0.108 | 3 |
+| C971 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=non_extremist;operation=substitute` | `mean_delta` | 0.050 | 3 |
+| C972 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=non_extremist;operation=swap` | `mean_delta` | -0.059 | 3 |
+| C973 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=non_extremist;operation=swap` | `mean_abs_delta` | 0.076 | 3 |
+| C974 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=non_extremist;operation=swap` | `wilcoxon_p_holm` | 0.022 | 3 |
+| C975 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=remove` | `mean_delta` | 0.149 | 3 |
+| C976 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=substitute` | `mean_delta` | 0.101 | 3 |
+| C977 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=swap` | `mean_delta` | 0.004 | 3 |
+| C978 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=swap` | `mean_abs_delta` | 0.036 | 3 |
+| C979 | `results_summary/rq/rq4_identity_swap.csv` | `technique=11_MULTI-CHECKPOINT_LOGIT-POOL;population=extremist;operation=swap` | `wilcoxon_p_holm` | 1.00 | 2 |

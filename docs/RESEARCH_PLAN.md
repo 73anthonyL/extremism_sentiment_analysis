@@ -741,7 +741,8 @@ is the stricter control; the classical models weigh identity terms under
 every edit; the transformers respond to a group being named rather than
 which group, and part of their removal effect may be the loss of a noun. The
 paper does not claim the transformers treat identity terms as evidence of
-extremism. Folding WP7b into the results draft is pending.
+extremism. WP7b is in the results draft as section 8.2b (Table 9), with
+every number bound in `docs/paper/CLAIMS.md` (C671 to C697, C900 to C979).
 
 *Results, descriptive, with the preregistered rule applied as written.*
 Here delta is p(extremist) before minus after the edit, and p values are
