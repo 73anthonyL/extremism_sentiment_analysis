@@ -1,7 +1,7 @@
 """Verify every quantitative claim in docs/paper/CLAIMS.md against its committed artifact.
 
 The paper draft (`docs/paper/RESULTS_DRAFT.md`) cites each number through a
-claim id. `CLAIMS.md` holds one markdown table with a row per claim:
+claim id, singly (`C012`) or as a range (`C001–C056`). `CLAIMS.md` holds one markdown table with a row per claim:
 
     | id | artifact | selector | column | value | decimals |
 
@@ -15,8 +15,8 @@ selector
     strings in the file), or `*` for every row. JSON: `-`.
 column
     CSV: a column name, which needs the selector to match exactly one row,
-    or an aggregate over the matching rows: `count`, `min:<column>`,
-    `max:<column>`, `sum:<column>`.
+    or an aggregate over the matching rows: `count()`, `min(<column>)`,
+    `max(<column>)`, `sum(<column>)`.
     JSON: a dotted path. A segment is a key, a list index, or
     `[key=value]`, which picks the one element of a list whose `key` equals
     `value` (as a string).
@@ -56,7 +56,10 @@ DEFAULT_DRAFT = REPO_ROOT / "docs" / "paper" / "RESULTS_DRAFT.md"
 HEADER = ("id", "artifact", "selector", "column", "value", "decimals")
 ID_PATTERN = re.compile(r"^C\d{3}$")
 CITED_ID_PATTERN = re.compile(r"\bC\d{3}\b")
+# A cited range such as "C001–C056" (en dash or hyphen) cites every id in it.
+CITED_RANGE_PATTERN = re.compile(r"\bC(\d{3})\s*[\u2013-]\s*C(\d{3})\b")
 AGGREGATES = ("min", "max", "sum")
+AGGREGATE_PATTERN = re.compile(r"(\w+)\(([^()]*)\)")
 
 
 class ClaimError(ValueError):
@@ -162,10 +165,13 @@ def csv_value(rows, fieldnames, selector, column):
         if key not in fieldnames:
             raise ClaimError(f"selector key {key!r} is not a column")
     matched = [r for r in rows if all(r[k] == v for k, v in pairs)]
-    if column == "count":
-        return len(matched)
-    if ":" in column:
-        how, target = column.split(":", 1)
+    aggregate = AGGREGATE_PATTERN.fullmatch(column)
+    if aggregate:
+        how, target = aggregate.groups()
+        if how == "count":
+            if target:
+                raise ClaimError("count() takes no column")
+            return len(matched)
         if how not in AGGREGATES:
             raise ClaimError(f"unknown aggregate {how!r}")
         if target not in fieldnames:
@@ -256,6 +262,10 @@ def verify_claim(claim, cache):
 def check_draft_ids(claims, draft_path):
     text = Path(draft_path).read_text()
     cited = set(CITED_ID_PATTERN.findall(text))
+    for start, end in CITED_RANGE_PATTERN.findall(text):
+        if int(end) < int(start):
+            raise ClaimError(f"cited range C{start}-C{end} runs backwards")
+        cited.update(f"C{n:03d}" for n in range(int(start), int(end) + 1))
     listed = {c["id"] for c in claims}
     problems = []
     for missing in sorted(listed - cited):
