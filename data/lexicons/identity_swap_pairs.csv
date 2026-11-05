@@ -1,0 +1,97 @@
+category,form,group,source,target_1,target_2,target_3,note
+religion,person,islam,muslim,christian,hindu,buddhist,
+religion,person,islam,islamic,christian,hindu,buddhist,
+religion,person,christianity,christian,muslim,hindu,buddhist,
+religion,person,christianity,catholic,muslim,hindu,buddhist,
+religion,person,christianity,protestant,muslim,hindu,buddhist,
+religion,person,judaism,jew,muslim,christian,hindu,
+religion,person,judaism,jewish,muslim,christian,hindu,
+religion,person,hinduism,hindu,muslim,christian,buddhist,
+religion,person,sikhism,sikh,muslim,christian,hindu,
+religion,person,buddhism,buddhist,muslim,christian,hindu,
+religion,person,atheism,atheist,muslim,christian,hindu,
+religion,person_plural,islam,muslims,christians,hindus,buddhists,
+religion,person_plural,christianity,christians,muslims,hindus,buddhists,
+religion,person_plural,christianity,catholics,muslims,hindus,buddhists,
+religion,person_plural,christianity,protestants,muslims,hindus,buddhists,
+religion,person_plural,judaism,jews,muslims,christians,hindus,
+religion,person_plural,hinduism,hindus,muslims,christians,buddhists,
+religion,person_plural,sikhism,sikhs,muslims,christians,hindus,
+religion,person_plural,buddhism,buddhists,muslims,christians,hindus,
+religion,person_plural,atheism,atheists,muslims,christians,hindus,
+religion,faith,islam,islam,christianity,judaism,hinduism,
+religion,faith,christianity,christianity,islam,judaism,hinduism,
+religion,faith,judaism,judaism,islam,christianity,hinduism,
+religion,faith,hinduism,hinduism,islam,christianity,judaism,
+ethnicity_nationality,person,african,african,asian,mexican,european,
+ethnicity_nationality,person,african,somali,asian,mexican,european,
+ethnicity_nationality,person,asian,asian,african,mexican,european,
+ethnicity_nationality,person,asian,pakistani,african,mexican,european,
+ethnicity_nationality,person,asian,chinese,african,mexican,european,
+ethnicity_nationality,person,latin_american,mexican,african,asian,european,
+ethnicity_nationality,person,latin_american,latino,african,asian,european,
+ethnicity_nationality,person,latin_american,latina,african,asian,european,
+ethnicity_nationality,person,latin_american,hispanic,african,asian,european,
+ethnicity_nationality,person,european,european,african,asian,mexican,
+ethnicity_nationality,person,european,russian,african,asian,mexican,
+ethnicity_nationality,person,european,ukrainian,african,asian,mexican,
+ethnicity_nationality,person,european,british,african,asian,mexican,
+ethnicity_nationality,person,european,irish,african,asian,mexican,
+ethnicity_nationality,person,european,scottish,african,asian,mexican,
+ethnicity_nationality,person,european,welsh,african,asian,mexican,
+ethnicity_nationality,person,arab,arab,african,asian,mexican,
+ethnicity_nationality,person,turkish,turkish,african,asian,mexican,
+ethnicity_nationality,person,kurdish,kurdish,african,asian,mexican,
+ethnicity_nationality,person,palestinian,palestinian,african,asian,mexican,
+ethnicity_nationality,person,israeli,israeli,african,asian,mexican,
+ethnicity_nationality,person,american,american,african,asian,mexican,
+ethnicity_nationality,person,indigenous,indigenous,african,asian,mexican,
+ethnicity_nationality,person_plural,african,africans,asians,mexicans,europeans,
+ethnicity_nationality,person_plural,african,somalis,asians,mexicans,europeans,
+ethnicity_nationality,person_plural,asian,asians,africans,mexicans,europeans,
+ethnicity_nationality,person_plural,asian,pakistanis,africans,mexicans,europeans,
+ethnicity_nationality,person_plural,latin_american,mexicans,africans,asians,europeans,
+ethnicity_nationality,person_plural,latin_american,latinos,africans,asians,europeans,
+ethnicity_nationality,person_plural,latin_american,hispanics,africans,asians,europeans,
+ethnicity_nationality,person_plural,european,europeans,africans,asians,mexicans,
+ethnicity_nationality,person_plural,european,russians,africans,asians,mexicans,
+ethnicity_nationality,person_plural,european,ukrainians,africans,asians,mexicans,
+ethnicity_nationality,person_plural,arab,arabs,africans,asians,mexicans,
+ethnicity_nationality,person_plural,turkish,turks,africans,asians,mexicans,
+ethnicity_nationality,person_plural,kurdish,kurds,africans,asians,mexicans,
+ethnicity_nationality,person_plural,palestinian,palestinians,africans,asians,mexicans,
+ethnicity_nationality,person_plural,israeli,israelis,africans,asians,mexicans,
+ethnicity_nationality,person_plural,american,americans,africans,asians,mexicans,
+migration,person,immigrant,immigrant,refugee,foreigner,migrant,
+migration,person,migrant,migrant,immigrant,refugee,foreigner,
+migration,person,refugee,refugee,immigrant,foreigner,migrant,
+migration,person,foreigner,foreigner,immigrant,refugee,migrant,
+migration,person_plural,immigrant,immigrants,refugees,foreigners,migrants,
+migration,person_plural,migrant,migrants,immigrants,refugees,foreigners,
+migration,person_plural,refugee,refugees,immigrants,foreigners,migrants,
+migration,person_plural,foreigner,foreigners,immigrants,refugees,migrants,
+gender_sexuality,identity,gay,gay,lesbian,bisexual,transgender,
+gender_sexuality,identity,lesbian,lesbian,gay,bisexual,transgender,
+gender_sexuality,identity,bisexual,bisexual,gay,lesbian,transgender,
+gender_sexuality,identity,transgender,transgender,gay,lesbian,bisexual,
+ethnicity_nationality,excluded,,black,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+ethnicity_nationality,excluded,,white,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+ethnicity_nationality,excluded,,indian,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+ethnicity_nationality,excluded,,english,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+ethnicity_nationality,excluded,,native,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+ethnicity_nationality,excluded,,indians,,,,same ambiguity as indian (India and Indigenous Americans)
+migration,excluded,,asylum,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+gender_sexuality,excluded,,man,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+gender_sexuality,excluded,,men,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+gender_sexuality,excluded,,boy,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+gender_sexuality,excluded,,boys,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+gender_sexuality,excluded,,girl,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+gender_sexuality,excluded,,girls,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+gender_sexuality,excluded,,trans,,,,ambiguous: on AMBIGUOUS_IDENTITY_TERMS in tools/identity_sensitivity.py
+gender_sexuality,excluded,,woman,,,,no admissible same-form target: man and girl are ambiguous
+gender_sexuality,excluded,,women,,,,no admissible same-form target: men and girls are ambiguous
+gender_sexuality,excluded,,feminist,,,,a stance and not a group of the same kind as any other entry
+gender_sexuality,excluded,,feminists,,,,a stance and not a group of the same kind as any other entry
+gender_sexuality,excluded,,queer,,,,umbrella term: every same-form target is one of its members
+gender_sexuality,excluded,,lgbt,,,,umbrella term: every same-form target is one of its members
+gender_sexuality,excluded,,lgbtq,,,,umbrella term: every same-form target is one of its members

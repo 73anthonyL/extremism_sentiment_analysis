@@ -672,6 +672,90 @@ is estimated from few posts. Words never seen in training act like removal
 for the word-level models. The lexicon covers only the identity terms it
 lists. All of this is post-level and text-only.
 
+### WP7b. Identity swap (local, sensitivity analysis of WP7). Run 2026-11-04.
+
+WP7's substitution check left one question open: do the transformers respond
+to which group is named, or only to a group being named? WP7b replaces each
+identity term with three other identity terms of the same lexicon category
+and grammatical form (religion, ethnicity/nationality, migration, gender and
+sexuality), averages the probabilities over the three, and compares the
+shift with removal and with WP7's neutral panel on the same spans of the
+same posts.
+
+The swap map (`data/lexicons/identity_swap_pairs.csv`) and the analysis plan
+(`docs/preregistrations/WP7b_identity_swap.md`) were committed before any
+model was run on swapped text, so the metrics, the Holm family (the 48
+technique x population x operation rows) and the reading rule are fixed in
+advance. WP7b is still a sensitivity analysis of RQ4, not a primary outcome:
+WP7's removal stays the primary operation. The map excludes the 13
+ambiguous entries and 8 more (`indians`, `woman`, `women`, `feminist`,
+`feminists`, `queer`, `lgbt`, `lgbtq`), so the population is the 68 test
+posts with a swapped term (23 non-extremist, 45 extremist), a subset of
+WP7's 150. Operations edit only the swapped spans and match their case, so
+the remove and substitute rows here differ from WP7's.
+
+`tools/identity_swap.py` refuses a map that leaves the lexicon, crosses a
+category, changes form, repeats the source's group or uses an ambiguous
+term. It verifies each restored predictor against the committed artifact
+before scoring. It writes `identity_swap_test.json` per technique,
+`rq/rq4_identity_swap.csv` and the descriptive
+`rq/rq4_identity_swap_directions.csv`. The interpretation is pending author
+review and is not yet folded into section 3 or the results draft.
+
+*Results, descriptive, with the preregistered rule applied as written.*
+Here delta is p(extremist) before minus after the edit, and p values are
+Holm-adjusted Wilcoxon over the 48 rows of `rq4_identity_swap.csv`.
+
+* Labels. The rule gives "group mention" on both populations for 01, 02
+  and 04. For 03 and 05 it gives group mention on non-extremist posts and
+  "partial" on extremist posts. There the swap shifts are tiny (0.0045 and
+  0.022) but still Holm-significant (0.021 and 0.016), and below half of
+  removal. 06 is "group-specific" on extremist posts (swap 0.027, Holm
+  0.0056, 0.75 of the removal shift). On non-extremist posts 06 is partial
+  (swap 0.027, Holm 2.1e-4, 0.47 of removal). 07 and 11 are group mention on
+  extremist posts and partial on non-extremist posts.
+* Extremist posts. The swap moves 07 and 11 by 0.006 and 0.004 (Holm 1.0
+  for both), against 0.069 and 0.149 under removal, and unflags none of
+  their 34 and 38 flagged posts. For 11 the neutral substitute also lowers p
+  (0.101, Holm 8.1e-6), so for 11 the presence of an identity term matters,
+  not which group it names. For 07 the substitute shift (0.043, Holm 0.12)
+  is not significant, so group mention and noun deletion cannot be told
+  apart.
+* Non-extremist posts. The swap raises p: 11 by 0.059 (Holm 0.022) and 07
+  by 0.100 (Holm 0.087, not significant). Both are partial under the rule
+  because the sign is the reverse of removal's. The medians are about zero
+  (-0.006 and -0.002), so the shift sits in few posts. In the
+  single-source directions, three sources carry about 72% of the summed
+  upward shift for 07 (refugees, muslim, american) and 73% for 11
+  (refugees, american, christian). The sign varies by source: swapping away
+  christians lowers p for both models, and muslims for 11 (+0.068). The targets' training-label skew
+  does not explain this. Across non-extremist directions, the shift's
+  Spearman correlation with the source-minus-target 01 coefficient is
+  -0.15 (07) and -0.10 (11), and with the difference in training extremist
+  share +0.13 and +0.09. On extremist posts the correlations are +0.21 and
+  +0.32 (coefficient) and +0.21 and +0.23 (share).
+* Classical models. The averaged swap shift is near zero, but the
+  per-variant mean |delta| is 0.91 (non-extremist) and 0.75 (extremist) of
+  removal's for 01, and 0.75 and 0.77 for 02. Targets that raise p and
+  targets that lower it cancel in the mean. Per-direction shifts track the
+  change in 01 coefficient: Spearman 0.92 for 01 and 0.88 for 02 over 114
+  directions, then 0.72 (03), 0.67 (05), 0.41 (04) and 0.25 (06). Targets
+  never seen in training count as coefficient 0. This is direction-dependent
+  sensitivity, not an absence of response.
+* Magnitude, extremist posts, swap mean |delta| over remove mean |delta|:
+  11 0.24, 07 0.46, 01 0.75, 02 0.77. Descriptive only.
+* Precision. p_original is the committed artifact, while every
+  counterfactual for 07 and 11 was re-scored on MPS. On the original texts
+  the two differ by at most 1.4e-3 (07) and 7.7e-4 (11). That is the same
+  order as the extremist swap deltas (0.006 and 0.004) and larger than their
+  medians (2e-5 and 3.4e-4).
+
+*Limitations.* The panel fixes one set of comparison groups. Swapping two
+co-occurring groups can leave a post's set of groups unchanged. The
+non-extremist population is small (23 posts, 2 to 7 flagged), so flip
+counts there are descriptive. Word-level models score a target unseen in
+training like a deletion. Post-level labels, text-only features.
+
 ### WP6. Write the paper
 
 Sections map one-to-one onto the research questions:

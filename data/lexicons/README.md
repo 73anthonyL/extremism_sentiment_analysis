@@ -20,3 +20,9 @@ artifact (RQ2). The categorizer prints how many it skipped.
 
 Changing a lexicon changes RQ2 and RQ4 results. Re-run both tools and the table
 renderer after any edit, and describe the edit in the commit.
+
+`identity_swap_pairs.csv` is not a lexicon and neither RQ2 nor RQ4 reads it.
+It is the preregistered swap map of WP7b (`tools/identity_swap.py`,
+`docs/preregistrations/WP7b_identity_swap.md`): one row per identity-term
+entry, either three same-category, same-form targets or `excluded` with a
+reason. Every word in it is an entry of `identity_terms.txt`.
