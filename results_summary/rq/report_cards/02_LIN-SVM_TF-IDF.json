@@ -1,4 +1,70 @@
 {
+  "faithfulness": {
+    "holm_family_size": 32,
+    "in_comparison": true,
+    "n_posts_explained": 450,
+    "n_posts_shared": 200,
+    "n_posts_shared_set": 200,
+    "n_random_seeds": 5,
+    "population": "shared",
+    "rows": [
+      {
+        "drop_minus_random": 0.0545047,
+        "drop_minus_random_flagged": 0.0673573,
+        "drop_over_attributed_topk": 0.530484,
+        "k": 1,
+        "mean_drop_random": 0.00434836,
+        "mean_drop_topk": 0.058853,
+        "n_flagged": 70,
+        "n_posts": 200,
+        "share_topk_drop_gt_random": 0.99,
+        "wilcoxon_p_holm": 9.19432e-33
+      },
+      {
+        "drop_minus_random": 0.108131,
+        "drop_minus_random_flagged": 0.134871,
+        "drop_over_attributed_topk": 0.556339,
+        "k": 3,
+        "mean_drop_random": 0.0132718,
+        "mean_drop_topk": 0.121403,
+        "n_flagged": 70,
+        "n_posts": 200,
+        "share_topk_drop_gt_random": 0.99,
+        "wilcoxon_p_holm": 9.19432e-33
+      },
+      {
+        "drop_minus_random": 0.135351,
+        "drop_minus_random_flagged": 0.176367,
+        "drop_over_attributed_topk": 0.587423,
+        "k": 5,
+        "mean_drop_random": 0.0242314,
+        "mean_drop_topk": 0.159582,
+        "n_flagged": 70,
+        "n_posts": 200,
+        "share_topk_drop_gt_random": 0.99,
+        "wilcoxon_p_holm": 9.19432e-33
+      },
+      {
+        "drop_minus_random": 0.178348,
+        "drop_minus_random_flagged": 0.256883,
+        "drop_over_attributed_topk": 0.671207,
+        "k": 10,
+        "mean_drop_random": 0.0355061,
+        "mean_drop_topk": 0.213854,
+        "n_flagged": 70,
+        "n_posts": 200,
+        "share_topk_drop_gt_random": 0.99,
+        "wilcoxon_p_holm": 9.19432e-33
+      }
+    ],
+    "sources": [
+      "results_summary/02_LIN-SVM_TF-IDF/faithfulness_test.json",
+      "results_summary/rq/rq2_faithfulness.csv"
+    ],
+    "status": "run",
+    "threshold": 0.485,
+    "verification_max_abs_diff": 6.41613e-09
+  },
   "generated_by": "tools/audit.py report",
   "rq1": {
     "holm_family_size": 28,
@@ -222,6 +288,21 @@
     ],
     "threshold": 0.485
   },
+  "rq4_ambiguous_terms_sensitivity": {
+    "fisher_p_value": 0.095915,
+    "fpr_ratio": 2.1434,
+    "fpr_with_identity_terms": 0.150943,
+    "fpr_without_identity_terms": 0.0704225,
+    "n_negative_excluded": 14,
+    "n_negative_with_identity_terms": 53,
+    "n_negative_without_identity_terms": 213,
+    "n_positive_excluded": 24,
+    "n_positive_with_identity_terms": 59,
+    "sources": [
+      "results_summary/rq/rq4_identity_fpr_sensitivity.csv"
+    ],
+    "variant": "exclude_ambiguous_only"
+  },
   "scope": "post-level labels, text-only features, one dataset, 450-row test split",
   "shap_check": {
     "anchor": "01_LOG-REG_TF-IDF",
@@ -258,6 +339,34 @@
     "sources": [
       "results_summary/rq/rq4_identity_counterfactual.csv"
     ],
-    "status": "run"
+    "status": "run",
+    "unambiguous_population": {
+      "rows": [
+        {
+          "mcnemar_p_holm": 1.0,
+          "mean_delta": 0.0245672,
+          "n_flagged_original": 8,
+          "n_flip_neg_to_pos": 1,
+          "n_flip_pos_to_neg": 2,
+          "n_posts": 53,
+          "population": "non_extremist, unambiguous match",
+          "wilcoxon_p_holm": 0.000250237
+        },
+        {
+          "mcnemar_p_holm": 0.117188,
+          "mean_delta": 0.04274,
+          "n_flagged_original": 43,
+          "n_flip_neg_to_pos": 0,
+          "n_flip_pos_to_neg": 9,
+          "n_posts": 59,
+          "population": "extremist, unambiguous match",
+          "wilcoxon_p_holm": 4.02978e-06
+        }
+      ],
+      "sources": [
+        "results_summary/rq/rq4_identity_counterfactual_sensitivity.csv"
+      ],
+      "status": "run"
+    }
   }
 }

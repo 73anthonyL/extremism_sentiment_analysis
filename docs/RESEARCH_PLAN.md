@@ -296,7 +296,12 @@ Other facts that shape the order of work:
   technique with `in_comparison: false` gets its own Holm family and is kept
   out of the comparison tables and the rendered docs, so auditing a new
   classifier leaves the eight-technique results unchanged. The user guide
-  is `docs/FRAMEWORK.md`.
+  is `docs/FRAMEWORK.md`. The chain now also runs the ambiguous-term
+  sensitivity, the lexicon-gap candidates, the same-post tables and the
+  RQ2-RQ4 relation, and, with `--with-perturbation`, the two counterfactuals
+  and the deletion faithfulness test; a stage whose inputs are absent prints
+  SKIP with its reason. Each card gains a faithfulness section and the
+  ambiguous-term rows (2026-11-04).
 * **Every technique has its attribution runs.** Two whole-model SHAP runs
   per technique (test and validation samples), and one test run per
   admitted member of 11 (`A_anchor`, `B_dynabench`, `C_hatebert`,
