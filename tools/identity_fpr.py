@@ -95,6 +95,22 @@ def _rate(numerator, denominator):
     return float(numerator / denominator) if denominator else float("nan")
 
 
+def merge_with_dataset(technique, probs, processed):
+    """Attach dataset text and label to an artifact's rows, aborting on any mismatch.
+
+    The returned frame holds text in memory only; callers must never write it.
+    """
+    merged = probs.merge(processed[["row_id", "text", "label"]], on="row_id", how="left")
+    if merged["text"].isna().any():
+        raise IdentityFPRError(f"{technique}: some row_ids in the artifact are not in the dataset")
+    if (merged["y_true"] != merged["label"]).any():
+        raise IdentityFPRError(
+            f"{technique}: y_true disagrees with the dataset label for "
+            f"{int((merged['y_true'] != merged['label']).sum())} rows; wrong artifact or dataset version"
+        )
+    return merged
+
+
 def analyze(technique, split=DEFAULT_SPLIT, threshold=None, processed=None, probs=None,
             terms=None, min_term_support=DEFAULT_MIN_TERM_SUPPORT, results_dir=None):
     """Compute the RQ4 summary and per-term table for one technique.
@@ -107,15 +123,7 @@ def analyze(technique, split=DEFAULT_SPLIT, threshold=None, processed=None, prob
     terms = load_lexicons()["identity_term"] if terms is None else terms
     threshold = load_threshold(technique, results_dir) if threshold is None else float(threshold)
 
-    merged = probs.merge(processed[["row_id", "text", "label"]], on="row_id", how="left")
-    if merged["text"].isna().any():
-        raise IdentityFPRError(f"{technique}: some row_ids in the artifact are not in the dataset")
-    if (merged["y_true"] != merged["label"]).any():
-        raise IdentityFPRError(
-            f"{technique}: y_true disagrees with the dataset label for "
-            f"{int((merged['y_true'] != merged['label']).sum())} rows; wrong artifact or dataset version"
-        )
-
+    merged = merge_with_dataset(technique, probs, processed)
     merged["pred"] = (merged["y_prob"] >= threshold).astype(int)
     merged["terms"] = identity_matches(merged["text"].tolist(), terms)
     merged["has_identity"] = merged["terms"].map(bool)

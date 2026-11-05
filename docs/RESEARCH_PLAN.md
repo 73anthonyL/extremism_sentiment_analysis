@@ -1,6 +1,6 @@
 # Research plan
 
-Status as of 2026-10-08 (WP0, WP1 and WP2 closed). This is the working plan for the paper. It says what
+Status as of 2026-11-04 (WP0, WP1, WP2 and WP7 closed). This is the working plan for the paper. It says what
 the paper claims, which research question each piece of work serves, what
 exists today, what is missing, in what order the gaps get closed, and what
 rule decides when each question is answered. Update it when a work package
@@ -8,7 +8,10 @@ closes or a decision changes; do not let it drift from `README.md`.
 
 `README.md` summarises the project, `docs/RESULTS_SCHEMA.md` defines every
 committed artifact, and `notebooks/README.md` holds the notebook conventions.
-This document does not repeat them.
+`docs/POSITIONING.md` (2026-11-04) frames the paper as three contributions: an
+auditing framework, explanation-derived findings about detection, and a
+section on why the task is hard. It also adds WP7 to WP10. This document does
+not repeat them.
 
 ## 1. Thesis and contribution
 
@@ -149,6 +152,11 @@ share against RQ4 FPR ratio, one point per technique.
 and the RQ2-versus-RQ4 relation is reported with its rank correlation and
 the number of techniques behind it.
 
+*Intervention.* WP7 (`tools/identity_counterfactual.py`) removes the
+identity terms from the same posts and re-scores them. It reports the false
+positives that clear and, for extremist posts, the recall cost of the same
+edit. See WP7 for the results.
+
 ## 3. Where things stand
 
 Techniques in the controlled comparison and what each one has today.
@@ -192,6 +200,27 @@ Other facts that shape the order of work:
   the classical models, on 200 versus 450 posts; a same-post comparison
   from the external per-post files is the next step before that
   difference is claimed.
+* **The identity counterfactual exists** (WP7, 2026-11-04).
+  `tools/identity_counterfactual.py` re-scores the 150 test posts that
+  contain an identity-lexicon match (67 non-extremist, 83 extremist) with
+  the matches removed, using each technique's restored predictor at its
+  locked threshold. On the original texts every restored predictor matches
+  its committed test probabilities to within 0.0016. On the 67
+  non-extremist posts, removal lowers p(extremist) for 7 of 8 techniques
+  (Holm-adjusted Wilcoxon p <= 0.0014). 03_SLP_TF-IDF shows no detectable
+  shift (mean delta +0.001, Wilcoxon p = 0.48), which is not evidence that
+  the effect is absent. For 07 and 11 the mean shift is 0.099 and 0.095 but
+  the median is 0.001 and 0.003, so the shift sits in a minority of posts.
+  Removal clears 7 of 9 original false positives for 07 and 7 of 8 for 11,
+  against 0 to 5 of 5 to 11 for the classical techniques. These counts are
+  small, no false-positive flip test survives Holm over the 32 rows
+  (smallest 0.33), and they are descriptive, not a ranking. On the 83
+  extremist posts the same edit unflags 15 of 71 flagged posts for 07 and
+  22 of 74 for 11 (Holm-adjusted McNemar p = 0.016 and 1.5e-5); no
+  classical drop survives Holm. Identity terms therefore count as evidence
+  of extremism whatever the label, and removing them trades false positives
+  for recall. Substitution with a control panel is a sensitivity check;
+  the per-model counts, the panel and the limits are under WP7.
 * **Every technique has its attribution runs.** Two whole-model SHAP runs
   per technique (test and validation samples), and one test run per
   admitted member of 11 (`A_anchor`, `B_dynabench`, `C_hatebert`,
@@ -382,6 +411,7 @@ python3 tools/validate_shap.py --technique 01_LOG-REG_TF-IDF
 python3 tools/categorize_attributions.py --all
 python3 tools/compare_reliance.py
 python3 tools/identity_fpr.py --all
+python3 tools/identity_counterfactual.py --all
 python3 tools/render_tables.py --write
 ```
 
@@ -425,6 +455,85 @@ no loader, as closed lines.
 
 *Done when.* Every technique in the comparison passes verification and
 appears in `report.html` for every curated text.
+
+### WP7. Identity counterfactual test (local). Closed 2026-11-04.
+
+`tools/identity_counterfactual.py` takes the 150 test posts with at least one
+identity-lexicon match (67 non-extremist, 83 extremist). It edits them and
+re-scores them with each technique's restored predictor, at the technique's
+locked threshold. Before scoring, the predictor re-scores the original texts
+and must match the committed artifact. The largest difference is 6e-8 for
+the classical models and 1.6e-3 for 07 and 11 served on MPS.
+p_original is always the committed probability. The outputs are
+`identity_counterfactual_test.json` per technique and
+`rq/rq4_identity_counterfactual.csv`. p-values are Holm-adjusted over all 32
+rows, as section 5 requires.
+
+*Remove (primary).* Every identity match is deleted.
+
+* Non-extremist posts. Removal lowers p(extremist) for 7 of 8 techniques,
+  each with Holm-adjusted Wilcoxon p <= 0.0014. 03_SLP_TF-IDF shows no
+  detectable shift at n = 67: mean delta +0.001, median 3e-5, 51% of posts
+  positive, Wilcoxon p = 0.48. That is not evidence that the effect is
+  absent. For the five other classical techniques the mean delta is 0.020
+  to 0.040 and the median 0.010 to 0.034. For 07 and 11 the mean is about
+  0.095 to 0.099 but the median is 0.001 to 0.003, so their shift comes from
+  a minority of posts.
+* Flagged non-extremist posts, original -> after removal, with the false
+  positives that clear and the new ones in brackets:
+  01 11 -> 8 (3 / 0), 02 10 -> 8 (3 / 1), 03 6 -> 7 (0 / 1), 04 9 -> 4 (5 / 0),
+  05 5 -> 4 (1 / 0), 06 7 -> 7 (1 / 1), 07 9 -> 2 (7 / 0), 11 8 -> 2 (7 / 1).
+  These counts are descriptive. None of the flip tests survives Holm (the
+  smallest is 07 at 0.33). With 5 to 11 original false positives the exact
+  McNemar test has little power: 7 cleared and 0 new gives p = 0.016 before
+  correction. The counts are also below the 14-row gap, so they do not rank
+  the techniques.
+* Extremist posts, the recall cost of the same edit. Flagged extremist
+  posts go 01 62 -> 56, 02 60 -> 50, 03 51 -> 49, 04 53 -> 45,
+  05 53 -> 47, 06 52 -> 43, 07 71 -> 57 and 11 74 -> 52. Only the 07 drop
+  (15 lost, 1 gained, Holm p = 0.016) and the 11 drop (22 lost, 0 gained,
+  Holm p = 1.5e-5) survive Holm. This matches RQ4: recall for 07 and 11 is
+  0.855 and 0.892 on extremist posts with identity terms, against 0.839 and
+  0.793 without. The models treat identity terms as evidence of extremism
+  whatever the label. The term is not only a source of errors. Every
+  false-positive reduction above is reported next to this cost.
+
+*Substitute (sensitivity check).* Every match is replaced by each word of a
+control panel, "group", "population" and "humans", and the probabilities are
+averaged over the panel. The tool refuses a panel word if any lexicon
+matches it, if its share of extremist posts in the training split is more
+than 0.10 from the base rate of 0.376, or if its 01 coefficient has
+|coef| > 0.5. The panel words occur in 10, 7 and 5 training posts, with
+extremist shares of 0.40, 0.43 and 0.40 and coefficients +0.17, -0.18 and
+-0.49 (ranks 1510, 3001 and 4225 of 4692). The JSON records all of these.
+
+* The first version substituted "people", which is not a neutral control.
+  It occurs in 219 extremist and 116 non-extremist dataset posts. 63% of
+  its training posts are extremist, and its LR coefficient (+3.20) is the
+  10th largest of 4692. With "people", every classical technique moved
+  toward extremist, so that run compared an identity term with an
+  extremist-associated word. The panel replaces it, and a test refuses a
+  word with that profile.
+* With the panel, the classical techniques shift about as much as under
+  removal: non-extremist mean delta 0.028 to 0.045, and 03 again shows no
+  detectable shift (p = 0.31). For 07 and 11 the shift on non-extremist
+  posts is small and depends on the word. 07 has mean 0.012 and median
+  -0.0004 (Wilcoxon p = 0.06). Its per-word means are +0.073 for "group",
+  +0.028 for "population" and -0.065 for "humans". 11 has mean 0.038 and
+  median about 0 (p = 0.34).
+* For the transformers, the removal shift is therefore not reproduced when a
+  neutral group noun takes the term's place. Removal cannot be attributed to
+  the identity term specifically: it may come from losing the group referent,
+  or from the ungrammatical text that deletion leaves.
+
+*Limitations.* A flip shows that this one perturbation moved the post across
+the locked threshold. That is threshold-local necessity, not proof that the
+term causes the error. Deletion leaves ungrammatical text. For TF-IDF models
+it also changes the L2 normalisation and creates character n-grams across the
+join. The panel words are rare in training (5 to 10 posts), so their balance
+is estimated from few posts. Words never seen in training act like removal
+for the word-level models. The lexicon covers only the identity terms it
+lists. All of this is post-level and text-only.
 
 ### WP6. Write the paper
 
@@ -477,12 +586,26 @@ non-significant result is reported as such, not as absence of effect. The
 RQ2-to-RQ4 relation is reported as a rank correlation over techniques with
 n stated; with eight or nine points it is descriptive.
 
+**Identity counterfactual (WP7).** Removal is the primary operation and
+substitution is a sensitivity check. A substitute word must pass the
+neutrality check in `identity_counterfactual.py`. Wilcoxon and exact McNemar
+p-values are Holm-adjusted over every technique x population x operation
+row of `rq4_identity_counterfactual.csv`, one family per test, as for RQ1.
+Flip counts are always given with n_flagged_original, and the counts on
+non-extremist posts are descriptive unless they survive Holm. A
+false-positive reduction is never reported without the recall change on
+extremist posts. Differences between techniques are not ranked below the
+14-row gap.
+
 **Threshold.** Every RQ4 rate uses the technique's locked validation-selected
 threshold. No threshold is re-chosen to change an RQ4 result.
 
 **Test budget.** One test evaluation per technique, ever. A rerun in WP1
 replaces the earlier evaluation rather than adding one. Notebook 12 is the
-only new test unlock this plan authorises.
+only new test unlock this plan authorises. WP7 re-scores edited test texts
+with frozen models at their locked thresholds. That is a perturbation
+analysis, not a test evaluation: it selects no threshold, model or
+configuration and does not count against this budget.
 
 **Lexicons.** Frozen after WP3. If a reviewer's question forces a change,
 the change is made once, RQ2 and RQ4 are re-run in full, and both versions of
@@ -497,7 +620,9 @@ Not part of this paper, and not to be started on this branch of work:
 * Account-level, temporal, network, or multimodal signals.
 * Multi-class ideology labels or a new dataset. External validation is a
   limitation, not a work package.
-* Deployment, moderation tooling, or any per-user decision.
+* Deployment, moderation tooling, or any per-user decision. The auditing
+  framework in `docs/POSITIONING.md` is a research toolkit for evaluating
+  classifiers, not moderation tooling.
 * Re-running the champion-promotion loop. `legacy_tools/` is reference only.
 
 ## 7. Open decisions for the authors

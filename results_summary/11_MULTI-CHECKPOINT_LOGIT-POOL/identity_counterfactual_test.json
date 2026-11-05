@@ -1,0 +1,196 @@
+{
+  "device": "mps",
+  "holm_adjusted_p": "see rq4_identity_counterfactual.csv (family: every row of that table)",
+  "n_identity_terms_in_lexicon": 96,
+  "n_population": 150,
+  "n_population_by_label": {
+    "extremist": 83,
+    "non_extremist": 67
+  },
+  "operations": [
+    "remove",
+    "substitute"
+  ],
+  "p_original_source": "committed probability artifact",
+  "primary_operation": "remove",
+  "rows": [
+    {
+      "fp_share_cleared": 0.875,
+      "mcnemar_exact_p": 0.0703125,
+      "mean_delta": 0.0948202,
+      "mean_p_counterfactual": 0.059831,
+      "mean_p_original": 0.154651,
+      "median_delta": 0.00319894,
+      "n_flagged_counterfactual": 2,
+      "n_flagged_original": 8,
+      "n_flip_neg_to_pos": 1,
+      "n_flip_pos_to_neg": 7,
+      "n_posts": 67,
+      "operation": "remove",
+      "population": "non_extremist",
+      "share_delta_positive": 0.820896,
+      "split": "test",
+      "technique": "11_MULTI-CHECKPOINT_LOGIT-POOL",
+      "threshold": 0.5,
+      "verification_max_abs_diff": 0.00146615,
+      "wilcoxon_p": 7.52332e-07,
+      "y_true": 0
+    },
+    {
+      "fp_share_cleared": 0.625,
+      "mcnemar_exact_p": 0.21875,
+      "mean_delta": 0.0376399,
+      "mean_p_counterfactual": 0.117011,
+      "mean_p_original": 0.154651,
+      "median_delta": 3.70053e-06,
+      "n_flagged_counterfactual": 4,
+      "n_flagged_original": 8,
+      "n_flip_neg_to_pos": 1,
+      "n_flip_pos_to_neg": 5,
+      "n_posts": 67,
+      "operation": "substitute",
+      "population": "non_extremist",
+      "share_delta_positive": 0.507463,
+      "split": "test",
+      "technique": "11_MULTI-CHECKPOINT_LOGIT-POOL",
+      "threshold": 0.5,
+      "verification_max_abs_diff": 0.00146615,
+      "wilcoxon_p": 0.342371,
+      "y_true": 0
+    },
+    {
+      "fp_share_cleared": null,
+      "mcnemar_exact_p": 4.76837e-07,
+      "mean_delta": 0.198292,
+      "mean_p_counterfactual": 0.646626,
+      "mean_p_original": 0.844918,
+      "median_delta": 0.0680825,
+      "n_flagged_counterfactual": 52,
+      "n_flagged_original": 74,
+      "n_flip_neg_to_pos": 0,
+      "n_flip_pos_to_neg": 22,
+      "n_posts": 83,
+      "operation": "remove",
+      "population": "extremist",
+      "share_delta_positive": 0.903614,
+      "split": "test",
+      "technique": "11_MULTI-CHECKPOINT_LOGIT-POOL",
+      "threshold": 0.5,
+      "verification_max_abs_diff": 0.00146615,
+      "wilcoxon_p": 9.30856e-14,
+      "y_true": 1
+    },
+    {
+      "fp_share_cleared": null,
+      "mcnemar_exact_p": 0.00390625,
+      "mean_delta": 0.111238,
+      "mean_p_counterfactual": 0.73368,
+      "mean_p_original": 0.844918,
+      "median_delta": 0.0309559,
+      "n_flagged_counterfactual": 65,
+      "n_flagged_original": 74,
+      "n_flip_neg_to_pos": 0,
+      "n_flip_pos_to_neg": 9,
+      "n_posts": 83,
+      "operation": "substitute",
+      "population": "extremist",
+      "share_delta_positive": 0.831325,
+      "split": "test",
+      "technique": "11_MULTI-CHECKPOINT_LOGIT-POOL",
+      "threshold": 0.5,
+      "verification_max_abs_diff": 0.00146615,
+      "wilcoxon_p": 8.44841e-11,
+      "y_true": 1
+    }
+  ],
+  "split": "test",
+  "substitute_aggregation": "mean probability over the substitute words",
+  "substitute_per_word": [
+    {
+      "mean_delta": 0.0808974,
+      "median_delta": 0.00317163,
+      "n_flagged_counterfactual": 1,
+      "population": "non_extremist",
+      "word": "group"
+    },
+    {
+      "mean_delta": 0.0414382,
+      "median_delta": -0.000207874,
+      "n_flagged_counterfactual": 5,
+      "population": "non_extremist",
+      "word": "population"
+    },
+    {
+      "mean_delta": -0.00941594,
+      "median_delta": -0.000827595,
+      "n_flagged_counterfactual": 9,
+      "population": "non_extremist",
+      "word": "humans"
+    },
+    {
+      "mean_delta": 0.176797,
+      "median_delta": 0.0576818,
+      "n_flagged_counterfactual": 55,
+      "population": "extremist",
+      "word": "group"
+    },
+    {
+      "mean_delta": 0.0817196,
+      "median_delta": 0.0103781,
+      "n_flagged_counterfactual": 66,
+      "population": "extremist",
+      "word": "population"
+    },
+    {
+      "mean_delta": 0.0751987,
+      "median_delta": 0.00441747,
+      "n_flagged_counterfactual": 66,
+      "population": "extremist",
+      "word": "humans"
+    }
+  ],
+  "substitute_profile": {
+    "max_abs_coef": 0.5,
+    "max_share_gap": 0.1,
+    "n_lr_coefficients": 4692,
+    "reference_technique": "01_LOG-REG_TF-IDF",
+    "train_base_rate": 0.37637,
+    "words": {
+      "group": {
+        "lr_coefficient": 0.172832,
+        "lr_coefficient_rank_desc": 1510,
+        "train_extremist_share": 0.4,
+        "train_n_extremist": 4,
+        "train_n_posts": 10
+      },
+      "humans": {
+        "lr_coefficient": -0.491425,
+        "lr_coefficient_rank_desc": 4225,
+        "train_extremist_share": 0.4,
+        "train_n_extremist": 2,
+        "train_n_posts": 5
+      },
+      "population": {
+        "lr_coefficient": -0.184668,
+        "lr_coefficient_rank_desc": 3001,
+        "train_extremist_share": 0.428571,
+        "train_n_extremist": 3,
+        "train_n_posts": 7
+      }
+    }
+  },
+  "substitute_words": [
+    "group",
+    "population",
+    "humans"
+  ],
+  "technique": "11_MULTI-CHECKPOINT_LOGIT-POOL",
+  "threshold": 0.5,
+  "verification": {
+    "max_abs_diff": 0.00146615,
+    "mean_abs_diff": 0.000117225,
+    "n_rows": 150,
+    "passed": true,
+    "tolerance": 0.01
+  }
+}

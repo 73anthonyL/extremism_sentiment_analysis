@@ -101,6 +101,7 @@ recovers the coefficients before any cross-model claim is made.
 | `attributions/<run_id>__category_shares.csv` | `categorize_attributions.py` | Share of words, absolute mass, and positive mass per category. |
 | `attributions/<run_id>__coefficient_check.json` | `validate_shap.py` | Spearman and sign-agreement statistics against the coefficients. |
 | `identity_fpr_<split>.json`, `identity_fpr_terms_<split>.csv` | `identity_fpr.py` | False-positive rate on non-extremist posts with vs without identity terms; per-term counts. No text. |
+| `identity_counterfactual_test.json` | `identity_counterfactual.py` | WP7: probability shift and flips at the locked threshold when identity terms are removed (primary) or replaced by a control panel (sensitivity; mean probability over the panel), per label and operation, after re-scoring the original texts against the committed artifact. Records the panel's training class balance and LR coefficients, per-word substitute deltas, and the device a torch technique ran on (null for techniques that ignore it). No text, no row ids. |
 | `run_manifest.json` | `run_manifest.py` | Kaggle notebook version, git commit, hashes of committed files, and the location and hash of every external asset. |
 
 Cross-technique tables live in `results_summary/rq/`, one per research
@@ -115,6 +116,7 @@ question, and are the inputs to the rendered documentation tables.
 | `rq/rq2_word_agreement_pairs.csv`, `rq/rq2_shared_top_words.csv`, `rq/rq2_top_word_support.csv` | `word_agreement.py` | Lexicon-free comparison of the whole-model word tables across techniques: pairwise Spearman and top-K Jaccard, words in several techniques' top-K, and the share of top-K words seen in a single explained post. |
 | `rq/rq3_reliance_comparison.csv`, `rq/rq3_stability.csv` | `compare_reliance.py` | Wide per-run shares with member means; across-run stability per technique. |
 | `rq/rq4_identity_fpr.csv` | `identity_fpr.py` | False-positive rate on non-extremist posts with vs without identity terms, per technique. |
+| `rq/rq4_identity_counterfactual.csv` | `identity_counterfactual.py` | WP7 counterfactual rows (technique x label x operation): mean/median delta, flagged counts before and after, flips, `fp_share_cleared` (share of original false positives that clear), Wilcoxon and exact McNemar p, their Holm adjustments over every row of the table, verification max diff. |
 
 ### Provenance fields
 
