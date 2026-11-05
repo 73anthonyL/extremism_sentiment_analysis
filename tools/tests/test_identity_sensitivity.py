@@ -237,3 +237,53 @@ def test_cli_refuses_a_bad_ambiguous_list(monkeypatch, capsys, tmp_path):
     assert isens.main(["lexicon-gaps"]) == 1
     assert "not in the identity lexicon" in capsys.readouterr().err
     assert not gaps_csv.exists() and not top_k_csv.exists()
+
+
+def _gap_summary(technique, words):
+    return {"technique": technique, "run_id": "run", "top_k": 50, "n_identity_term": 2,
+            "n_identity_term_ambiguous": 1, "ambiguous_words": "white", "n_gap_candidates": len(words),
+            "gap_words": ";".join(words)}
+
+
+def _gap_candidate(technique, rank, word):
+    return {"technique": technique, "run_id": "run", "top_k": 50, "rank": rank, "word": word,
+            "rule": "inflection", "related_entry": "white", "related_entry_ambiguous": True,
+            "other_lexicon_category": "", "mean_abs_attribution": 0.0123456789, "support": 2,
+            "low_support": True}
+
+
+def test_gap_tables_for_one_technique_leave_the_others_byte_identical(tmp_path):
+    """An audited classifier's lexicon-gap run must not drop or rewrite the comparison's rows."""
+    from identity_sensitivity import write_gap_tables
+
+    gaps, top_k = tmp_path / "gaps.csv", tmp_path / "top_k.csv"
+    both = ([_gap_candidate("01_A", 3, "whites"), _gap_candidate("02_B", 7, "blacks")],
+            [_gap_summary("01_A", ["whites"]), _gap_summary("02_B", ["blacks"])])
+    write_gap_tables(*both, gaps, top_k)
+    before = gaps.read_text(), top_k.read_text()
+
+    write_gap_tables([_gap_candidate("98_TOY", 1, "whites")], [_gap_summary("98_TOY", ["whites"])], gaps, top_k)
+    assert list(pd.read_csv(gaps)["technique"]) == ["01_A", "02_B", "98_TOY"]
+    kept = [line for line in gaps.read_text().splitlines() if not line.startswith("98_TOY")]
+    assert kept == before[0].splitlines()
+
+    # A rerun of 02_B with no candidate left removes its old candidate row.
+    write_gap_tables([], [_gap_summary("02_B", [])], gaps, top_k)
+    assert "02_B" not in set(pd.read_csv(gaps)["technique"])
+    assert list(pd.read_csv(top_k)["technique"]) == ["01_A", "02_B", "98_TOY"]
+
+    # Rewriting every technique from scratch reproduces the first state byte for byte.
+    gaps.unlink()
+    top_k.unlink()
+    write_gap_tables(*both, gaps, top_k)
+    assert (gaps.read_text(), top_k.read_text()) == before
+
+
+def test_gap_table_with_a_foreign_schema_is_refused(tmp_path):
+    from identity_sensitivity import write_gap_tables
+
+    gaps, top_k = tmp_path / "gaps.csv", tmp_path / "top_k.csv"
+    pd.DataFrame({"technique": ["01_A"], "word": ["x"]}).to_csv(gaps, index=False)
+    with pytest.raises(IdentitySensitivityError, match="columns differ"):
+        write_gap_tables([], [_gap_summary("02_B", [])], gaps, top_k)
+    assert not top_k.exists()

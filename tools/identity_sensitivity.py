@@ -54,7 +54,9 @@ lexicon-gaps    for each technique's whole-model test attribution run, the
                 low_support marks support <= LOW_SUPPORT_MAX posts: weak
                 evidence. Hashtag compounds may belong in extremist_framing
                 rather than identity terms. The candidates are for human
-                review; nothing is added.
+                review; nothing is added. A run with --technique replaces
+                only those techniques' rows, so auditing one classifier
+                leaves every other technique's rows as they were.
 
 Text is held in memory only. Outputs carry counts, rates, p values and
 vocabulary words (which the committed attribution artifacts already carry);
@@ -483,6 +485,43 @@ def cmd_fpr(args, lexicons, ambiguous):
     return 0
 
 
+def _merge_by_technique(new, path, columns, written):
+    """`new` plus the rows of `path` for techniques not in `written`, sorted by technique (stable)."""
+    path = Path(path)
+    if path.exists():
+        existing = pd.read_csv(path, keep_default_na=False)
+        if list(existing.columns) != list(columns):
+            raise IdentitySensitivityError(f"{path.name}: columns differ from this version of the tool")
+        existing = existing[~existing["technique"].isin(written)]
+        # Re-read through the same parser as `new` so a kept row is written back unchanged.
+        new = pd.concat([existing.astype(str), new.astype(str)], ignore_index=True)
+    return new.sort_values("technique", kind="stable").reset_index(drop=True)
+
+
+def write_gap_tables(candidates, summaries, gaps_path=None, top_k_path=None):
+    """Write the lexicon-gap tables, replacing only the rows of the techniques given.
+
+    A run for one technique (an audited classifier outside the comparison)
+    adds or replaces that technique's rows and leaves every other
+    technique's rows as they were. Both tables are per technique: no row is
+    computed across techniques, so nothing else changes.
+    """
+    gaps_path = Path(RQ2_IDENTITY_LEXICON_GAPS_SENSITIVITY_CSV if gaps_path is None else gaps_path)
+    top_k_path = Path(RQ2_IDENTITY_TOP_K_SENSITIVITY_CSV if top_k_path is None else top_k_path)
+    written = {s["technique"] for s in summaries}
+    if any(c["technique"] not in written for c in candidates):
+        raise IdentitySensitivityError("a gap candidate names a technique with no summary row")
+    gaps = pd.DataFrame(candidates, columns=list(GAP_COLUMNS))
+    gaps["mean_abs_attribution"] = gaps["mean_abs_attribution"].map(lambda v: f"{v:.6g}")
+    top_k = pd.DataFrame(summaries, columns=list(TOP_K_COLUMNS))
+    gaps = _merge_by_technique(gaps, gaps_path, GAP_COLUMNS, written)
+    top_k = _merge_by_technique(top_k, top_k_path, TOP_K_COLUMNS, written)
+    gaps_path.parent.mkdir(parents=True, exist_ok=True)
+    gaps.to_csv(gaps_path, index=False)
+    top_k.to_csv(top_k_path, index=False)
+    return gaps_path, top_k_path
+
+
 def cmd_gaps(args, lexicons, ambiguous):
     candidates, summaries = [], []
     for technique in _techniques(args):
@@ -492,11 +531,8 @@ def cmd_gaps(args, lexicons, ambiguous):
         summaries.append(summary)
         print(f"{technique}: {summary['n_identity_term']} identity words in top {args.top_k} "
               f"({summary['n_identity_term_ambiguous']} ambiguous), {summary['n_gap_candidates']} gap candidates")
-    RQ2_IDENTITY_LEXICON_GAPS_SENSITIVITY_CSV.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(candidates, columns=list(GAP_COLUMNS)).to_csv(
-        RQ2_IDENTITY_LEXICON_GAPS_SENSITIVITY_CSV, index=False, float_format="%.6g")
-    pd.DataFrame(summaries, columns=list(TOP_K_COLUMNS)).to_csv(RQ2_IDENTITY_TOP_K_SENSITIVITY_CSV, index=False)
-    print(f"wrote {RQ2_IDENTITY_LEXICON_GAPS_SENSITIVITY_CSV} and {RQ2_IDENTITY_TOP_K_SENSITIVITY_CSV}")
+    gaps_path, top_k_path = write_gap_tables(candidates, summaries)
+    print(f"wrote {gaps_path} and {top_k_path}")
     return 0
 
 
