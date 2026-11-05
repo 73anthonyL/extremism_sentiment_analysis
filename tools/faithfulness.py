@@ -41,6 +41,10 @@ Per technique x population x k:
 * mean_drop_topk     mean of p_original - p_topk (comprehensiveness),
 * mean_drop_random   the same for the random deletion, averaged over seeds,
 * drop_minus_random  their difference, the faithfulness margin,
+* mean_attributed_topk  mean summed SHAP value of the deleted tokens: the drop
+                     additivity predicts if deleting a word acted like masking
+                     it; drop_over_attributed_topk is mean_drop_topk over it
+                     (mean_attributed_random: the same for the random tokens),
 * flip_share_topk    share of posts flagged at the locked threshold that are
                      no longer flagged after the top-k deletion
                      (flip_share_random: expected share over the seeds),
@@ -148,6 +152,9 @@ ROW_COLUMNS = (
     "median_paired_diff",
     "share_topk_drop_gt_random",
     "random_drop_sd_over_seeds",
+    "mean_attributed_topk",
+    "mean_attributed_random",
+    "drop_over_attributed_topk",
     "n_flagged",
     "mean_drop_topk_flagged",
     "mean_drop_random_flagged",
@@ -293,19 +300,24 @@ def deletion_plan(posts, k_values=K_VALUES, seeds=RANDOM_SEEDS):
     """
     plan = {}
     for k in k_values:
-        m_values, topk_texts = [], []
+        m_values, topk_texts, topk_mass = [], [], []
         for tokens, values in zip(posts["tokens"], posts["values"]):
             chosen = top_k_positive(values, k)
             m_values.append(len(chosen))
             topk_texts.append(delete_tokens(tokens, chosen))
-        random_texts = []
+            topk_mass.append(float(np.asarray(values)[chosen].sum()))
+        random_texts, random_mass = [], []
         for seed in seeds:
             rng = np.random.default_rng([int(seed), int(k)])
-            random_texts.append([
-                delete_tokens(tokens, random_positions(len(tokens), m, rng))
-                for tokens, m in zip(posts["tokens"], m_values)
-            ])
-        plan[k] = {"m": np.asarray(m_values, dtype=int), "topk": topk_texts, "random": random_texts}
+            texts, mass = [], []
+            for tokens, values, m in zip(posts["tokens"], posts["values"], m_values):
+                positions = random_positions(len(tokens), m, rng)
+                texts.append(delete_tokens(tokens, positions))
+                mass.append(float(np.asarray(values)[positions].sum()))
+            random_texts.append(texts)
+            random_mass.append(mass)
+        plan[k] = {"m": np.asarray(m_values, dtype=int), "topk": topk_texts, "random": random_texts,
+                   "topk_mass": np.asarray(topk_mass), "random_mass": np.asarray(random_mass)}
     return plan
 
 
@@ -360,11 +372,13 @@ def _mean(values):
     return float(values.mean()) if values.size else float("nan")
 
 
-def deletion_metrics(p_original, p_topk, p_random, m, k, threshold):
+def deletion_metrics(p_original, p_topk, p_random, m, k, threshold, topk_mass=None, random_mass=None):
     """Comprehensiveness, random baseline, flips and the paired test for one k.
 
     `p_random` has one row per seed. Posts with m == 0 (no positive token) are
-    excluded here.
+    excluded here. `topk_mass` / `random_mass` (one row per seed) are the summed
+    SHAP values of the deleted tokens, the drop SHAP's additivity would predict
+    if deleting a word acted like masking it.
     """
     keep = np.asarray(m) > 0
     p_original = np.asarray(p_original, dtype=float)[keep]
@@ -372,6 +386,10 @@ def deletion_metrics(p_original, p_topk, p_random, m, k, threshold):
     p_random = np.asarray(p_random, dtype=float)[:, keep]
     m = np.asarray(m)[keep]
     n = int(keep.sum())
+    topk_mass = np.full(len(keep), np.nan) if topk_mass is None else np.asarray(topk_mass, dtype=float)
+    random_mass = np.full((1, len(keep)), np.nan) if random_mass is None else np.asarray(random_mass, dtype=float)
+    attributed_topk = _mean(topk_mass[keep])
+    attributed_random = _mean(random_mass[:, keep].mean(axis=0))
 
     drop_topk = p_original - p_topk
     drop_random_by_seed = p_original[None, :] - p_random
@@ -399,6 +417,11 @@ def deletion_metrics(p_original, p_topk, p_random, m, k, threshold):
         "share_topk_drop_gt_random": _mean(paired > 0),
         "random_drop_sd_over_seeds": (
             float(drop_random_by_seed.mean(axis=1).std(ddof=1)) if n and len(p_random) > 1 else float("nan")
+        ),
+        "mean_attributed_topk": attributed_topk,
+        "mean_attributed_random": attributed_random,
+        "drop_over_attributed_topk": (
+            _mean(drop_topk) / attributed_topk if n and attributed_topk > 0 else float("nan")
         ),
         "n_flagged": n_flagged,
         "mean_drop_topk_flagged": _mean(drop_topk[flagged]),
@@ -469,6 +492,7 @@ def analyze(technique, model, posts, threshold, shared_ids, model_family=None, d
             row.update(deletion_metrics(
                 p_original[mask], scored[k]["topk"][mask], scored[k]["random"][:, mask],
                 plan[k]["m"][mask], k, threshold,
+                topk_mass=plan[k]["topk_mass"][mask], random_mass=plan[k]["random_mass"][:, mask],
             ))
             row["verification_max_abs_diff"] = verification["max_abs_diff"]
             rows.append({c: _round(row[c]) for c in ROW_COLUMNS})

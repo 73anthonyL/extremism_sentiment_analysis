@@ -133,6 +133,14 @@ class TestMetrics:
         assert row["mean_drop_topk"] == 0
         assert row["drop_minus_random"] <= 0
 
+    def test_attributed_mass_is_the_sum_of_the_deleted_values(self):
+        frame = _frame(_posts())
+        payload = analyze("11_T", _fake_model(), frame, 0.5, set(frame["row_id"]), k_values=(1,), seeds=(1,))
+        row = payload["rows"][0]
+        # Top-1 is the trigger (0.4) on even posts and "walk" (0.01) on odd ones.
+        assert row["mean_attributed_topk"] == pytest.approx((0.4 + 0.01) / 2)
+        assert row["drop_over_attributed_topk"] == pytest.approx(row["mean_drop_topk"] / row["mean_attributed_topk"], rel=1e-4)
+
     def test_posts_without_positive_token_are_excluded(self):
         metrics = deletion_metrics([0.9, 0.2], [0.1, 0.2], np.array([[0.9, 0.2]]), [1, 0], 1, 0.5)
         assert metrics["n_posts"] == 1 and metrics["flip_share_topk"] == 1.0
