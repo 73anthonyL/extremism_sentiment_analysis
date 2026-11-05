@@ -1,9 +1,12 @@
 {
   "explainer": "shap.PartitionExplainer(maskers.Text(r'\\W+'))",
   "n_shared_words": 1523,
+  "n_shared_words_support_ge_min": 768,
   "passed": true,
   "run_id": "shap-partition_test_seed30",
+  "secondary_min_support": 2,
   "spearman_mean_attribution_vs_coefficient": 0.8729761351880327,
+  "spearman_support_ge_min": 0.9320539998921327,
   "technique": "01_LOG-REG_TF-IDF",
   "thresholds": {
     "min_sign_agreement": 0.9,

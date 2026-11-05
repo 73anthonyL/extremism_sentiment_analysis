@@ -10,6 +10,14 @@ coefficient and grows with |coefficient|, so:
 * Spearman rank correlation between `mean_attribution` and the coefficient over
   all shared words must be high (default: at least 0.8).
 
+The pass rule is the preregistered one above (RESEARCH_PLAN RQ2
+precondition) and is not changed here. Because a word seen in a single
+explained post has a one-sample mean attribution, the check also records the
+same Spearman over shared words with support >= SECONDARY_MIN_SUPPORT
+(`spearman_support_ge_min`, with `secondary_min_support`). It is a diagnostic
+that tells a near-miss caused by single-post words apart from a real
+disagreement; it does not decide PASS or FAIL.
+
 Inputs, in results_summary/<TECHNIQUE>/attributions/:
     coefficients.csv   word, coefficient   (exported by the notebook)
     <run_id>.csv/.json the attribution run to check
@@ -39,6 +47,7 @@ from repo_paths import COEFFICIENTS_FILENAME
 DEFAULT_MIN_SPEARMAN = 0.8
 DEFAULT_MIN_SIGN_AGREEMENT = 0.9
 DEFAULT_TOP_K = 50
+SECONDARY_MIN_SUPPORT = 2
 COEFFICIENT_COLUMNS = ("word", "coefficient")
 
 
@@ -71,6 +80,9 @@ def coefficient_check(attributions, coefficients, top_k=DEFAULT_TOP_K):
             f"only {len(merged)} words shared between coefficients and attributions"
         )
     rho, _ = spearmanr(merged["coefficient"], merged["mean_attribution"])
+    supported = merged[merged["support"] >= SECONDARY_MIN_SUPPORT]
+    rho_supported = (float(spearmanr(supported["coefficient"], supported["mean_attribution"])[0])
+                     if len(supported) >= 3 else None)
 
     ranked = coefficients.reindex(coefficients["coefficient"].abs().sort_values(ascending=False).index)
     top = ranked.head(top_k)
@@ -87,6 +99,9 @@ def coefficient_check(attributions, coefficients, top_k=DEFAULT_TOP_K):
     return {
         "n_shared_words": int(len(merged)),
         "spearman_mean_attribution_vs_coefficient": float(rho),
+        "secondary_min_support": SECONDARY_MIN_SUPPORT,
+        "n_shared_words_support_ge_min": int(len(supported)),
+        "spearman_support_ge_min": rho_supported,
         "top_k": int(top_k),
         "top_k_coverage": float(coverage),
         "top_k_sign_agreement": sign_agreement,
@@ -143,6 +158,9 @@ def main():
     print(f"wrote {out}")
     print(f"  shared words        {stats['n_shared_words']}")
     print(f"  spearman            {stats['spearman_mean_attribution_vs_coefficient']:.4f}")
+    if stats["spearman_support_ge_min"] is not None:
+        print(f"  spearman, support >= {stats['secondary_min_support']}  {stats['spearman_support_ge_min']:.4f} "
+              f"over {stats['n_shared_words_support_ge_min']} words (diagnostic, not the pass rule)")
     print(f"  top-{stats['top_k']} sign agreement  {stats['top_k_sign_agreement']:.4f} "
           f"(coverage {stats['top_k_coverage']:.2f})")
     if stats["top_k_sign_disagreements"]:
