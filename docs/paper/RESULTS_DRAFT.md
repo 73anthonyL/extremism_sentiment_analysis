@@ -694,7 +694,10 @@ ordering of reliance and false positives is not established.
 
 Each item cites the evidence above; "avenue" names what would address it.
 None of these is a claim that the task is new: extremism and hate-speech
-detection are established research areas. The aim is to say where the
+detection are established research areas, with systematic reviews of
+extremism detection (Gaikwad et al., 2021; Aldera et al., 2021; Torregrosa
+et al., 2023) and surveys of hate-speech detection (Schmidt and Wiegand,
+2017; Fortuna and Nunes, 2018). The aim is to say where the
 remaining difficulty sits.
 
 1. **Small test splits hide real differences.** With 450 [C818] test posts,
@@ -705,8 +708,11 @@ remaining difficulty sits.
 2. **Some errors are shared by every model.** 12 [C089] test posts are wrong
    for all eight techniques, 11 [C090] of them extremist. They point at label
    ambiguity, or at signal the text does not contain, which fits the
-   post-level, text-only limitation. Avenue: multi-annotator labels with
-   reported agreement. **TODO(author):** a qualitative read of these posts
+   post-level, text-only limitation. Label ambiguity is a known problem:
+   hate and offensive language are hard to separate (Davidson et al., 2017),
+   and definitions of extremism vary (Torregrosa et al., 2023). Avenue:
+   multi-annotator labels with reported agreement, as in large crowdsourced
+   annotation studies (Founta et al., 2018). **TODO(author):** a qualitative read of these posts
    by the authors (outside the repository; no text may be committed).
 3. **Identity terms are hard to separate from what surrounds them.** Every
    technique has a higher FPR on benign posts with identity terms (Table 7).
@@ -714,29 +720,41 @@ remaining difficulty sits.
    noun lowers p(extremist) about as much as deleting it. For the
    transformers, deleting it costs recall but substituting it does not, so
    the edit, not only the term, may drive the effect (section 8.2). Avenue:
-   counterfactual data augmentation or identity-balanced training,
-   evaluated with substitution as well as deletion and with the
-   recall-cost reporting used here.
+   counterfactual data augmentation (Kaushik et al., 2020) or
+   identity-balanced training such as data rebalancing (Dixon et al., 2018)
+   or worst-group training (Sagawa et al., 2020), evaluated with
+   substitution as well as deletion and with the recall-cost reporting used
+   here. This paper audits and does not retrain.
 4. **Transformer explanations are faithful on the posts they flag but
    unstable across samples.** The deletion test holds for every technique,
    and for the transformers its effect is concentrated in flagged posts
    (Table 3); yet their word rankings agree least across post samples
    (Spearman, Table 6). Per-word claims about transformers are fragile.
-   Avenue: report explanation stability and deletion faithfulness as
-   standard metrics.
+   Avenue: report explanation stability (Ding and Koehn, 2021) and
+   deletion faithfulness (DeYoung et al., 2020) as standard metrics.
 5. **Lexicons do not cover the vocabulary.** The topical category takes
    0.81 [C158] to 1.00 [C159] of positive mass, the framing lexicon matches almost
    none of the top words, the slur list is empty, and 14 [C703] distinct
    words that look like identity references are missing from the identity
    list (most on thin support). Category-level claims depend on curation.
-   Avenue: hand-annotated top words rather than lexicons alone.
+   Avenue: hand-annotated top words rather than lexicons alone, on the
+   model of the human rationales in HateXplain (Mathew et al., 2021), or
+   group-robust training that does not need group labels (Liu et al., 2021)
+   or an identity-term list (Attanasio et al., 2022).
 6. **Context matters.** Quotation, reporting and counter-speech can use the
    same words as extremist posts, and a word-level attribution cannot
-   separate them. No artifact here measures this. **TODO(author):** either
+   separate them. Prior work reaches past surface words with semantic graph
+   features (Saif et al., 2017) or annotations of implied statements about
+   groups (Sap et al., 2020), and HateCheck's functional tests include
+   non-hateful identity mentions, counter-speech and quotation (Röttger et
+   al., 2021). No artifact here measures this. **TODO(author):** either
    support this item with evidence (for example a labelled sample of
    counter-speech among the false positives, kept outside the repository)
-   or present it as a hypothesis. Avenue: layer-wise probes (WP9) and LLM
-   self-explanations (WP10). **TODO(author):** WP9 needs a Kaggle GPU run;
+   or present it as a hypothesis. Avenue: a HateCheck-style curated set
+   (Röttger et al., 2021), layer-wise probes (WP9; Alain and Bengio, 2017)
+   checked against control tasks (Hewitt and Liang, 2019), and LLM
+   self-explanations (WP10), whose stated reasons can be unfaithful (Turpin
+   et al., 2023). **TODO(author):** WP9 needs a Kaggle GPU run;
    WP10 needs an author decision on sending dataset text to a hosted model
    (an open-weight local model avoids it). Neither result exists.
 
@@ -842,12 +860,19 @@ The perturbation stages cannot be reproduced by a reader until they are.
 Labels are post-level and features text-only; one dataset and one frozen
 split; a small test split; category shares depend on lexicons that are not
 yet frozen; SHAP over subword models is aggregated to words with a
-word-level masker; the bootstrap intervals cover post sampling only, not
+word-level masker (Kokalj et al., 2021); the pipeline check compares
+against known coefficients, and the randomization sanity checks of Adebayo
+et al. (2018) were not run; the identity lexicon does not capture
+dialect-correlated false positives (Sap et al., 2019); the bootstrap intervals cover post sampling only, not
 SHAP seeds or other splits; transformer runs explain fewer posts per split
 than the classical runs (the same-post tables control for this where
 stated); the transformers in RQ3 differ in more than pretraining. The
 framework audits detectors of extremist content in single posts and is not a
-deployment recommendation.
+deployment recommendation. How abuse datasets are built and documented
+limits what any result on them shows (Vidgen and Derczynski, 2020).
+**TODO(author):** no peer-reviewed source for the dataset's collection and
+labelling was found (`docs/RELATED_WORK.md`, "Items not verified"); confirm
+and cite it before submission.
 
 [^cov]: `results_summary/rq/rq2_lexicon_coverage.csv`.
 
