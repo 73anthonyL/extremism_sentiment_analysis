@@ -23,6 +23,11 @@ checks, in order:
    no shortcut that skips training, and no test data before section 8.
 6. Soundness: every code cell parses, and every name it uses is defined in a
    cell at or before it (or inside the function that uses it).
+   A probe notebook (role "probe", WP9) instead loads tools/probe_kit.py as
+   `pk` with its canonical block, validates its probe configuration, opens
+   the test split once (pk.begin_test_evaluation) in its evaluation section,
+   exports its tables once (pk.export_probe_tables), never references test
+   before that section, and makes no threshold, SHAP or probability export.
 7. Outputs. With `--primed` (code ready to upload, not yet run) every output
    must be empty. Without it (after a Kaggle run) there must be no error
    output and no row id in any output.
@@ -82,11 +87,28 @@ FOUNDATION_SECTIONS = (
     "Foundation summaries",
     "Package outputs",
 )
+# The layer-probe analysis (WP9): no post classifier, no threshold, no SHAP
+# run. It loads tools/probe_kit.py next to the kit and writes cross-model
+# tables to results_summary/rq/.
+PROBE_SECTIONS = (
+    "Bootstrap",
+    "Configuration",
+    "Load foundation and assert the frozen split",
+    "Probe targets",
+    "Models and representations",
+    "Representations on train and validation",
+    "Probe fit on train",
+    "Single test evaluation",
+    "Probe tables",
+    "Interpretation",
+    "Package outputs",
+)
 ROLE_SECTIONS = {
     "foundation": FOUNDATION_SECTIONS,
     "classical": MODEL_SECTIONS,
     "transformer": MODEL_SECTIONS,
     "ensemble": MODEL_SECTIONS,
+    "probe": PROBE_SECTIONS,
 }
 # Sections that may consist of prose alone.
 PROSE_ONLY_SECTIONS = ("Interpretation",)
@@ -115,6 +137,22 @@ nk = importlib.util.module_from_spec(_kit_spec)
 sys.modules["notebook_kit"] = nk
 _kit_spec.loader.exec_module(nk)
 '''
+
+# Probe notebooks follow the kit cell with this block, verbatim: it loads
+# tools/probe_kit.py from the folder the kit was found in, as `pk`.
+PROBE_KIT_SNIPPET = '''_probe_kit_path = _kit_path.parent / "probe_kit.py"
+if not _probe_kit_path.is_file():
+    raise FileNotFoundError(
+        "probe_kit.py not found next to notebook_kit.py. Attach the repository's tools/ "
+        "folder to this kernel as an input dataset."
+    )
+_probe_kit_spec = importlib.util.spec_from_file_location("probe_kit", _probe_kit_path)
+pk = importlib.util.module_from_spec(_probe_kit_spec)
+sys.modules["probe_kit"] = pk
+_probe_kit_spec.loader.exec_module(pk)
+'''
+# Kit-like modules whose calls the checker tracks: the kit, and the probe kit.
+KIT_ALIASES = ("nk", "pk")
 
 HEADER_RE = re.compile(r"^## (\d+)\. (.+?)\s*$")
 ROW_ID_RE = re.compile(r"\bex_\d{6}\b")
@@ -148,6 +186,21 @@ FORBIDDEN_SOURCE_PATTERNS = (
 TEST_REFERENCE_RE = re.compile(r"\btest_(df|prob|probs|texts|loader|logits)\b")
 # Sections (by title) in which the test split must not be referenced at all.
 NO_TEST_SECTIONS = ("Features and model", "Ablation on validation", "Threshold on validation")
+PROBE_NO_TEST_SECTIONS = (
+    "Probe targets",
+    "Models and representations",
+    "Representations on train and validation",
+    "Probe fit on train",
+)
+# Model-notebook steps a probe notebook never takes.
+PROBE_FORBIDDEN_CALLS = (
+    "select_threshold",
+    "evaluate",
+    "explain",
+    "export_probabilities",
+    "export_attribution_run",
+    "export_results_folder",
+)
 
 # Identifiers and column names that hold dataset text or row-level identity.
 TEXT_IDENTIFIERS = frozenset(
@@ -256,14 +309,14 @@ def parse_cells(cells):
 # Kit calls
 # ---------------------------------------------------------------------------
 def kit_calls(tree):
-    """Every `nk.<name>(...)` call in a cell, as (name, ast.Call)."""
+    """Every `nk.<name>(...)` or `pk.<name>(...)` call in a cell, as (name, ast.Call)."""
     calls = []
     for node in ast.walk(tree):
         if (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Attribute)
             and isinstance(node.func.value, ast.Name)
-            and node.func.value.id == "nk"
+            and node.func.value.id in KIT_ALIASES
         ):
             calls.append((node.func.attr, node))
     return calls
@@ -322,7 +375,7 @@ def _returns_an_aggregate(call):
     return (
         isinstance(func, ast.Attribute)
         and isinstance(func.value, ast.Name)
-        and func.value.id == "nk"
+        and func.value.id in KIT_ALIASES
     )
 
 
@@ -651,7 +704,9 @@ def check_notebook(path, primed=False):
     if last.get("cell_type") != "code" or "nk.finalize(" not in cell_source(last):
         problems.append("the last cell must be the code cell that calls nk.finalize(ctx)")
 
-    if role == "foundation":
+    if role == "probe":
+        problems.extend(probe_problems(cells, trees, by_title, index))
+    elif role == "foundation":
         if not index.in_section("find_input", "Load raw dataset"):
             problems.append("section 'Load raw dataset' must locate the dataset with nk.find_input")
         require_once_in(index, "assert_split_counts", "Create and verify the split", problems)
@@ -764,6 +819,49 @@ def check_notebook(path, primed=False):
     return problems
 
 
+def _string_constants(tree, value):
+    return [
+        node for node in ast.walk(tree) if isinstance(node, ast.Constant) and node.value == value
+    ]
+
+
+def probe_problems(cells, trees, by_title, index):
+    """The probe role's pipeline rules (WP9, docs/preregistrations/WP9_layer_probes.md)."""
+    problems = []
+    bootstrap_cells = by_title["Bootstrap"].code_indices
+    if not bootstrap_cells or PROBE_KIT_SNIPPET.strip() not in cell_source(cells[bootstrap_cells[0]]):
+        problems.append(
+            "section 'Bootstrap' must load the probe kit with the canonical block after the kit "
+            "cell (see --print-template probe)"
+        )
+    require_once_in(index, "validate_probe_config", "Configuration", problems, label="pk.validate_probe_config")
+    require_once_in(index, "load_foundation", "Load foundation and assert the frozen split", problems)
+    require_once_in(index, "split_frames", "Load foundation and assert the frozen split", problems)
+    require_once_in(index, "begin_test_evaluation", "Single test evaluation", problems, label="pk.begin_test_evaluation")
+    require_once_in(index, "export_probe_tables", "Probe tables", problems, label="pk.export_probe_tables")
+    for name in PROBE_FORBIDDEN_CALLS:
+        for _, cell_index, _ in index.calls(name):
+            problems.append(
+                f"cell {cell_index}: nk.{name} is a model-notebook step; a probe notebook selects "
+                "nothing and evaluates probes through pk"
+            )
+    for title in PROBE_NO_TEST_SECTIONS:
+        for cell_index in by_title[title].code_indices:
+            source = cell_source(cells[cell_index])
+            match = TEST_REFERENCE_RE.search(source)
+            if match:
+                problems.append(
+                    f"cell {cell_index}: '{match.group(0)}' is referenced in section '{title}'; "
+                    "the test split is not touched before 'Single test evaluation'"
+                )
+            if cell_index in trees and _string_constants(trees[cell_index], "test"):
+                problems.append(
+                    f"cell {cell_index}: the string 'test' appears in section '{title}'; "
+                    "the test split is not touched before 'Single test evaluation'"
+                )
+    return problems
+
+
 def notebook_paths(directory=None):
     directory = NOTEBOOKS_DIR if directory is None else Path(directory)
     return sorted(directory.glob("*.ipynb"))
@@ -800,6 +898,9 @@ def print_template(role):
         print(f"  ## {number}. {title}")
     print("\nFirst code cell of section 1, verbatim:\n")
     print(BOOTSTRAP_SNIPPET)
+    if role == "probe":
+        print("followed, in the same cell, by:\n")
+        print(PROBE_KIT_SNIPPET)
 
 
 def main():
