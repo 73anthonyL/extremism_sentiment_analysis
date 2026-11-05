@@ -71,10 +71,10 @@ Conventions:
   matches our text-only scope, and it is the reference for "the task is
   well studied".
 * **Torregrosa, J., Bello-Orgaz, G., Martínez-Cámara, E., Del Ser, J.,
-  Camacho, D. (2022).** A survey on extremism analysis using natural language
+  Camacho, D. (2023).** A survey on extremism analysis using natural language
   processing: definitions, literature review, trends and challenges.
   *Journal of Ambient Intelligence and Humanized Computing* 14(8),
-  9869-9905.
+  9869-9905 (published online 2022).
   DOI 10.1007/s12652-021-03658-z.
   *Relation:* covers definitions of extremism and the open problems. It
   supports the C3 "why the task is hard" section (context, label ambiguity).
@@ -254,9 +254,11 @@ Conventions:
   identity does not hold for our probability-output LR with word deletion.
 * **SHAP library documentation, `shap.PartitionExplainer` and
   `shap.maskers.Text`.** https://shap.readthedocs.io (checked 2026-11-04).
-  *Relation:* software reference for the Partition explainer and for its
-  documented property that Owen values equal Shapley values for linear
-  models. Cite the exact `shap` version from `requirements-lock.txt`.
+  *Relation:* software reference for the Partition explainer and the text
+  masker. When the model output is additive in the features, Owen and
+  Shapley values coincide (any coalition structure gives the same values
+  for an additive game); the paper should state this as a property of Owen values, not
+  cite the docs for it. Cite the exact `shap` version from `requirements-lock.txt`.
 * **Sundararajan, M., Taly, A., Yan, Q. (2017).** Axiomatic Attribution for
   Deep Networks (Integrated Gradients). *ICML 2017*, PMLR 70.
   arXiv:1703.01365.
@@ -274,7 +276,7 @@ Conventions:
 * **Mosca, E., Szigeti, F., Tragianni, S., Gallagher, D., Groh, G. (2022).**
   SHAP-Based Explanation Methods: A Review for NLP Interpretability.
   *COLING 2022*, pp. 4593-4603. ACL Anthology 2022.coling-1.406.
-  *Relation:* reviews 41 SHAP variants for NLP. It is the reference for our
+  *Relation:* reviews SHAP-based interpretability methods for NLP. It is the reference for our
   choice of masker and explainer.
 * **Madsen, A., Reddy, S., Chandar, S. (2022).** Post-hoc Interpretability
   for Neural NLP: A Survey. *ACM Computing Surveys* 55(8), Article 155.
@@ -674,7 +676,7 @@ Anthology, AAAI OJS, PMLR, NeurIPS proceedings, JSTOR or OpenReview).
 
 Detecting extremist and hateful content from text is well studied. There are
 systematic reviews (Gaikwad et al. 2021; Aldera et al. 2021; Torregrosa et
-al. 2022), shared tasks and datasets (Basile et al. 2019; Zampieri et al.
+al. 2023), shared tasks and datasets (Basile et al. 2019; Zampieri et al.
 2019; Vidgen et al. 2021), and domain-pretrained encoders (Barbieri et al.
 2020; Caselli et al. 2021; Antypas and Camacho-Collados 2023). This paper
 therefore reports accuracy only briefly (RQ1), as paired McNemar tests with
