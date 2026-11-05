@@ -39,7 +39,9 @@ rq4-identity-fpr  per technique, false-positive rate on non-extremist test
                   posts with vs without identity terms, from
                   results_summary/<T>/identity_fpr_test.json
 
-Techniques come from repo_paths.technique_dirs(), sorted by id. A technique
+Techniques come from repo_paths.comparison_technique_dirs(), sorted by id: a
+technique whose best_config.json says "in_comparison": false (an audited
+classifier, docs/FRAMEWORK.md) is never rendered into a doc table. A technique
 folder without metrics_test.json is skipped from the metric tables with a
 warning rather than rendered blank; a technique without attribution or
 identity-FPR outputs is simply absent from the RQ2/RQ4 tables.
@@ -109,7 +111,7 @@ def load_techniques():
     has no place in a held-out comparison table.
     """
     rows = []
-    for tech_dir in sorted(repo_paths.technique_dirs(), key=lambda p: p.name):
+    for tech_dir in sorted(repo_paths.comparison_technique_dirs(), key=lambda p: p.name):
         val_path = tech_dir / VALIDATION_METRICS_FILE
         test_path = tech_dir / TEST_METRICS_FILE
         if not test_path.is_file() or not val_path.is_file():
@@ -177,7 +179,7 @@ def render_confusion_test(rows):
 def load_category_shares():
     """Per technique, mean share of positive mass per category over whole-model runs."""
     rows = []
-    for tech_dir in repo_paths.technique_dirs():
+    for tech_dir in repo_paths.comparison_technique_dirs():
         shares = []
         for run_id in list_runs(tech_dir.name):
             meta = read_meta(tech_dir.name, run_id)
@@ -220,7 +222,7 @@ def render_rq2_category_shares(_rows):
 
 def load_identity_fpr():
     rows = []
-    for tech_dir in repo_paths.technique_dirs():
+    for tech_dir in repo_paths.comparison_technique_dirs():
         path = tech_dir / repo_paths.IDENTITY_FPR_FILENAME.format(split="test")
         if path.is_file():
             with open(path, encoding="utf-8") as f:
@@ -321,6 +323,7 @@ def main():
 
     rows = load_techniques()
     drifted = []
+    rewritten = []
     total_regions = 0
 
     for path in documentation_files():
@@ -332,6 +335,7 @@ def main():
             continue
         if args.write:
             path.write_text(new_content, encoding="utf-8")
+            rewritten.append((rel_path, region_ids))
             print(f"rendered {rel_path}: {', '.join(region_ids)}")
         else:
             drifted.append((rel_path, region_ids, content, new_content))
@@ -357,7 +361,12 @@ def main():
         print(f"OK: {total_regions} rendered region(s) match results_summary/")
         return 0
 
-    print(f"OK: {total_regions} rendered region(s) up to date")
+    if rewritten:
+        n_regions = sum(len(ids) for _, ids in rewritten)
+        print(f"OK: rewrote {n_regions} region(s) in {len(rewritten)} file(s); "
+              f"{total_regions} rendered region(s) now up to date")
+    else:
+        print(f"OK: {total_regions} rendered region(s) already up to date; nothing rewritten")
     return 0
 
 

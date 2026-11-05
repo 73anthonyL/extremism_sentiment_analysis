@@ -43,7 +43,10 @@ n_flagged_original -> n_flagged_counterfactual, the net change. Extremist posts
 (y_true=1) answer the recall question. Paired tests: Wilcoxon signed-rank on
 the probabilities and an exact McNemar test on the flips. Holm-adjusted
 p-values are added in the cross-technique table, over every technique x
-population x operation row (one family per test), matching RQ1.
+population x operation row of the techniques in the comparison (one family
+per test), matching RQ1. A technique whose best_config.json says
+"in_comparison": false (an audited classifier) gets its rows Holm-adjusted
+within its own rows, so it never moves the comparison's p values.
 
 A flip shows that this perturbation moved the post across the locked
 threshold. That is threshold-local necessity, not proof that the term is the
@@ -100,6 +103,7 @@ from repo_paths import (  # noqa: E402
     RESULTS_DIR,
     RQ4_IDENTITY_COUNTERFACTUAL_CSV,
     SPLIT_ASSIGNMENTS_CSV,
+    in_comparison,
     technique_dirs,
 )
 
@@ -395,7 +399,7 @@ def analyze(technique, model, population, pattern, threshold, n_lexicon_entries,
         "n_population": int(n),
         "n_population_by_label": population_counts(population),
         "p_original_source": "committed probability artifact",
-        "holm_adjusted_p": f"see {RQ4_IDENTITY_COUNTERFACTUAL_CSV.name} (family: every row of that table)",
+        "holm_adjusted_p": f"see {RQ4_IDENTITY_COUNTERFACTUAL_CSV.name} (family: every comparison row of that table, or this technique's own rows when it is outside the comparison)",
         "verification": {k: _round(v) for k, v in verification.items()},
         "rows": rows,
     }
@@ -423,8 +427,8 @@ def _holm_column(values):
     return adjusted
 
 
-def write_table(payloads, path=None):
-    """Merge rows into the cross-technique table and recompute Holm over every row."""
+def write_table(payloads, path=None, results_dir=None):
+    """Merge rows into the cross-technique table and recompute Holm per family."""
     path = Path(RQ4_IDENTITY_COUNTERFACTUAL_CSV if path is None else path)
     new = pd.DataFrame([row for p in payloads for row in p["rows"]])[list(ROW_COLUMNS)]
     if path.exists():
@@ -436,8 +440,13 @@ def write_table(payloads, path=None):
         existing = existing[~existing["technique"].isin(new["technique"])][list(ROW_COLUMNS)]
         new = pd.concat([existing, new], ignore_index=True)
     new = new.sort_values(["technique", "y_true", "operation"]).reset_index(drop=True)
-    new["wilcoxon_p_holm"] = _holm_column(new["wilcoxon_p"])
-    new["mcnemar_p_holm"] = _holm_column(new["mcnemar_exact_p"])
+    # One Holm family for the comparison; each outside-comparison technique is its own family.
+    family = new["technique"].map(lambda t: "" if in_comparison(t, results_dir) else t)
+    new["wilcoxon_p_holm"] = np.nan
+    new["mcnemar_p_holm"] = np.nan
+    for _, index in new.groupby(family, sort=False).groups.items():
+        new.loc[index, "wilcoxon_p_holm"] = _holm_column(new.loc[index, "wilcoxon_p"])
+        new.loc[index, "mcnemar_p_holm"] = _holm_column(new.loc[index, "mcnemar_exact_p"])
     path.parent.mkdir(parents=True, exist_ok=True)
     new[list(TABLE_COLUMNS)].to_csv(path, index=False, float_format=f"%.{SIG_DIGITS}g")
     return path

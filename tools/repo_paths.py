@@ -51,6 +51,17 @@ RQ3_STABILITY_CSV = RQ_DIR / "rq3_stability.csv"
 RQ4_IDENTITY_FPR_CSV = RQ_DIR / "rq4_identity_fpr.csv"
 RQ4_IDENTITY_COUNTERFACTUAL_CSV = RQ_DIR / "rq4_identity_counterfactual.csv"
 
+# Pairs between a technique outside the comparison (best_config.json
+# "in_comparison": false) and every technique in it. Kept apart so an audited
+# classifier never enters the paper's Holm family or its cross-technique counts.
+RQ1_MCNEMAR_PAIRS_OUTSIDE_CSV = RQ_DIR / "rq1_mcnemar_pairs_outside_comparison.csv"
+RQ2_WORD_AGREEMENT_OUTSIDE_CSV = RQ_DIR / "rq2_word_agreement_pairs_outside_comparison.csv"
+
+# One text-free report card per technique, written by tools/audit.py report.
+REPORT_CARDS_DIR = RQ_DIR / "report_cards"
+REPORT_CARD_MD_FILENAME = "{technique}.md"
+REPORT_CARD_JSON_FILENAME = "{technique}.json"
+
 # Per-technique files the tools read or write inside results_summary/<TECHNIQUE>/.
 ATTRIBUTIONS_SUBDIR = "attributions"
 COEFFICIENTS_FILENAME = "coefficients.csv"
@@ -64,6 +75,10 @@ LOOP_DIR = REPO_ROOT / "research_loop"
 PROBS_DIR = LOOP_DIR / "probs"
 
 TOOLS_DIR = REPO_ROOT / "tools"
+
+# Untracked downloads: weights, tokenizers and per-post files, one folder per
+# technique. Never committed.
+EXTERNAL_DIR = REPO_ROOT / "external"
 
 # ---------------------------------------------------------------------------
 # Frozen protocol constants
@@ -105,3 +120,37 @@ def technique_dirs(results_dir=None):
     return sorted(
         d for d in results_dir.iterdir() if d.is_dir() and TECHNIQUE_DIR_RE.match(d.name)
     )
+
+
+def in_comparison(technique, results_dir=None):
+    """Whether a technique takes part in the paper's controlled comparison.
+
+    Read from results_summary/<T>/best_config.json. Only an explicit
+    `"in_comparison": false` takes a technique out; a missing file or key
+    leaves it in, so a fixture or a half-exported folder is never silently
+    dropped from a family.
+    """
+    import json
+
+    results_dir = RESULTS_DIR if results_dir is None else Path(results_dir)
+    path = results_dir / technique / "best_config.json"
+    if not path.is_file():
+        return True
+    try:
+        with open(path) as handle:
+            config = json.load(handle)
+    except (OSError, ValueError):
+        return True
+    return not (isinstance(config, dict) and config.get("in_comparison") is False)
+
+
+def comparison_technique_dirs(results_dir=None):
+    """Technique folders in the comparison: the family every Holm correction,
+    cross-technique count and rendered doc table is computed over."""
+    return [d for d in technique_dirs(results_dir) if in_comparison(d.name, results_dir)]
+
+
+def outside_comparison_technique_dirs(results_dir=None):
+    """Technique folders with `"in_comparison": false` (an audited classifier
+    that must not move the paper's numbers)."""
+    return [d for d in technique_dirs(results_dir) if not in_comparison(d.name, results_dir)]

@@ -26,6 +26,13 @@ rq2_top_word_support.csv
     explained post. A top list made of single-post words is a top list that
     will not survive a different post sample.
 
+rq2_word_agreement_pairs_outside_comparison.csv
+    Only when a technique's best_config.json says "in_comparison": false
+    (an audited classifier, docs/FRAMEWORK.md): that technique's whole-model
+    run paired with every comparison technique's, same columns. The three
+    tables above cover the comparison only, so an audited classifier cannot
+    change the shared-top-word counts. Removed when no such technique exists.
+
 Member runs of an ensemble are left out unless --include-members is given,
 in which case each member is compared as its own column. Two tables whose
 shared vocabulary is smaller than --min-shared-words are refused, because a
@@ -52,6 +59,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from attributions import AttributionArtifactError, list_runs, load_run, top_words
 from repo_paths import (
+    RQ2_WORD_AGREEMENT_OUTSIDE_CSV,
+    in_comparison,
     RQ2_SHARED_TOP_WORDS_CSV,
     RQ2_TOP_WORD_SUPPORT_CSV,
     RQ2_WORD_AGREEMENT_CSV,
@@ -126,6 +135,8 @@ def select_runs(split=DEFAULT_SPLIT, include_members=False, results_dir=None, te
     folders = technique_dirs(results_dir)
     if techniques:
         folders = [f for f in folders if f.name in set(techniques)]
+    else:
+        folders = [f for f in folders if in_comparison(f.name, results_dir)]
     columns = []
     for folder in folders:
         technique = folder.name
@@ -252,6 +263,36 @@ def build(split=DEFAULT_SPLIT, top_k=DEFAULT_TOP_K, include_members=False,
     return pairs, shared, support
 
 
+def build_outside(split=DEFAULT_SPLIT, top_k=DEFAULT_TOP_K, min_shared_words=DEFAULT_MIN_SHARED_WORDS,
+                  results_dir=None):
+    """Whole-model pairs of each outside-comparison technique with the comparison techniques."""
+    folders = technique_dirs(results_dir)
+    comparison = [f.name for f in folders if in_comparison(f.name, results_dir)]
+    tables = []
+    for folder in folders:
+        if in_comparison(folder.name, results_dir):
+            continue
+        columns = select_runs(split, False, results_dir, [folder.name, *comparison])
+        columns.sort(key=lambda c: c[0] != folder.name)  # the outside technique is technique_a
+        pairs = pairwise_table(columns, split, top_k, min_shared_words)
+        tables.append(pairs[pairs["technique_a"] == folder.name])
+    if not tables:
+        return pd.DataFrame(columns=list(PAIR_COLUMNS))
+    return pd.concat(tables, ignore_index=True)
+
+
+def write_outside(outside_pairs, path=RQ2_WORD_AGREEMENT_OUTSIDE_CSV):
+    """Write the outside-comparison pairs, or remove a stale file when there are none."""
+    path = Path(path)
+    if outside_pairs.empty:
+        if path.exists():
+            path.unlink()
+        return None
+    path.parent.mkdir(parents=True, exist_ok=True)
+    outside_pairs.to_csv(path, index=False, float_format="%.6g")
+    return path
+
+
 def write_tables(pairs, shared, support, pairs_path=RQ2_WORD_AGREEMENT_CSV,
                  shared_path=RQ2_SHARED_TOP_WORDS_CSV, support_path=RQ2_TOP_WORD_SUPPORT_CSV):
     for table, path in ((pairs, pairs_path), (shared, shared_path), (support, support_path)):
@@ -274,11 +315,18 @@ def main():
         pairs, shared, support = build(
             args.split, args.top_k, args.include_members, args.min_shared_words, techniques=args.techniques
         )
+        outside = None
+        if not args.techniques and not args.include_members and args.split == DEFAULT_SPLIT:
+            outside = build_outside(args.split, args.top_k, args.min_shared_words)
     except (AttributionArtifactError, WordAgreementError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 1
 
     paths = write_tables(pairs, shared, support)
+    if outside is not None:
+        outside_path = write_outside(outside)
+        if outside_path is not None:
+            paths = (*paths, outside_path)
     for _, row in support.iterrows():
         print(f"{_column_label(row['technique'], row['member'])}: {row['n_words']} words over "
               f"{row['n_posts_explained']} posts; {row['share_single_post_top_k_positive']:.0%} of the "

@@ -23,6 +23,14 @@ rq1_shared_errors.csv
     by true label (a shared error on a negative post is a shared false
     positive).
 
+rq1_mcnemar_pairs_outside_comparison.csv
+    Only when a technique's best_config.json says "in_comparison": false
+    (an audited classifier, docs/FRAMEWORK.md): that technique paired with
+    every technique in the comparison, same columns, with Holm computed over
+    its own pairs only. The comparison tables above never include it, so
+    adding an audited classifier cannot move the paper's Holm p values or its
+    error-overlap counts. Removed when no such technique exists.
+
 Per-post rows are never committed, because results_summary/ may not carry
 row ids. --per-post-out writes the correctness matrix to a path of your
 choosing; keep it under external/.
@@ -53,6 +61,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from probs_artifact import ProbsArtifactError, available_techniques, load_technique_probs
 from repo_paths import (
     POSITIVE_LABEL,
+    RQ1_MCNEMAR_PAIRS_OUTSIDE_CSV,
+    in_comparison,
     RESULTS_DIR,
     RQ1_ERROR_OVERLAP_CSV,
     RQ1_MCNEMAR_PAIRS_CSV,
@@ -266,14 +276,58 @@ def shared_errors_table(matrix, y_true, split):
     return pd.DataFrame(rows, columns=list(SHARED_COLUMNS))
 
 
+def split_by_comparison(techniques, results_dir=None):
+    """Return (in_comparison, outside_comparison) lists, order kept."""
+    inside = [t for t in techniques if in_comparison(t, results_dir)]
+    outside = [t for t in techniques if not in_comparison(t, results_dir)]
+    return inside, outside
+
+
 def build(techniques=None, split=DEFAULT_SPLIT, results_dir=None, thresholds=None):
-    """Return (pairs, overlap, shared, matrix, y_true) for the techniques."""
-    techniques = list(techniques) if techniques else available_techniques(split)
+    """Return (pairs, overlap, shared, matrix, y_true) for the techniques.
+
+    With no technique list, the family is every technique in the comparison
+    that has an artifact for the split.
+    """
+    if not techniques:
+        techniques, _ = split_by_comparison(available_techniques(split), results_dir)
+    techniques = list(techniques)
     matrix, y_true, thresholds = correctness_matrix(techniques, split, results_dir, thresholds)
     pairs = pairwise_table(matrix, split, thresholds)
     overlap = per_technique_table(matrix, y_true, split, thresholds)
     shared = shared_errors_table(matrix, y_true, split)
     return pairs, overlap, shared, matrix, y_true
+
+
+def build_outside(outside, comparison, split=DEFAULT_SPLIT, results_dir=None):
+    """Pairs of each outside-comparison technique with every comparison technique.
+
+    Holm is recomputed over each outside technique's own pairs, so its family
+    has len(comparison) members and the comparison family is untouched.
+    """
+    tables = []
+    for technique in outside:
+        matrix, _, thresholds = correctness_matrix([technique, *comparison], split, results_dir)
+        pairs = pairwise_table(matrix, split, thresholds)
+        own = pairs[pairs["technique_a"] == technique].copy()
+        own["holm_p"] = holm_adjust(own["mcnemar_p"])
+        own["significant_holm"] = own["holm_p"] < ALPHA
+        tables.append(own)
+    if not tables:
+        return pd.DataFrame(columns=list(PAIR_COLUMNS))
+    return pd.concat(tables, ignore_index=True)[list(PAIR_COLUMNS)]
+
+
+def write_outside(outside_pairs, path=RQ1_MCNEMAR_PAIRS_OUTSIDE_CSV):
+    """Write the outside-comparison pairs, or remove a stale file when there are none."""
+    path = Path(path)
+    if outside_pairs.empty:
+        if path.exists():
+            path.unlink()
+        return None
+    path.parent.mkdir(parents=True, exist_ok=True)
+    outside_pairs.to_csv(path, index=False, float_format="%.6g")
+    return path
 
 
 def write_tables(pairs, overlap, shared, pairs_path=RQ1_MCNEMAR_PAIRS_CSV,
@@ -306,15 +360,24 @@ def main():
                         help="also write the row-keyed correctness matrix here (keep it under external/)")
     args = parser.parse_args()
 
+    outside_pairs = None
     try:
         pairs, overlap, shared, matrix, y_true = build(args.techniques, args.split)
         if args.per_post_out:
             write_per_post(matrix, y_true, args.per_post_out)
+        if not args.techniques:
+            comparison, outside = split_by_comparison(available_techniques(args.split))
+            outside_pairs = build_outside(outside, comparison, args.split)
     except (ProbsArtifactError, McNemarError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 1
 
     paths = write_tables(pairs, overlap, shared)
+    if outside_pairs is not None:
+        outside_path = write_outside(outside_pairs)
+        if outside_path is not None:
+            paths = (*paths, outside_path)
+            print(f"{len(outside_pairs)} outside-comparison pair(s), Holm within each technique's own pairs")
     for _, row in overlap.iterrows():
         print(f"{row['technique']}: {row['n_errors']} errors "
               f"({row['n_false_positives']} FP, {row['n_false_negatives']} FN), "
