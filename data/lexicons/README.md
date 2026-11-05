@@ -109,3 +109,34 @@ It is the preregistered swap map of WP7b (`tools/identity_swap.py`,
 `docs/preregistrations/WP7b_identity_swap.md`): one row per identity-term
 entry, either three same-category, same-form targets or `excluded` with a
 reason. Every word in it is an entry of `identity_terms.txt`.
+
+## Version note: frozen at WP3 (2026-11-04)
+
+The three lexicons are frozen as of this note (`docs/RESEARCH_PLAN.md`, WP3
+and section 5 "Lexicons"). Any later change re-runs RQ2 and RQ4 in full and
+keeps both versions of the affected tables.
+
+| File | Entries | sha256 |
+|---|---|---|
+| `slurs.txt` | 58 | `8164361489ce79690ff6a7910d716ff4f00f8aa8a170f228b37af839f981618d` |
+| `extremist_framing.txt` | 382 | `377179826ce2220dde8874b8707724028eacd44ad33eb9696c4b5a132318c749` |
+| `identity_terms.txt` | 97 | `df98c56de95e82c6c2241f8dfa3a0754349eec52c4fa13da7dbf859ca20b6c5b` |
+
+Entries are counted after `tools/lexicons.py` normalisation (comments and
+blank lines dropped, lower-cased, de-duplicated). Changes at the freeze:
+
+* `slurs.txt`: populated from HurtLex (above); it was empty before.
+* `identity_terms.txt`: `aliens` added to the migration section, the only
+  gap word in `rq2_identity_lexicon_gaps_sensitivity.csv` with test support
+  of at least 3 (author decision 2, `docs/DECISIONS_NEEDED.md`). The 13
+  ambiguous entries stay, and the `exclude_ambiguous_only` sensitivity keeps
+  being reported.
+* `extremist_framing.txt`: reviewed, unchanged. It shares no entry with the
+  other two lists; four of its entries contain an identity entry inside a
+  hyphenated framing word (for example `anti-muslim`), and these stay
+  framing.
+
+`identity_swap_pairs.csv` (not a lexicon) gained the matching excluded row
+for `aliens`; its sha256 is now
+`89c99e5b3b69779c70003d2317da0cbf39957485d399118740ffbbd4a8ac47f4`
+(Amendment 1 of `docs/preregistrations/WP7b_identity_swap.md`).
