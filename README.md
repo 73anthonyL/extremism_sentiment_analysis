@@ -290,22 +290,22 @@ spectrum. The tables below are rendered from committed artifacts by
 artifact.
 
 RQ2, share of positive attribution mass by lexicon category (top-50 words,
-whole-model runs averaged). These shares are preliminary: the slur lexicon
-is still empty and the extremist-framing lexicon lacks words such as "kill"
-and "genocide", so slurs and violent vocabulary currently count as topical
-until the lexicons are curated (`docs/RESEARCH_PLAN.md`, WP3).
+whole-model runs averaged). The lexicons were frozen at WP3 (2026-11-04;
+slurs from HurtLex, see `data/lexicons/README.md`). The extremist-framing
+lexicon has no generic violent words such as "kill" and "genocide", so
+those count as topical.
 
 <!-- RENDERED-TABLE:BEGIN id=rq2-category-shares -->
 | Technique | Runs | Slur | Extremist framing | Identity term | Topical |
 |---|---:|---:|---:|---:|---:|
-| `01_LOG-REG_TF-IDF` | 2 | 0.0000 | 0.0000 | 0.1003 | 0.8997 |
-| `02_LIN-SVM_TF-IDF` | 2 | 0.0000 | 0.0000 | 0.1018 | 0.8982 |
-| `03_SLP_TF-IDF` | 2 | 0.0000 | 0.0000 | 0.0227 | 0.9773 |
-| `04_CHAR-TF-IDF_LIN-SVM` | 2 | 0.0000 | 0.0000 | 0.1238 | 0.8762 |
-| `05_WORD-CHAR-TF-IDF_LIN-SVM` | 2 | 0.0000 | 0.0000 | 0.1266 | 0.8734 |
-| `06_FASTTEXT-EMB_LOG-REG` | 2 | 0.0000 | 0.0012 | 0.1178 | 0.8810 |
-| `07_TWITTER-ROBERTA_FINE-TUNE` | 2 | 0.0000 | 0.0150 | 0.0674 | 0.9175 |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 2 | 0.0000 | 0.0228 | 0.1764 | 0.8008 |
+| `01_LOG-REG_TF-IDF` | 2 | 0.0111 | 0.0000 | 0.1003 | 0.8887 |
+| `02_LIN-SVM_TF-IDF` | 2 | 0.0091 | 0.0000 | 0.1018 | 0.8892 |
+| `03_SLP_TF-IDF` | 2 | 0.0015 | 0.0000 | 0.0227 | 0.9758 |
+| `04_CHAR-TF-IDF_LIN-SVM` | 2 | 0.0167 | 0.0000 | 0.1238 | 0.8595 |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | 2 | 0.0082 | 0.0000 | 0.1266 | 0.8652 |
+| `06_FASTTEXT-EMB_LOG-REG` | 2 | 0.0049 | 0.0012 | 0.1203 | 0.8735 |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | 2 | 0.0392 | 0.0150 | 0.0674 | 0.8784 |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 2 | 0.0200 | 0.0228 | 0.1764 | 0.7807 |
 
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
 <!-- RENDERED-TABLE:END id=rq2-category-shares -->
@@ -316,14 +316,14 @@ terms:
 <!-- RENDERED-TABLE:BEGIN id=rq4-identity-fpr -->
 | Technique | Non-extremist posts with identity terms | FPR with identity terms | FPR without | Ratio | Fisher p |
 |---|---:|---:|---:|---:|---:|
-| `01_LOG-REG_TF-IDF` | 67 | 0.1642 | 0.0845 | 1.9428 | 0.0691 |
-| `02_LIN-SVM_TF-IDF` | 67 | 0.1493 | 0.0704 | 2.1194 | 0.0817 |
-| `03_SLP_TF-IDF` | 67 | 0.0896 | 0.0469 | 1.9075 | 0.2260 |
-| `04_CHAR-TF-IDF_LIN-SVM` | 67 | 0.1343 | 0.0516 | 2.6011 | 0.0298 |
-| `05_WORD-CHAR-TF-IDF_LIN-SVM` | 67 | 0.0746 | 0.0188 | 3.9739 | 0.0385 |
-| `06_FASTTEXT-EMB_LOG-REG` | 67 | 0.1045 | 0.0516 | 2.0231 | 0.1517 |
-| `07_TWITTER-ROBERTA_FINE-TUNE` | 67 | 0.1343 | 0.0704 | 1.9075 | 0.1312 |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 67 | 0.1194 | 0.0282 | 4.2388 | 0.0064 |
+| `01_LOG-REG_TF-IDF` | 68 | 0.1618 | 0.0849 | 1.9052 | 0.1063 |
+| `02_LIN-SVM_TF-IDF` | 68 | 0.1471 | 0.0708 | 2.0784 | 0.0835 |
+| `03_SLP_TF-IDF` | 68 | 0.0882 | 0.0472 | 1.8706 | 0.2308 |
+| `04_CHAR-TF-IDF_LIN-SVM` | 68 | 0.1324 | 0.0519 | 2.5508 | 0.0322 |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | 68 | 0.0735 | 0.0189 | 3.8971 | 0.0409 |
+| `06_FASTTEXT-EMB_LOG-REG` | 68 | 0.1176 | 0.0472 | 2.4941 | 0.0488 |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | 68 | 0.1324 | 0.0708 | 1.8706 | 0.1352 |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | 68 | 0.1176 | 0.0283 | 4.1569 | 0.0071 |
 
 Rendered by tools/render_tables.py from results_summary/ — do not edit by hand.
 <!-- RENDERED-TABLE:END id=rq4-identity-fpr -->
