@@ -28,6 +28,7 @@
     "best_config.json": "8967936379033b7c9265726bed4297967c9a00abe3341eb050946bcdf43d25e0",
     "classification_report_test.json": "ae65e7ffcde8267b6acaf6378ed30c128b02d34383e7b7f02482c27faa04f2b0",
     "confusion_matrix_test.csv": "d8cdfb787d475085ad47fd120e0b0877bb435b819cf2ab3b879a9cd5d3bbd1d7",
+    "faithfulness_test.json": "08010bd85ac48cb5d1fcd2bb068ea6fc02235f8f7e35d255c981879f09b1bdad",
     "identity_counterfactual_test.json": "ce80b9b337a5f75c4e3742199996f3b723b41a827ab9c84352773b3ca62dde7b",
     "identity_fpr_terms_test.csv": "a6ae05b77b5596ecc4c49abb788639beee75f6a78dfafa6d8331a9ee18fdb568",
     "identity_fpr_test.json": "eafab25097bfc2ffe503b3caef6293e8c81f060c1b6bf21b1ed2518a162b14a7",
@@ -35,7 +36,7 @@
     "metrics_validation.json": "265c991f45c71ec4febd0d4448639de8743025e06c7fcfa1740979d375cf2906",
     "threshold_sweep_validation.csv": "c4c947f9de83790732a45d3ed243b5f9aa71e387a6a10e7815f43449578dcac1"
   },
-  "committed_hashed_utc": "2026-11-04T20:52:41+00:00",
+  "committed_hashed_utc": "2026-11-05T03:05:54+00:00",
   "created_utc": "2026-10-08T15:51:56+00:00",
   "external_assets": [],
   "run_id": "11_MULTI-CHECKPOINT_LOGIT-POOL_20261008T093502Z",

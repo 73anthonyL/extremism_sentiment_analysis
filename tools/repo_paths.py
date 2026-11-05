@@ -50,6 +50,8 @@ RQ3_RELIANCE_CSV = RQ_DIR / "rq3_reliance_comparison.csv"
 RQ3_STABILITY_CSV = RQ_DIR / "rq3_stability.csv"
 RQ4_IDENTITY_FPR_CSV = RQ_DIR / "rq4_identity_fpr.csv"
 RQ4_IDENTITY_COUNTERFACTUAL_CSV = RQ_DIR / "rq4_identity_counterfactual.csv"
+# Deletion faithfulness of the per-post SHAP attributions (tools/faithfulness.py).
+RQ2_FAITHFULNESS_CSV = RQ_DIR / "rq2_faithfulness.csv"
 
 # Pairs between a technique outside the comparison (best_config.json
 # "in_comparison": false) and every technique in it. Kept apart so an audited
@@ -69,6 +71,7 @@ RUN_MANIFEST_FILENAME = "run_manifest.json"
 IDENTITY_FPR_FILENAME = "identity_fpr_{split}.json"
 IDENTITY_FPR_TERMS_FILENAME = "identity_fpr_terms_{split}.csv"
 IDENTITY_COUNTERFACTUAL_FILENAME = "identity_counterfactual_{split}.json"
+FAITHFULNESS_FILENAME = "faithfulness_{split}.json"
 
 # Probability artifacts (row_id, split, y_true, y_prob) exported by notebooks.
 LOOP_DIR = REPO_ROOT / "research_loop"

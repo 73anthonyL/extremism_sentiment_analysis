@@ -12,6 +12,7 @@
     "best_config.json": "00407b3c95c87eedd2cca15656d536bad635610a533884a674122efc487d94d5",
     "classification_report_test.json": "37a5df7d55867408a150eda5cc28068421db6801d773026a98e3ac88c93c6a94",
     "confusion_matrix_test.csv": "b97817257c3894506f63c047c8028ecde8fdae76fbc14559fdbf5eb8d73357b3",
+    "faithfulness_test.json": "31b594ae732767a2b9901de2ed4ef8ac3ade6dcfd3cd2674cfcaec57e7b0ca77",
     "identity_counterfactual_test.json": "3bbc226341766e6372703b4ace4fa3420b05cc7782753095d02ccb59d23e94c4",
     "identity_fpr_terms_test.csv": "1428b340d1c4b3df92307bdd8f77c0419d90e9cfbf0136868de04228bb04d24b",
     "identity_fpr_test.json": "d1067e5721975c7bbb8d6e89861faa18bf9bdf45ca584a9adbdb4081b4110134",
@@ -19,7 +20,7 @@
     "metrics_validation.json": "dae40475dc307fd159e156250f16dd5975202cfdbc202e8b1b50a5ab787fa59c",
     "threshold_sweep_validation.csv": "92d66eb5cbcb8a1669d10367226f286a4f2e762a22fc95185f5e6d0b96cd7280"
   },
-  "committed_hashed_utc": "2026-11-04T20:52:40+00:00",
+  "committed_hashed_utc": "2026-11-05T03:05:54+00:00",
   "created_utc": "2026-10-08T16:37:58+00:00",
   "external_assets": [],
   "run_id": "02_LIN-SVM_TF-IDF_20261008T073452Z",
