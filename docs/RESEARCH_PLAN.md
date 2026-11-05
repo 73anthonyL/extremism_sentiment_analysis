@@ -201,7 +201,12 @@ Other facts that shape the order of work:
   On the same 200 test posts (`rq2_same_post_support.csv`) the classical
   shares rise to 32 to 52%: char TF-IDF (04) reaches 52% and FastText (06)
   48%, while the word TF-IDF models (01, 02, 03, 05) stay 12 to 24 points
-  below 07. One run per split, no uncertainty estimate.
+  below 07. Under a post-level bootstrap the single-post share is a
+  replicate spread, not an interval: resampling shifts it upward and the
+  point for 01 falls outside its own spread (`rq2_bootstrap_same_post.csv`).
+  On paired draws 07's excess over the word TF-IDF models has a lower bound
+  of only 0.02 to 0.04, and its difference from 04 spans -0.10 to 0.14. The
+  comparison stays descriptive.
 * **The identity counterfactual exists** (WP7, 2026-11-04).
   `tools/identity_counterfactual.py` re-scores the 150 test posts that
   contain an identity-lexicon match (67 non-extremist, 83 extremist) with
@@ -271,14 +276,46 @@ Other facts that shape the order of work:
   negatives is -0.22, and the ratio ordering follows low FPR on the other
   negatives (05: 4 of 213, 11: 6 of 213). The WP7 removal shift shows no
   relation to the ratio (rho 0.06). Among the six classical techniques the
-  correlation is 0.60 (p = 0.24).
+  correlation is 0.60 (p = 0.24). The ranking is unstable under resampling.
+  Resampling explained posts for the shares and test rows for the FPR ratios
+  (`rq2_rq4_bootstrap_relation.csv`, 2000 replicates) gives a replicate
+  median of 0.48 against the point 0.83; rho is positive in about 90% of
+  replicates and below the point in 94%, with replicates spread from -0.29
+  to 0.89. The instability comes mainly from the FPR ratios: resampling test
+  rows alone gives a median of 0.43, posts alone 0.80. Each ratio rests on 4
+  to 18 false positives, and only 04 [1.06, 6.37] and 11 [1.40, 16.1] keep
+  their ratio above 1 across 95% of replicates. Resampling noisy ratios also
+  pulls a rank correlation toward zero, so these figures describe how
+  fragile the ordering is, not a confidence interval for rho. The relation
+  stays descriptive at n = 8.
 * **Transformer attributions agree less across post samples.** On the same
   200 posts, the test-versus-validation Spearman of mean absolute
   attribution is 0.43 (07) and 0.49 (11), against 0.62 to 0.74 for the
-  classical techniques. Top-50 Jaccard by absolute attribution does not
-  separate them from FastText (07 0.18, 11 0.22, 06 0.19; the others 0.32 to
-  0.47) (`rq3_same_post_split_agreement.csv`). One run per split, so
-  descriptive.
+  classical techniques (`rq3_same_post_split_agreement.csv`). A post-level
+  bootstrap that resamples each split's posts independently
+  (`rq3_bootstrap_split_agreement.csv`) gives 07 0.43 [0.34, 0.48] and 11
+  0.49 [0.41, 0.54]; FastText gives 0.62 [0.57, 0.68] and the other
+  classical techniques 0.69 to 0.74, each with a lower bound of at least
+  0.63. On paired draws (`rq2_rq3_bootstrap_paired_differences.csv`) every
+  transformer-minus-classical difference has an interval that excludes zero
+  (07: upper bound <= -0.13; 11: <= -0.08); 07 and 11 do not separate from
+  each other (-0.06 [-0.13, 0.005]). This is descriptive: it covers post
+  sampling only, not the SHAP seed or another split, and it is not the
+  section 5 difference criterion. Lower agreement may reflect attributions
+  that depend on context, which a word-level mean over different posts reads
+  as instability, rather than less reliable explanations. Top-50 Jaccard by
+  absolute attribution (07 0.18, 11 0.22, 06 0.19; the others 0.32 to 0.47)
+  is a replicate spread under the bootstrap and does not separate the
+  transformers from 06 or 04.
+* **Identity shares carry more post-sampling spread than the two runs
+  show.** Post-level bootstrap SDs of the identity share
+  (`rq2_bootstrap_category_shares.csv`) are 0.016 to 0.036, against 0.002 to
+  0.023 across the two runs in `rq3_stability.csv`. On the common posts,
+  paired draws put 11 (0.17 [0.11, 0.24]) above 01, 02, 03 and 06 but not
+  above 04 or 05; 07 (0.07 [0.04, 0.17]) does not separate from any
+  classical technique. These intervals cover post sampling only and do not
+  replace the section 5 rule; whether section 5 should use them is an author
+  decision.
 * **The framework has one entry point** (WP8, 2026-11-04).
   `tools/audit.py` checks a technique against the contract
   (`check-contract`), runs the documented tool chain in order and stops at
