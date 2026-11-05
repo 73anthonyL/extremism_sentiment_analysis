@@ -672,6 +672,42 @@ is estimated from few posts. Words never seen in training act like removal
 for the word-level models. The lexicon covers only the identity terms it
 lists. All of this is post-level and text-only.
 
+### WP7b. Identity swap (local, sensitivity analysis of WP7). Run 2026-11-04.
+
+WP7's substitution check left one question open: do the transformers respond
+to which group is named, or only to a group being named? WP7b replaces each
+identity term with three other identity terms of the same lexicon category
+and grammatical form (religion, ethnicity/nationality, migration, gender and
+sexuality), averages the probabilities over the three, and compares the
+shift with removal and with WP7's neutral panel on the same spans of the
+same posts.
+
+The swap map (`data/lexicons/identity_swap_pairs.csv`) and the analysis plan
+(`docs/preregistrations/WP7b_identity_swap.md`) were committed before any
+model was run on swapped text, so the metrics, the Holm family (the 48
+technique x population x operation rows) and the reading rule are fixed in
+advance. WP7b is still a sensitivity analysis of RQ4, not a primary outcome:
+WP7's removal stays the primary operation. The map excludes the 13
+ambiguous entries and 8 more (`indians`, `woman`, `women`, `feminist`,
+`feminists`, `queer`, `lgbt`, `lgbtq`), so the population is the 68 test
+posts with a swapped term (23 non-extremist, 45 extremist), a subset of
+WP7's 150. Operations edit only the swapped spans and match their case, so
+the remove and substitute rows here differ from WP7's.
+
+`tools/identity_swap.py` refuses a map that leaves the lexicon, crosses a
+category, changes form, repeats the source's group or uses an ambiguous
+term. It verifies each restored predictor against the committed artifact
+before scoring. It writes `identity_swap_test.json` per technique,
+`rq/rq4_identity_swap.csv` and the descriptive
+`rq/rq4_identity_swap_directions.csv`. The reading is pending author review
+and is not yet folded into section 3 or the results draft.
+
+*Limitations.* The panel fixes one set of comparison groups. Swapping two
+co-occurring groups can leave a post's set of groups unchanged. The
+non-extremist population is small (23 posts, 2 to 7 flagged), so flip
+counts there are descriptive. Word-level models score a target unseen in
+training like a deletion. Post-level labels, text-only features.
+
 ### WP6. Write the paper
 
 Sections map one-to-one onto the research questions:
