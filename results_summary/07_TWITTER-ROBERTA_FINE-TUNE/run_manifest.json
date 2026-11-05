@@ -14,7 +14,7 @@
     "confusion_matrix_test.csv": "e41addb948b6f1680ca48c2bd5cde12b26b7fe95945d5cfc5593754e5a1b3c42",
     "confusion_matrix_test.png": "e695a49f2e4ad2d9987de89b45e4d724cfe653068e78ce275a0c634b55de4638",
     "faithfulness_test.json": "ab12086861b4aac8d3c6c3cd1c645630d32ccb9b457cadc3245e649a50bb7439",
-    "identity_counterfactual_test.json": "cde473fe1e313eb0b8d144acffaaa57a446ced7123084e4714dd0b3f75d552c4",
+    "identity_counterfactual_test.json": "763a38d0ad837e6cbafca6f3416bcdafd587e1e061ef6b2d476c6cc5c3384846",
     "identity_fpr_terms_test.csv": "a85a7a8daf889ac926fc6b5cd500b894c40673ca9f15656a2b192aa3ac59412d",
     "identity_fpr_test.json": "3788d83f1648db242ed4e0d49b7a375453c4a4c670f755b2502bf4e7df8c8ccf",
     "identity_swap_test.json": "54e49219c66fcc34b6609dc1e4a29c5d48138be16f1d31955df8914acfe47686",
@@ -22,7 +22,7 @@
     "metrics_validation.json": "03ca251815c5edd375fe3e7003f5fe020716a7f18aa555f87167eec559fca9d4",
     "threshold_sweep_validation.csv": "b9c8983a1ed5f2b92bc4337fde41c89c438d2dc9b8529a705e39309739f50797"
   },
-  "committed_hashed_utc": "2026-11-05T07:59:48+00:00",
+  "committed_hashed_utc": "2026-11-05T08:16:36+00:00",
   "created_utc": "2026-10-08T16:37:59+00:00",
   "external_assets": [],
   "run_id": "07_TWITTER-ROBERTA_FINE-TUNE_20261008T082627Z",

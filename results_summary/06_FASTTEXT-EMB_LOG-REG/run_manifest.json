@@ -16,7 +16,7 @@
     "classification_report_test.json": "3685ce6b5611a0b3edca92cfab5c87ff0e0f5eb0e16dfffa7b9303f9d28a9871",
     "confusion_matrix_test.csv": "d0d14a52a1d07c312434056fde69ad881311017f1e2fdf7afdd4d3e45818a3f6",
     "faithfulness_test.json": "c6f3ecc90b9c4a9ba1695087ef3aa56fec7f8a0712225aaf9ae85bb4c9eb2a70",
-    "identity_counterfactual_test.json": "ed66ee274b90298f6fb40484a488ad2b7ccbb188bd3b74bb82ed476f1950e60a",
+    "identity_counterfactual_test.json": "60e34e597571dbd9dd1bf0c9eeabf9c2e38c5254ff7b8efdf11eea8e360ec248",
     "identity_fpr_terms_test.csv": "0a8386ff3e90ac5be673ed311ecaa022a10ed9aaeadd5878226423c6eb0adb6c",
     "identity_fpr_test.json": "d6f5db138fc3c2eaf6fe1720e6732c0888966a506998b65aac68d3f50e312c71",
     "identity_swap_test.json": "b2da0b06102eaf207abe9a0d4b8bd6d9f733055413889bcab55f28182dadbe26",
@@ -24,7 +24,7 @@
     "metrics_validation.json": "e063990347c3d3f9d60a32339baf5172acb044ef4b09134fa42b562a04613b13",
     "threshold_sweep_validation.csv": "8cff84405108a8a154b3d9d832adc21d7dc414a0f930d750f48b3cf4995c486c"
   },
-  "committed_hashed_utc": "2026-11-05T07:59:48+00:00",
+  "committed_hashed_utc": "2026-11-05T08:16:35+00:00",
   "created_utc": "2026-10-08T16:37:59+00:00",
   "external_assets": [],
   "run_id": "06_FASTTEXT-EMB_LOG-REG_20261008T074721Z",
