@@ -404,7 +404,9 @@ Conventions:
   *Relation:* the founding paper for RQ4. It shows that toxicity classifiers
   over-flag benign text that names identity groups, and it introduces
   templated identity-term tests and data rebalancing. RQ4's per-technique
-  FPR ratio (1.9 to 4.2) is the same measurement on extremism labels.
+  FPR ratio (point estimates 1.9 to 4.2; Fisher p < 0.05, unadjusted, for
+  only 3 of the 8 techniques: 04, 05 and 11) is the same measurement on
+  extremism labels.
 * **Park, J. H., Shin, J., Fung, P. (2018).** Reducing Gender Bias in
   Abusive Language Detection. *EMNLP 2018*. DOI 10.18653/v1/D18-1302.
   *Relation:* gender-swap augmentation and debiased embeddings for abuse
@@ -438,8 +440,9 @@ Conventions:
   Speech and Abusive Language Detection Datasets. *Third Workshop on Abusive
   Language Online*. DOI 10.18653/v1/W19-3504.
   *Relation:* shows that the bias comes from the datasets, not one model. It
-  fits RQ4's finding that every technique, classical or transformer, has an
-  elevated identity-term FPR.
+  fits RQ4's pattern that every technique, classical or transformer, has an
+  identity-term FPR ratio above 1 (point estimates; Fisher-significant,
+  unadjusted, for 3 of 8).
 * **Kennedy, B., Jin, X., Mostafazadeh Davani, A., Dehghani, M., Ren, X.
   (2020).** Contextualizing Hate Speech Classifiers with Post-hoc
   Explanation. *ACL 2020*. ACL Anthology 2020.acl-main.483.
