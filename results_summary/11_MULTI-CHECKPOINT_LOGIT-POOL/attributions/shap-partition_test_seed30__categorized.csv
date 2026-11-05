@@ -1,6 +1,6 @@
 word,mean_abs_attribution,mean_attribution,support,category,matched_categories,abs_mass,positive_mass,rank
 jew,0.5368059,0.5368059,1,identity_term,identity_term,0.5368059,0.5368059,1
-nigger,0.46257783,0.46257783,2,topical,,0.92515566,0.92515566,2
+nigger,0.46257783,0.46257783,2,slur,slur,0.92515566,0.92515566,2
 refugeesnotwelcome,0.42899146,0.42899146,1,topical,,0.42899146,0.42899146,3
 genocide,0.38527109,0.38527109,8,topical,,3.0821687,3.0821687,4
 islam,0.37704131,0.37704131,3,identity_term,identity_term,1.1311239,1.1311239,5
