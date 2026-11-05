@@ -66,7 +66,7 @@ Word-level agreement with the other techniques' whole-model test runs (Spearman 
 
 Sources: `results_summary/03_SLP_TF-IDF/faithfulness_test.json`, `results_summary/rq/rq2_faithfulness.csv`.
 
-Deletion test on the 200 test posts that every comparison technique explained (this technique explained 450 in all). For each k, the k words the post's own explanation ranks highest toward EXTREMIST are deleted, against deleting as many random words of the same post (5 seeds). Drop is p(extremist) before minus after; n counts the posts with at least one positive word. The restored predictor matched the committed probabilities within 1.2e-07.
+Deletion test on 200 of the 200 test posts that every comparison technique explained (this technique explained 450 in all). For each k, the k words the post's own explanation ranks highest toward EXTREMIST are deleted, against deleting as many random words of the same post (5 seeds). Drop is p(extremist) before minus after; n counts the posts with at least one positive word. The restored predictor matched the committed probabilities within 1.2e-07.
 
 | k | n | Drop, top-k | Drop, random | Margin | Margin on flagged posts (n) | Share top-k > random | Drop / summed SHAP | Wilcoxon Holm p |
 |---|---|---|---|---|---|---|---|---|
@@ -107,7 +107,7 @@ Sources: `results_summary/rq/rq4_identity_counterfactual.csv`, `results_summary/
 | non_extremist, unambiguous match | 53 | 0.0027 | 4 | 0 | 1 | 0.321 | 1.000 |
 | extremist, unambiguous match | 59 | 0.0094 | 34 | 3 | 2 | 0.00035 | 1.000 |
 
-Rows marked `unambiguous match` are the posts that keep at least one identity match outside the ambiguous list, with every match removed. Their Holm p values are over the sensitivity table's own rows, not the WP7 family; a smaller population lowers power without changing the effect size.
+Rows marked `unambiguous match` are the posts that keep at least one identity match outside the ambiguous list, with every match removed. Their Holm p values are over the sensitivity table's own rows, not the WP7 family. A smaller population has less power; its effect size is that of the restricted posts.
 
 ## Limits
 

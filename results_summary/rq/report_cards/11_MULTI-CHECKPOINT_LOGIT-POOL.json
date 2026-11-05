@@ -4,6 +4,7 @@
     "in_comparison": true,
     "n_posts_explained": 200,
     "n_posts_shared": 200,
+    "n_posts_shared_set": 200,
     "n_random_seeds": 5,
     "population": "shared",
     "rows": [
@@ -295,6 +296,8 @@
     "n_negative_excluded": 14,
     "n_negative_with_identity_terms": 53,
     "n_negative_without_identity_terms": 213,
+    "n_positive_excluded": 24,
+    "n_positive_with_identity_terms": 59,
     "sources": [
       "results_summary/rq/rq4_identity_fpr_sensitivity.csv"
     ],
