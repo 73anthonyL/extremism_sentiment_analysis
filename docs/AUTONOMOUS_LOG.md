@@ -23,6 +23,25 @@ dataset text to an external API is listed under "Blocked" and not attempted.
   becomes the SHAP pass rule; dropping `--primed` from the CLAUDE.md
   pre-commit list now that notebooks carry outputs.
 
+## 2026-11-04 — Decisions brief; lexicon coverage artifact
+
+`docs/DECISIONS_NEEDED.md` (branch `docs/decisions-brief`): the twelve open
+author decisions in one table, each with what it blocks, the options and a
+recommendation. "Accept all recommendations" unblocks the local ones.
+
+Branch `research/lexicon-coverage`: `categorize_attributions.py` now writes
+`results_summary/rq/rq2_lexicon_coverage.csv` (entries, single words and
+multi-word phrases per category) and `--check-coverage` refuses a table
+that no longer matches `data/lexicons/`. The count section 5 asks for is 0:
+every lexicon entry is a single word. The draft reports it (claim C820) and
+the TODO is closed. Review: small change, checked by mutation (disabling the
+staleness check fails two tests); category shares are byte-identical after
+a full re-run.
+
+Checks: all five pass (529 tests); check_claims OK (632).
+
+Next: place the verified related-work citations in the Results draft.
+
 ## 2026-11-04 — WP7b: preregistered within-category identity swap
 
 Branch `research/identity-swap`, merged into `research/integration`. The
