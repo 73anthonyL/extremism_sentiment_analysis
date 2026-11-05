@@ -106,10 +106,15 @@ Each item cites the artifact that shows it.
    significance (`rq4_identity_counterfactual_sensitivity.csv`). So the
    models treat identity terms as evidence of extremism whatever the label.
    The false-positive flips (5 to 11 posts per model) are descriptive.
-   Across the eight techniques, the ranking by identity-term share of
-   attribution follows the FPR-ratio ranking (Spearman 0.83, n = 8,
-   descriptive). It does so through low FPR on posts without identity terms,
-   not through more identity-term false positives (`rq2_rq4_relation.csv`).
+   At the point estimates, the identity-share ranking of the eight
+   techniques follows their FPR-ratio ranking (Spearman 0.83, n = 8),
+   through low FPR on posts without identity terms rather than more
+   identity-term false positives (`rq2_rq4_relation.csv`). That ranking is
+   unstable under resampling, mainly through the FPR ratios, each of which
+   rests on 4 to 18 false positives: resampling posts and test rows gives a
+   replicate median of about 0.48, positive in about 90% of replicates
+   (`rq2_rq4_bootstrap_relation.csv`). It is not evidence that reliance on
+   identity terms and identity-term false positives go together.
 4. **Transformer explanations are faithful per post but unstable across
    post samples.** Deleting each post's top-SHAP words lowers p(extremist)
    more than deleting random words, for every technique
@@ -119,9 +124,13 @@ Each item cites the artifact that shows it.
    posts, the test and validation rank agreement of word attributions is
    0.43 (07) and 0.49 (11), against 0.62 to 0.74 for the classical models
    (`rq3_same_post_split_agreement.csv`). Top-50 overlap is as low for
-   FastText (0.19) as for the transformers (0.18, 0.22). There is one run
-   per split, so this is descriptive. Per-word claims about transformers are
-   fragile, and the paper says so.
+   FastText (0.19) as for the transformers (0.18, 0.22). Under a post-level
+   bootstrap, every transformer-minus-classical difference in rank agreement
+   has an interval that excludes zero (descriptive;
+   `rq3_bootstrap_split_agreement.csv`). This covers post sampling, not the
+   SHAP seed or another split, and lower agreement may also reflect context-
+   dependent attributions rather than noisier ones. Per-word claims about
+   transformers are fragile, and the paper says so.
 5. **Lexicons do not cover the vocabulary.** The "topical" category absorbs
    80 to 100 percent of positive mass while the slur list is empty (WP3), so
    category-level claims depend on curation choices.
