@@ -4,6 +4,6 @@ technique,run_id,top_k,n_identity_term,n_identity_term_ambiguous,ambiguous_words
 03_SLP_TF-IDF,shap-partition_test_seed30,50,0,0,,2,minorities;refugeesnotwelcome
 04_CHAR-TF-IDF_LIN-SVM,shap-partition_test_seed30,50,6,0,,5,refugeesnotwelcome;americanimmigrants;islamicinvasion;stopwhitegenocide;races
 05_WORD-CHAR-TF-IDF_LIN-SVM,shap-partition_test_seed30,50,8,1,white,3,refugeesnotwelcome;blacks;stopwhitegenocide
-06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,50,9,1,white,4,whites;refugeesnotwelcome;blacks;stopwhitegenocide
+06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,50,8,1,white,5,whites;refugeesnotwelcome;aliens;blacks;stopwhitegenocide
 07_TWITTER-ROBERTA_FINE-TUNE,shap-partition_test_seed30,50,7,1,trans,4,refugeesnotwelcome;stopwhitegenocide;whites;afro
 11_MULTI-CHECKPOINT_LOGIT-POOL,shap-partition_test_seed30,50,11,3,trans;black;white,6,refugeesnotwelcome;whites;gays;mulatto;stopwhitegenocide;africangangs

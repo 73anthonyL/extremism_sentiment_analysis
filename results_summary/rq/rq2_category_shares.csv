@@ -40,9 +40,9 @@ technique,run_id,member,split,seed,top_k,category,n_words,share_of_words,abs_mas
 05_WORD-CHAR-TF-IDF_LIN-SVM,shap-partition_validation_seed30,,validation,30,50,slur,3,0.06,1.0976809,0.016485803,0.45361349,0.0090497569
 05_WORD-CHAR-TF-IDF_LIN-SVM,shap-partition_validation_seed30,,validation,30,50,topical,39,0.78,59.288959,0.89044646,43.474003,0.86732245
 06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,,test,30,50,extremist_framing,0,0,0,0,0,0
-06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,,test,30,50,identity_term,9,0.18,8.9223071,0.13723523,8.9223071,0.13723523
+06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,,test,30,50,identity_term,8,0.16,8.5947247,0.13219664,8.5947247,0.13219664
 06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,,test,30,50,slur,1,0.02,0.64108162,0.0098605647,0.64108162,0.0098605647
-06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,,test,30,50,topical,40,0.8,55.451308,0.8529042,55.451308,0.8529042
+06_FASTTEXT-EMB_LOG-REG,shap-partition_test_seed30,,test,30,50,topical,41,0.82,55.77889,0.85794279,55.77889,0.85794279
 06_FASTTEXT-EMB_LOG-REG,shap-partition_validation_seed30,,validation,30,50,extremist_framing,1,0.02,0.1275928,0.002440943,0.1275928,0.002440943
 06_FASTTEXT-EMB_LOG-REG,shap-partition_validation_seed30,,validation,30,50,identity_term,4,0.08,5.4070856,0.10344148,5.4070856,0.10344148
 06_FASTTEXT-EMB_LOG-REG,shap-partition_validation_seed30,,validation,30,50,slur,0,0,0,0,0,0
