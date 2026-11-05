@@ -110,7 +110,7 @@ It is the preregistered swap map of WP7b (`tools/identity_swap.py`,
 entry, either three same-category, same-form targets or `excluded` with a
 reason. Every word in it is an entry of `identity_terms.txt`.
 
-## Version note: frozen at WP3 (2026-11-04)
+## Version note: frozen at WP3 (2026-11-04; identity list revised 2026-11-05)
 
 The three lexicons are frozen as of this note (`docs/RESEARCH_PLAN.md`, WP3
 and section 5 "Lexicons"). Any later change re-runs RQ2 and RQ4 in full and
@@ -120,23 +120,40 @@ keeps both versions of the affected tables.
 |---|---|---|
 | `slurs.txt` | 58 | `8164361489ce79690ff6a7910d716ff4f00f8aa8a170f228b37af839f981618d` |
 | `extremist_framing.txt` | 382 | `377179826ce2220dde8874b8707724028eacd44ad33eb9696c4b5a132318c749` |
-| `identity_terms.txt` | 97 | `df98c56de95e82c6c2241f8dfa3a0754349eec52c4fa13da7dbf859ca20b6c5b` |
+| `identity_terms.txt` | 96 | `4c6eb3cf088d3e47aec7141605b61c25d6ea31bbf559bbfd1db98ffd47a4b77c` |
 
 Entries are counted after `tools/lexicons.py` normalisation (comments and
 blank lines dropped, lower-cased, de-duplicated). Changes at the freeze:
 
 * `slurs.txt`: populated from HurtLex (above); it was empty before.
-* `identity_terms.txt`: `aliens` added to the migration section, the only
-  gap word in `rq2_identity_lexicon_gaps_sensitivity.csv` with test support
-  of at least 3 (author decision 2, `docs/DECISIONS_NEEDED.md`). The 13
-  ambiguous entries stay, and the `exclude_ambiguous_only` sensitivity keeps
-  being reported.
+* `identity_terms.txt`: unchanged from before the freeze (96 entries). At
+  the freeze on 2026-11-04 `aliens` was added (97 entries, sha256
+  `df98c56d…`), as the only gap word in
+  `rq2_identity_lexicon_gaps_sensitivity.csv` with test support of at least
+  3. It was dropped again on 2026-11-05 (author decision 2,
+  `docs/DECISIONS_NEEDED.md`): it came from 06's own test top-50 gap list,
+  so the addition was derived from test-split attributions; it always
+  appears in the loaded phrase "illegal aliens", not as a neutral
+  reference; and it alone moved 06's RQ4 Fisher p below 0.05. Both runs are
+  in git history. The 13 ambiguous entries stay, and the
+  `exclude_ambiguous_only` sensitivity keeps being reported.
 * `extremist_framing.txt`: reviewed, unchanged. It shares no entry with the
   other two lists; four of its entries contain an identity entry inside a
   hyphenated framing word (for example `anti-muslim`), and these stay
   framing.
 
-`identity_swap_pairs.csv` (not a lexicon) gained the matching excluded row
-for `aliens`; its sha256 is now
-`89c99e5b3b69779c70003d2317da0cbf39957485d399118740ffbbd4a8ac47f4`
-(Amendment 1 of `docs/preregistrations/WP7b_identity_swap.md`).
+`identity_swap_pairs.csv` (not a lexicon) is byte-identical to the WP7b
+preregistration (sha256
+`1e94dd70e48e511d0530592a95044f4e15bb74235853ec04c2356cb32dab406f`); the
+excluded `aliens` row of Amendment 1 was removed by Amendment 2 of
+`docs/preregistrations/WP7b_identity_swap.md`.
+
+## Rule for adding terms
+
+A term may be added to any list only on grounds that do not come from the
+test split. In particular, no term is added because it appears in a
+test-split attribution artifact, a test-split gap list or test-split
+false positives: that would fit the lexicon to the results it is used to
+measure. Candidates may come from the training split, from a published
+source, or from linguistic review; the source is recorded with the
+addition, and the change follows the freeze rule above.

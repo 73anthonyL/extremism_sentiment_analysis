@@ -78,3 +78,12 @@ def test_a_note_without_the_freeze_heading_is_refused(tmp_path):
     readme.write_text("# Lexicons\n\nno version note\n", encoding="utf-8")
     with pytest.raises(ValueError, match="no WP3 version note"):
         version_note(readme)
+
+
+def test_dropped_term_stays_out_of_the_identity_list():
+    """Author decision 2026-11-05: aliens was test-derived and is not an identity term."""
+    from lexicons import load_lexicons
+
+    lexicons = load_lexicons()
+    assert "aliens" not in lexicons["identity_term"]
+    assert version_note()["identity_terms.txt"][0] == len(lexicons["identity_term"]) == 96
