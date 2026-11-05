@@ -50,7 +50,10 @@ that changes other techniques' results. The Holm family grows (from 28 pairs
 for eight techniques to 36 for nine), so pairs near alpha can flip in the other
 cards. The error-overlap and shared-top-word counts change too, and so do the
 counterfactual and faithfulness Holm p values, the common post set of the
-same-post tables and the RQ2-RQ4 rank relation. Only do it as a decision recorded in
+same-post tables and the RQ2-RQ4 rank relation. Faithfulness has to be re-run
+for every comparison technique, not only the new one: each JSON records the
+techniques its `shared` population came from, and `report` refuses every card
+until they all name the new comparison. Only do it as a decision recorded in
 `docs/RESEARCH_PLAN.md`. Then recheck the prose claims that quote these
 numbers, because `render_tables.py --check` cannot see them:
 `RESEARCH_PLAN.md` section 3 (the McNemar bullet, "Seven of 28 pairs", and
@@ -178,9 +181,11 @@ one that fails, naming it:
     or when the whole-model test run is not named `shap-partition_test_seed30`.
 14. `rq2_rq4_relation.py`: Spearman between the comparison techniques' RQ2
     identity share and RQ4 FPR ratio, with exact permutation p. Skipped for a
-    technique outside the comparison, and while the WP7 or same-post table
-    lacks a comparison technique (the relation table is then stale, and the
-    stage line says so).
+    technique outside the comparison, when `same_post_stability` was skipped
+    in the same run, when a comparison technique's WP7 rows were scored at a
+    threshold other than its locked one, and while the WP7 or same-post table
+    lacks a comparison technique. The relation table is then left as it was
+    and may be stale; the stage line says so.
 15. `refresh_manifest`: when the chain wrote files into the technique folder
     (coefficient checks, category shares, identity-FPR, counterfactual and
     faithfulness JSONs) and a `run_manifest.json` exists, the manifest is
@@ -197,22 +202,31 @@ requested`. With it, `check-contract` must find a restorable predictor. They
 run one after another, one model in memory at a time; pass `--device` and
 `--sequential-checkpoints` through for large ensembles. Re-scoring frozen
 models at their locked thresholds selects nothing, so it is a perturbation
-analysis, not a second test evaluation.
+analysis, not a second test evaluation. With `--with-perturbation`, if one of
+these stages skips for missing inputs (per-post files, run name), the run
+still completes but exits 2, so a script can tell that what was asked for did
+not happen.
 
 Any error in a stage, including an unexpected exception, stops the chain with
 `STOPPED at stage <name>`. A stage whose inputs are absent does not fail and
 does not pass: it prints `SKIP  <name>: <reason>`, and the last line lists
 every skipped stage. A table such a stage would have written is left as it
-was; the report card then says "not run" for faithfulness and WP7.
+was, and so is anything committed in it earlier: the cards then show those
+earlier outputs, or "not run" only where none exist. When perturbation stages
+were skipped, the run's last line says so. A skipped stage therefore does not
+mean the card is current for it; `report` refuses the stale cases it can
+detect (below).
 
 The chain is deterministic: on the committed state, `run --technique
 01_LOG-REG_TF-IDF` rewrites every table, coefficient check and card byte for
-byte. With `--with-perturbation` every table and card is reproduced too; the
-one difference is the `holm_adjusted_p` note in
-`identity_counterfactual_test.json`, whose wording the tool changed after the
-committed WP7 runs (the numbers are identical). The coefficient checks cover
-every whole-model run of 01 and 06 (test and validation); all four are
-committed.
+byte. With `--with-perturbation` every table and card is reproduced too, but
+the run rewrites the `holm_adjusted_p` note in the technique's
+`identity_counterfactual_test.json`. All eight committed WP7 JSONs carry an
+older wording of that note, written before the tool changed it; the numbers
+are identical. A `--with-perturbation` run therefore changes that line in each
+technique it runs, and the eight have not been regenerated. The coefficient
+checks cover every whole-model run of 01 and 06 (test and validation); all
+four are committed.
 
 ### If the SHAP check fails
 
@@ -260,12 +274,24 @@ python3 -m pytest tools/tests/ -q
 `report` reads committed files only. It refuses to write any card when an RQ
 table has no row for a technique, a pair table does not pair it with every
 other technique in the comparison, `coefficients.csv` exists without a check
-file for each whole-model run, the ambiguous-term FPR table's `full_lexicon`
-row differs from `rq4_identity_fpr.csv`, or `faithfulness_test.json` and the
-technique's rows in `rq2_faithfulness.csv` do not both exist and agree (or
-were computed at a threshold other than the locked one). Each means the inputs
-are stale; rerun the chain rather than reporting a partial card. A technique
-with neither faithfulness file reads "not run".
+file for each whole-model run, or any of these holds:
+
+* the ambiguous-term FPR table's `full_lexicon` row differs from
+  `rq4_identity_fpr.csv`, or its `exclude_ambiguous_only` row is not that row
+  minus the excluded posts;
+* `faithfulness_test.json` and the technique's rows in `rq2_faithfulness.csv`
+  do not both exist, do not have the same (population, k) rows, or differ in
+  any numeric field;
+* faithfulness was computed at a threshold other than the locked one, from a
+  shared population of other techniques than the current comparison, or with
+  a stored Holm p that is not Holm over the current family;
+* some comparison techniques have faithfulness rows and others do not;
+* the WP7 or restricted counterfactual rows were scored at a threshold other
+  than the locked one, or the restricted rows' post counts are not the
+  `exclude_ambiguous_only` identity-term counts.
+
+Each means the inputs are stale; rerun the chain rather than reporting a
+partial card. A technique with neither faithfulness file reads "not run".
 
 ## Reading a report card
 
@@ -291,7 +317,8 @@ numbers in `<TECHNIQUE>.json`. Each section names the file it was read from.
   top-50 positive words. The most and least agreeing techniques are given for
   each metric, since the two can disagree.
 * **RQ2 support (faithfulness).** If the deletion test was run: per k, on the
-  `shared` posts, the mean drop in p(extremist) when the top-k words are
+  `shared` posts (the card gives "N of the M" posts every comparison technique
+  explained that this technique explained), the mean drop in p(extremist) when the top-k words are
   deleted, the same for k random words, their difference (the margin), the
   margin on flagged posts, the share of posts where top-k beats random, the
   drop over the summed SHAP of the deleted words, and the Holm-adjusted
@@ -307,7 +334,7 @@ numbers in `<TECHNIQUE>.json`. Each section names the file it was read from.
   identity term, the ratio, Fisher's exact p and the group sizes. This is a
   correlation. A second line gives the same figures after dropping the posts
   whose only identity matches are ambiguous words; if the ratio holds there,
-  it does not rest on colour words or interjections.
+  it does not rest on the posts whose only matches are those words.
 * **WP7.** If the counterfactual was run: the mean drop in p(extremist) when
   identity terms are removed, the flips at the locked threshold, and the Holm
   p values. This is the intervention behind RQ4. Rows marked `unambiguous
