@@ -67,7 +67,7 @@ derivation can be repeated:
 | Removed because | Count |
 |---|---|
 | already a neutral entry of `identity_terms.txt` | 2 |
-| a neutral or descriptive group reference, not a slur (for example `homosexual`, `mestizo`) | 20 |
+| a neutral or descriptive group reference, not a slur (for example `homosexual`, `mestizo`); these forms were not added to `identity_terms.txt` either: they occur in no non-extremist test post, so they could not change RQ4 | 20 |
 | a generic insult about intelligence, character, class or conduct, not aimed at a group (for example `idiot`, `barbarian`, `peasant`), including cognitive-disability insults | 84 |
 | a word whose everyday sense dominates (a name, object, animal or other meaning), so a word-level match would mostly not be a slur | 12 |
 | not a usable lemma (an organisation name, a phrase about slurs, a crime term, an unidentified string) | 15 |

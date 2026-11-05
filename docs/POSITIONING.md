@@ -95,7 +95,9 @@ Each item cites the artifact that shows it.
 3. **Identity terms are hard to separate from what surrounds them.** Every technique has a higher FPR on
    benign posts that mention a community (`rq4_identity_fpr.csv`: point
    estimates 1.9 to 4.2, Fisher p < 0.05 unadjusted for 04, 05, 06 and 11,
-   06 at the boundary at 0.049). Setting aside 13 ambiguous identity words
+   none after Holm over the eight tests; 06, at 0.049, became significant only
+   when the WP3 freeze added `aliens`, a term taken from 06's own top-50 gap
+   list that co-occurs with "illegal" in every dataset post containing it). Setting aside 13 ambiguous identity words
    keeps every ratio above 1 (1.6 to 4.9), and 04, 05 and 11 stay below p
    0.05
    (`rq4_identity_fpr_sensitivity.csv`). In the counterfactual test (WP7),

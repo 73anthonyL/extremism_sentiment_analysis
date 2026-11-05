@@ -269,8 +269,13 @@ Other facts that shape the order of work:
   matches are those words, every FPR ratio stays above 1 (1.57 to 4.91, 54
   identity-term negatives). Three techniques have Fisher p < 0.05 (04
   0.032, 05 0.019, 11 0.0062); 06, at p = 0.049 on the full lexicon, is not
-  (2.36, p = 0.10), and 03 falls to 1.57 (p = 0.49); at this n that is not
-  evidence that the effect is absent. On the 60 extremist posts that keep an unambiguous match, removal unflags
+  (2.36, p = 0.10). 06's full-lexicon p was 0.15 before the freeze and fell
+  below 0.05 through one false positive that matches only `aliens`; that
+  term came from 06's own top-50 gap list and co-occurs with "illegal" in
+  all 25 dataset posts that contain it. Holm over the eight full-lexicon
+  Fisher tests leaves none below 0.05 (smallest about 0.057). 03 falls to
+  1.57 (p = 0.49); at this n that is not evidence that the effect is
+  absent. On the 60 extremist posts that keep an unambiguous match, removal unflags
   15 of 51 flagged posts for 11 (Holm p = 0.002 over 32 rows) and 10 of 48
   for 07 (raw p = 0.012, Holm p = 0.33). 07's rate, about 21%, equals its
   full-population rate (15 of 71); with fewer discordant pairs the test
@@ -587,7 +592,7 @@ tools with adversarial tests:
   tables (`rq1_error_overlap.csv`, `rq1_shared_errors.csv`).
 * `tools/rq2_rq4_relation.py`: the rank correlation between each technique's
   RQ2 identity-term share and its RQ4 FPR ratio, from the two `rq/` tables.
-  Done 2026-11-04 (`rq2_rq4_relation.csv`); re-run after WP3 freezes the
+  Done 2026-11-04 (`rq2_rq4_relation.csv`), and re-run on the frozen WP3
   lexicons.
 
 *Done when.* All five rendered regions are populated for every technique,
@@ -864,14 +869,16 @@ bootstrap intervals (`rq2_bootstrap_category_shares.csv`) are reported next
 to it as a stricter check, and the paper says which differences pass both. Top-K is 50 throughout;
 changing it re-runs everything and is stated. Runs are compared only when
 they explain the same number of posts with the same evaluation budget; the
-sidecar records both. Multi-word lexicon entries
-cannot match word-level artifacts and the count of skipped entries is
-reported.
+sidecar records both. Lexicon entries the word-level masker splits
+(spaces, hyphens, other punctuation) cannot match word-level artifacts and
+the count of skipped entries is reported.
 
 **Identity false positives (RQ4).** The Fisher exact test on the 2x2 table
 (identity term present or absent, false positive or true negative) is
 reported with the FPR ratio and the count of negatives with identity terms.
-With 68 such posts in the test split, only large ratios are detectable; a
+With 68 such posts in the test split (67 before the WP3 freeze; the count
+was updated on 2026-11-04 when `aliens` joined the identity list, and the
+rule itself did not change), only large ratios are detectable; a
 non-significant result is reported as such, not as absence of effect. The
 RQ2-to-RQ4 relation is reported as a rank correlation over techniques with
 n stated; with eight or nine points it is descriptive.
