@@ -374,3 +374,153 @@ def test_merging_one_technique_equals_a_rebuild_byte_for_byte(tmp_path):
     for payload in payloads:
         merged = write_table([payload], tmp_path / "t.csv", RESULTS_DIR).read_text()
         assert merged == rebuilt, payload["technique"]
+
+
+# ---------------------------------------------------------------------------
+# --split validation: the replication on the validation split's whole-model run
+# ---------------------------------------------------------------------------
+def _write_run(posts, external, results, split, sidecar_split=None):
+    """The per-post file of `split`'s whole-model run, its committed word table and sidecar."""
+    local = fa.local_path("11_T", external, split)
+    local.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame([
+        {"row_id": r, "position": i, "token": tok, "attribution": v}
+        for r, toks, vals in posts for i, (tok, v) in enumerate(zip(toks, vals))
+    ]).to_csv(local, index=False)
+    table = aggregate_word_attributions([t for _, t, _ in posts], [v for _, _, v in posts])
+    committed = results / "11_T" / "attributions" / local.name
+    committed.parent.mkdir(parents=True, exist_ok=True)
+    table.to_csv(committed, index=False)
+    committed.with_suffix(".json").write_text(json.dumps({"split": sidecar_split or split}))
+    return local
+
+
+def _split_probs(posts, split):
+    processed, probs = _processed_and_probs(posts)
+    probs["split"] = split
+    return processed, probs
+
+
+class TestValidationSplit:
+    def test_validation_run_reads_its_own_files_and_artifact(self, tmp_path):
+        posts = _posts(6)
+        external, results = tmp_path / "external", tmp_path / "results_summary"
+        local = _write_run(posts, external, results, "validation")
+        assert local.name == "shap-partition_validation_seed30.csv"
+        processed, probs = _split_probs(posts, "validation")
+        frame, diff = load_posts("11_T", processed, external, results, probs=probs, split="validation")
+        assert len(frame) == 6 and diff < 1e-9
+        payload = analyze("11_T", _fake_model(), frame, 0.5, set(frame["row_id"]), k_values=(1,), seeds=(1,),
+                          split="validation")
+        assert payload["split"] == "validation" and payload["run_id"] == "shap-partition_validation_seed30"
+        assert {row["split"] for row in payload["rows"]} == {"validation"}
+        assert "rq2_faithfulness_validation.csv" in payload["holm_adjusted_p"]
+        assert write_outputs(payload, results).name == "faithfulness_validation.json"
+
+    def test_validation_run_verified_against_the_test_artifact_is_refused(self, tmp_path):
+        """Same row ids, same probabilities, but the artifact is the test one: refused before scoring."""
+        posts = _posts(6)
+        external, results = tmp_path / "external", tmp_path / "results_summary"
+        _write_run(posts, external, results, "validation")
+        processed, test_probs = _split_probs(posts, "test")
+        with pytest.raises(FaithfulnessError, match=r"split\(s\) \['test'\], not validation"):
+            load_posts("11_T", processed, external, results, probs=test_probs, split="validation")
+
+    def test_validation_run_against_another_artifact_relabelled_validation_is_refused(self, tmp_path):
+        """An artifact relabelled as validation still fails: the explained posts are not its rows."""
+        posts = _posts(6)
+        external, results = tmp_path / "external", tmp_path / "results_summary"
+        _write_run(posts, external, results, "validation")
+        processed, probs = _split_probs(posts, "validation")
+        other = probs.assign(row_id=[f"ex_{900000 + i:06d}" for i in range(len(probs))])
+        processed = pd.concat([processed, processed.assign(row_id=other["row_id"])], ignore_index=True)
+        with pytest.raises(FaithfulnessError, match="not a row of the committed validation artifact"):
+            load_posts("11_T", processed, external, results, probs=other, split="validation")
+
+    def test_per_post_file_of_the_test_split_under_a_validation_run_is_refused(self, tmp_path):
+        """The validation slot holds a file explained on test posts: its rows are not validation rows."""
+        test_posts = _posts(6)
+        validation_posts = [(f"ex_{500000 + i:06d}", t, v) for i, (_, t, v) in enumerate(_posts(6))]
+        external, results = tmp_path / "external", tmp_path / "results_summary"
+        _write_run(test_posts, external, results, "validation")
+        processed, probs = _split_probs(validation_posts, "validation")
+        processed = pd.concat([processed, _processed_and_probs(test_posts)[0]], ignore_index=True)
+        with pytest.raises(FaithfulnessError, match="explained on another split"):
+            load_posts("11_T", processed, external, results, probs=probs, split="validation")
+
+    def test_committed_run_of_another_split_is_refused(self, tmp_path):
+        posts = _posts(6)
+        external, results = tmp_path / "external", tmp_path / "results_summary"
+        _write_run(posts, external, results, "validation", sidecar_split="test")
+        processed, probs = _split_probs(posts, "validation")
+        with pytest.raises(FaithfulnessError, match="names split 'test', not 'validation'"):
+            load_posts("11_T", processed, external, results, probs=probs, split="validation")
+
+    def test_shared_population_is_taken_within_the_split(self, tmp_path):
+        """Only test per-post files exist, so the validation shared population is refused."""
+        results = tmp_path / "results_summary"
+        external = tmp_path / "external"
+        for technique in ("01_A", "02_B"):
+            (results / technique).mkdir(parents=True)
+            folder = external / technique / fa.LOCAL_SUBDIR
+            folder.mkdir(parents=True)
+            pd.DataFrame({"row_id": ["ex_000001"]}).to_csv(folder / "shap-partition_test_seed30.csv", index=False)
+        assert shared_row_ids(external, results)[0] == {"ex_000001"}
+        with pytest.raises(FaithfulnessError, match="no per-post"):
+            shared_row_ids(external, results, split="validation")
+
+    def test_unknown_split_is_refused(self, tmp_path):
+        with pytest.raises(FaithfulnessError, match="split must be one of"):
+            fa.local_path("11_T", tmp_path, "train")
+
+    def _payloads(self, split):
+        frame = _frame(_posts())
+        out = []
+        for technique in ("01_A", "02_B"):
+            model = _fake_model()
+            model.technique = technique
+            out.append(analyze(technique, model, frame, 0.5, set(frame["row_id"]), k_values=(1, 3), seeds=(1,),
+                               split=split))
+        return out
+
+    def test_tables_never_mix_splits(self, tmp_path):
+        results = tmp_path / "results_summary"
+        results.mkdir()
+        test, validation = self._payloads("test"), self._payloads("validation")
+        with pytest.raises(FaithfulnessError, match="mix splits"):
+            write_table([test[0], validation[1]], tmp_path / "t.csv", results)
+        with pytest.raises(FaithfulnessError, match="one table per split"):
+            write_table(validation, tmp_path / "t.csv", results, split="test")
+        test_path = write_table(test, tmp_path / "t.csv", results)
+        with pytest.raises(FaithfulnessError, match="another split"):
+            write_table(validation, test_path, results)
+        assert set(pd.read_csv(test_path)["split"]) == {"test"}
+
+    def test_validation_rows_leave_the_test_table_and_its_holm_unchanged(self, tmp_path):
+        """Holm is per split: writing the validation table changes nothing in the test table."""
+        results = tmp_path / "results_summary"
+        results.mkdir()
+        test_path = write_table(self._payloads("test"), tmp_path / "test.csv", results)
+        before = test_path.read_bytes()
+        validation_path = write_table(self._payloads("validation"), tmp_path / "validation.csv", results)
+        assert test_path.read_bytes() == before
+        table = pd.read_csv(validation_path)
+        assert set(table["split"]) == {"validation"}
+        for _, block in table.groupby("population"):
+            assert np.allclose(block["wilcoxon_p_holm"], fa.holm_adjust(block["wilcoxon_p"].to_numpy()))
+
+    def test_default_table_path_is_per_split(self):
+        assert fa.table_path("test").name == "rq2_faithfulness.csv"
+        assert fa.table_path("validation").name == "rq2_faithfulness_validation.csv"
+
+    def test_rebuild_reads_only_the_split_asked_for(self, tmp_path):
+        results = tmp_path / "results_summary"
+        results.mkdir()
+        for payload in self._payloads("test") + self._payloads("validation"):
+            write_outputs(payload, results)
+        written, n = fa.rebuild_table(results, tmp_path / "v.csv", split="validation")
+        assert n == 2 and set(pd.read_csv(written)["split"]) == {"validation"}
+        (results / "01_A" / "faithfulness_validation.json").write_text(
+            (results / "01_A" / "faithfulness_test.json").read_text())
+        with pytest.raises(FaithfulnessError, match="has split 'test'"):
+            fa.rebuild_table(results, tmp_path / "v.csv", split="validation")

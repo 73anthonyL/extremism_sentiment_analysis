@@ -13,6 +13,7 @@
     "classification_report_test.json": "405d9286bd0eae60cbc8af444e885cb71d312f2d8cceb17292c975bef3219ff8",
     "confusion_matrix_test.csv": "7d757295562e9c08790991539137e337f55872f7815f13bd043d2d6f1d74a882",
     "faithfulness_test.json": "c094f349bfd12488586dbe77fcba4702974db4b9f1dc023c3bf56a1120ba12ff",
+    "faithfulness_validation.json": "c5161247bfcb2a244644d7a479783d08e5d4f8ed711eacdd82f39f108f15564c",
     "identity_counterfactual_test.json": "42afa00432453729046587785f76d00a60c4643322e1cce3c96ad42e377de54c",
     "identity_fpr_terms_test.csv": "938f7198509f69c7f95fd5b56bb118b9a70e815e3e7a2ceb42f1f8a737742960",
     "identity_fpr_test.json": "770a074314b376ec1203f57150ae2717feb93fcf64cc816eddf4d915035a2811",
@@ -21,7 +22,7 @@
     "metrics_validation.json": "4c3a7ac667d4949f356c7e01e7e7f36d6709df3c310e50fcbf542eeef16479cd",
     "threshold_sweep_validation.csv": "c43dfae1e3a739401b5bc2e1c1d9b9131922cce106f573f1b74153dcffdb6831"
   },
-  "committed_hashed_utc": "2026-11-05T06:41:22+00:00",
+  "committed_hashed_utc": "2026-11-05T08:06:19+00:00",
   "created_utc": "2026-10-08T16:37:58+00:00",
   "external_assets": [],
   "run_id": "05_WORD-CHAR-TF-IDF_LIN-SVM_20261008T074307Z",

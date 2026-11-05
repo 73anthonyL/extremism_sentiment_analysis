@@ -179,6 +179,9 @@ one that fails, naming it:
     reason, when the technique's or any comparison technique's per-post test
     file is absent (the `shared` population is the posts they all explained),
     or when the whole-model test run is not named `shap-partition_test_seed30`.
+    The chain runs the test split only. The validation replication
+    (`faithfulness.py --split validation --technique T`, into
+    `rq2_faithfulness_validation.csv`) is run by hand and read by no card.
 14. `rq2_rq4_relation.py`: Spearman between the comparison techniques' RQ2
     identity share and RQ4 FPR ratio, with exact permutation p. Skipped for a
     technique outside the comparison, when `same_post_stability` was skipped
