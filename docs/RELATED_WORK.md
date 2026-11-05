@@ -654,3 +654,42 @@ Conventions:
 Every other entry above matched a primary record (arXiv, Crossref, ACL
 Anthology, AAAI OJS, PMLR, NeurIPS proceedings, JSTOR or OpenReview).
 
+---
+
+## Positioning against prior work
+
+Detecting extremist and hateful content from text is well studied. There are
+systematic reviews (Gaikwad et al. 2021; Aldera et al. 2021; Torregrosa et
+al. 2022), shared tasks and datasets (Basile et al. 2019; Zampieri et al.
+2019; Vidgen et al. 2021), and domain-pretrained encoders (Barbieri et al.
+2020; Caselli et al. 2021; Antypas and Camacho-Collados 2023). This paper
+therefore reports accuracy only briefly (RQ1), as paired McNemar tests with
+Holm correction (McNemar 1947; Holm 1979; Dietterich 1998). It does not claim
+that any model is better unless the gap clears that test. Identity-term
+false positives are also documented (Dixon et al. 2018; Borkan et al. 2019;
+Sap et al. 2019), and so are explanation-based diagnoses of them (Kennedy et
+al. 2020; Mathew et al. 2021). The contribution is the comparison and the
+framework that makes it repeatable (POSITIONING C1, C2). Eight techniques,
+from TF-IDF linear models to a pooled transformer ensemble, are explained by
+one attribution method (Lundberg and Lee 2017, Partition/Owen values), which
+is first checked against known linear coefficients (cf. Adebayo et al.
+2018). Their word-level reliance is compared across families (RQ2) and
+across pretraining lineages and pooling (RQ3). Prior cross-method studies
+held the model fixed and varied the explainer (Atanasova et al. 2020;
+Krishna et al. 2024); we hold the explainer fixed and vary the model. Because
+Shapley-based attributions are not causal by themselves (Kumar et al. 2020;
+Slack et al. 2020), RQ4's correlation is followed by an input-level
+intervention (WP7) in the line of counterfactual token fairness and
+perturbation sensitivity (Garg et al. 2019; Prabhakaran et al. 2019). WP7
+removes the identity term, with a balanced substitution panel as a
+sensitivity check, and reports both the false-positive change and the recall
+cost. The framework's outputs are derived from probabilities and contain no
+dataset text, so they can be shared where the posts cannot. The study stays
+post-level and text-only. It does not model accounts or radicalisation over
+time (contrast Ferrara et al. 2016; Fernandez et al. 2018). Mitigation
+(Zhang et al. 2018; Sagawa et al. 2020; Liu et al. 2021; Clark et al. 2019;
+He et al. 2019), representation-level erasure and probing (Ravfogel et al.
+2020; Belrose et al. 2023; Elazar et al. 2021; Hewitt and Liang 2019) and
+LLM self-explanation (Turpin et al. 2023; Madsen et al. 2024) are framed as
+bounded follow-on packages (WP9, WP10) or future work, not as claims of this
+paper (POSITIONING C3).
