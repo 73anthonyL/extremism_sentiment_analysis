@@ -69,6 +69,21 @@ Word-level agreement with the other techniques' whole-model test runs (Spearman 
 | `07_TWITTER-ROBERTA_FINE-TUNE` | 0.234 | 0.136 |
 | `06_FASTTEXT-EMB_LOG-REG` | 0.167 | 0.149 |
 
+## RQ2 support. Are the explanations faithful to the model?
+
+Sources: `results_summary/01_LOG-REG_TF-IDF/faithfulness_test.json`, `results_summary/rq/rq2_faithfulness.csv`.
+
+Deletion test on the 200 test posts that every comparison technique explained (this technique explained 450 in all). For each k, the k words the post's own explanation ranks highest toward EXTREMIST are deleted, against deleting as many random words of the same post (5 seeds). Drop is p(extremist) before minus after; n counts the posts with at least one positive word. The restored predictor matched the committed probabilities within 2.1e-08.
+
+| k | n | Drop, top-k | Drop, random | Margin | Margin on flagged posts (n) | Share top-k > random | Drop / summed SHAP | Wilcoxon Holm p |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 199 | 0.074 | 0.009 | 0.065 | 0.091 (74) | 0.98 | 0.46 | 9.4e-33 |
+| 3 | 199 | 0.163 | 0.022 | 0.141 | 0.229 (74) | 0.99 | 0.51 | 1.1e-32 |
+| 5 | 199 | 0.225 | 0.044 | 0.181 | 0.318 (74) | 0.98 | 0.56 | 1.1e-32 |
+| 10 | 199 | 0.291 | 0.064 | 0.227 | 0.415 (74) | 0.99 | 0.62 | 1.1e-32 |
+
+Holm runs over the 32 `shared` rows of the comparison techniques. A positive margin with a small Holm p means the explanation finds words this model needs; it does not show the model is right to need them. No test compares margins across techniques, and the all-post means are capped by each model's probabilities, so compare techniques on the flagged-post margin, descriptively.
+
 ## RQ3. Stability of the explanation across post samples
 
 Source: `results_summary/rq/rq3_stability.csv`.
@@ -86,14 +101,20 @@ Source: `results_summary/rq/rq4_identity_fpr.csv`.
 
 Ratio 1.94, Fisher exact p 0.069, at the locked threshold 0.48. This is a correlation; the counterfactual below is the intervention.
 
+Ambiguous identity words (`results_summary/rq/rq4_identity_fpr_sensitivity.csv`, variant `exclude_ambiguous_only`): dropping the 14 non-extremist posts whose only identity matches are ambiguous words (colour words, interjections; declared in `tools/identity_sensitivity.py`, the lexicon is unchanged) leaves 53 with an identity term (FPR 0.170) and 213 without (FPR 0.085): ratio 2.01, Fisher exact p 0.077.
+
 ## WP7. Identity counterfactual (remove the term)
 
-Source: `results_summary/rq/rq4_identity_counterfactual.csv`. Mean delta is p(extremist) before minus after the edit.
+Sources: `results_summary/rq/rq4_identity_counterfactual.csv`, `results_summary/rq/rq4_identity_counterfactual_sensitivity.csv`. Mean delta is p(extremist) before minus after the edit.
 
 | Population | n | Mean delta | Flagged before | Flips to not flagged | Flips to flagged | Wilcoxon Holm p | McNemar Holm p |
 |---|---|---|---|---|---|---|---|
 | non_extremist | 67 | 0.0350 | 11 | 3 | 0 | 2.5e-05 | 1.000 |
 | extremist | 83 | 0.0658 | 62 | 6 | 0 | 1.3e-09 | 0.625 |
+| non_extremist, unambiguous match | 53 | 0.0419 | 9 | 3 | 0 | 3.1e-05 | 1.000 |
+| extremist, unambiguous match | 59 | 0.0644 | 44 | 5 | 0 | 2e-06 | 1.000 |
+
+Rows marked `unambiguous match` are the posts that keep at least one identity match outside the ambiguous list, with every match removed. Their Holm p values are over the sensitivity table's own rows, not the WP7 family; a smaller population lowers power without changing the effect size.
 
 ## Limits
 
