@@ -302,3 +302,57 @@ class TestHolm:
             assert len(own) == 2
             np.testing.assert_allclose(own["wilcoxon_p_holm"].to_numpy(), own_expected, rtol=1e-5)
 
+
+class TestDerivedAndRebuild:
+    def test_derived_columns_are_ratios_and_differences_of_the_row(self, tmp_path):
+        results = tmp_path / "results_summary"
+        results.mkdir()
+        frame = _frame(_posts())
+        payload = analyze("01_A", _fake_model(), frame, 0.5, set(frame["row_id"]), k_values=(1, 3), seeds=(1, 2))
+        table = pd.read_csv(write_table([payload], tmp_path / "t.csv", results))
+        flagged = table["mean_drop_topk_flagged"] - table["mean_drop_random_flagged"]
+        np.testing.assert_allclose(table["drop_minus_random_flagged"], flagged, rtol=1e-5, atol=1e-9)
+        has_mass = table["mean_attributed_random"] > 0
+        ratio = table["mean_drop_random"] / table["mean_attributed_random"]
+        np.testing.assert_allclose(table.loc[has_mass, "drop_random_over_attributed_random"],
+                                   ratio[has_mass], rtol=1e-5)
+
+    def _committed(self, tmp_path, techniques=("01_A", "02_B")):
+        results = tmp_path / "results_summary"
+        results.mkdir()
+        frame = _frame(_posts())
+        for technique in techniques:
+            model = _fake_model()
+            model.technique = technique
+            write_outputs(analyze(technique, model, frame, 0.5, set(frame["row_id"]), k_values=(1,), seeds=(1,)),
+                          results)
+        return results
+
+    def test_rebuild_replaces_a_stale_table(self, tmp_path):
+        results = self._committed(tmp_path)
+        path = tmp_path / "t.csv"
+        pd.DataFrame({"technique": ["99_GONE"], "old_column": [1]}).to_csv(path, index=False)
+        written, n = fa.rebuild_table(results, path)
+        table = pd.read_csv(written)
+        assert n == 2 and list(table.columns) == list(TABLE_COLUMNS)
+        assert sorted(table["technique"].unique()) == ["01_A", "02_B"]
+
+    def test_rebuild_refuses_a_json_in_the_wrong_folder(self, tmp_path):
+        results = self._committed(tmp_path)
+        source = results / "02_B" / "faithfulness_test.json"
+        (results / "03_C").mkdir()
+        (results / "03_C" / "faithfulness_test.json").write_text(source.read_text())
+        with pytest.raises(FaithfulnessError, match="names technique"):
+            fa.rebuild_table(results, tmp_path / "t.csv")
+        assert not (tmp_path / "t.csv").exists()
+
+    def test_rebuild_refuses_rows_missing_a_column(self, tmp_path):
+        results = self._committed(tmp_path)
+        source = results / "02_B" / "faithfulness_test.json"
+        payload = json.loads(source.read_text())
+        for row in payload["rows"]:
+            del row["mean_attributed_random"]
+        source.write_text(json.dumps(payload))
+        with pytest.raises(FaithfulnessError, match="rows lack"):
+            fa.rebuild_table(results, tmp_path / "t.csv")
+        assert not (tmp_path / "t.csv").exists()

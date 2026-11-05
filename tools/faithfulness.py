@@ -164,8 +164,14 @@ ROW_COLUMNS = (
     "wilcoxon_p",
     "verification_max_abs_diff",
 )
+# Table-only columns, pure functions of a row's committed means, so the table
+# can be rebuilt from the committed JSONs without re-scoring any model.
+DERIVED_COLUMNS = (
+    "drop_random_over_attributed_random",
+    "drop_minus_random_flagged",
+)
 HOLM_COLUMNS = ("wilcoxon_p_holm",)
-TABLE_COLUMNS = ROW_COLUMNS + HOLM_COLUMNS
+TABLE_COLUMNS = ROW_COLUMNS + DERIVED_COLUMNS + HOLM_COLUMNS
 
 
 class FaithfulnessError(RuntimeError):
@@ -557,13 +563,39 @@ def _holm_column(values):
     return adjusted
 
 
-def write_table(payloads, path=None, results_dir=None):
-    """Merge rows into the cross-technique table and recompute Holm per family."""
+def _ratio(numerator, denominator):
+    numerator = pd.to_numeric(numerator, errors="coerce")
+    denominator = pd.to_numeric(denominator, errors="coerce")
+    return (numerator / denominator).where(denominator > 0)
+
+
+def derive_columns(table):
+    """Add DERIVED_COLUMNS from a row's own means (ratio of means, like drop_over_attributed_topk)."""
+    table = table.copy()
+    table["drop_random_over_attributed_random"] = _ratio(table["mean_drop_random"], table["mean_attributed_random"])
+    table["drop_minus_random_flagged"] = (
+        pd.to_numeric(table["mean_drop_topk_flagged"], errors="coerce")
+        - pd.to_numeric(table["mean_drop_random_flagged"], errors="coerce")
+    )
+    return table
+
+
+def write_table(payloads, path=None, results_dir=None, replace=False):
+    """Merge rows into the cross-technique table and recompute Holm per family.
+
+    replace=True ignores any existing table (used by --rebuild-table, which
+    passes every committed payload).
+    """
     for payload in payloads:
         check_text_free(payload)
+        missing = [c for row in payload["rows"] for c in ROW_COLUMNS if c not in row]
+        if missing:
+            raise FaithfulnessError(f"{payload.get('technique')}: rows lack {sorted(set(missing))}")
+        if any(row["technique"] != payload.get("technique") for row in payload["rows"]):
+            raise FaithfulnessError(f"{payload.get('technique')}: a row names another technique")
     path = Path(RQ2_FAITHFULNESS_CSV if path is None else path)
     new = pd.DataFrame([row for p in payloads for row in p["rows"]])[list(ROW_COLUMNS)]
-    if path.exists():
+    if path.exists() and not replace:
         existing = pd.read_csv(path)
         if list(existing.columns) != list(TABLE_COLUMNS):
             raise FaithfulnessError(f"{path.name}: columns differ from this version of the tool; rerun every technique")
@@ -572,12 +604,31 @@ def write_table(payloads, path=None, results_dir=None):
     new = new.sort_values(["population", "technique", "k"]).reset_index(drop=True)
     owner = new["technique"].map(lambda t: "" if in_comparison(t, results_dir) else t)
     family = owner + "|" + new["population"].astype(str)
+    new = derive_columns(new)
     new["wilcoxon_p_holm"] = np.nan
     for _, index in new.groupby(family, sort=False).groups.items():
         new.loc[index, "wilcoxon_p_holm"] = _holm_column(new.loc[index, "wilcoxon_p"])
     path.parent.mkdir(parents=True, exist_ok=True)
     new[list(TABLE_COLUMNS)].to_csv(path, index=False, float_format=f"%.{SIG_DIGITS}g")
     return path
+
+
+def rebuild_table(results_dir=None, path=None):
+    """Rewrite the table from every committed faithfulness JSON; no model is loaded."""
+    base = RESULTS_DIR if results_dir is None else Path(results_dir)
+    payloads = []
+    for json_path in sorted(base.glob(f"*/{FAITHFULNESS_FILENAME.format(split=SPLIT)}")):
+        with open(json_path) as handle:
+            payload = json.load(handle)
+        if payload.get("technique") != json_path.parent.name:
+            raise FaithfulnessError(f"{json_path.parent.name}: its {json_path.name} names "
+                                    f"technique {payload.get('technique')!r}")
+        if payload.get("split") != SPLIT:
+            raise FaithfulnessError(f"{json_path.parent.name}: {json_path.name} has split {payload.get('split')!r}")
+        payloads.append(payload)
+    if not payloads:
+        raise FaithfulnessError(f"no {FAITHFULNESS_FILENAME.format(split=SPLIT)} under {base}")
+    return write_table(payloads, path, results_dir, replace=True), len(payloads)
 
 
 # ---------------------------------------------------------------------------
@@ -611,12 +662,26 @@ def run(techniques, processed, args, external_root=EXTERNAL_ROOT):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--technique", action="append", required=True,
+    parser.add_argument("--technique", action="append",
                         help="repeatable; run one model at a time on a small machine")
+    parser.add_argument("--rebuild-table", action="store_true",
+                        help="rewrite the cross-technique table from the committed JSONs; loads no model")
     parser.add_argument("--device", default="auto")
     parser.add_argument("--sequential-checkpoints", action="store_true",
                         help="load pooled-ensemble checkpoints one at a time (resident=False)")
     args = parser.parse_args(argv)
+    if args.rebuild_table:
+        if args.technique:
+            parser.error("--rebuild-table takes no --technique")
+        try:
+            table, n = rebuild_table()
+        except FaithfulnessError as error:
+            print(f"ERROR: {error}; nothing was written", file=sys.stderr)
+            return 1
+        print(f"rebuilt {table} from {n} technique JSON(s)")
+        return 0
+    if not args.technique:
+        parser.error("--technique is required unless --rebuild-table is given")
 
     from split_protocol import build_processed_dataset
 
