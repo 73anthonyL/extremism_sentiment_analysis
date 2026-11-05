@@ -1,0 +1,59 @@
+"""rq2_lexicon_coverage.csv: counts per category, and refusal when stale."""
+
+import pandas as pd
+import pytest
+
+from categorize_attributions import (
+    COVERAGE_COLUMNS,
+    check_coverage,
+    lexicon_coverage,
+    write_coverage,
+)
+from lexicons import load_lexicons
+from repo_paths import RQ2_LEXICON_COVERAGE_CSV
+
+LEXICONS = {
+    "slur": [],
+    "extremist_framing": ["jihad", "white genocide", "great replacement"],
+    "identity_term": ["muslims", "refugees"],
+}
+
+
+def test_counts_single_and_multi_word_entries():
+    table = lexicon_coverage(LEXICONS).set_index("category")
+    assert list(table.reset_index().columns) == list(COVERAGE_COLUMNS)
+    assert table.loc["extremist_framing", "n_entries"] == 3
+    assert table.loc["extremist_framing", "n_single_word"] == 1
+    assert table.loc["extremist_framing", "n_multi_word_unmatchable"] == 2
+    assert table.loc["identity_term", "n_multi_word_unmatchable"] == 0
+    assert table.loc["slur", "n_entries"] == 0
+
+
+def test_round_trip_passes(tmp_path):
+    path = write_coverage(LEXICONS, tmp_path / "coverage.csv")
+    assert check_coverage(LEXICONS, path) == path
+
+
+def test_stale_table_after_lexicon_change_is_refused(tmp_path):
+    path = write_coverage(LEXICONS, tmp_path / "coverage.csv")
+    changed = dict(LEXICONS, identity_term=LEXICONS["identity_term"] + ["asylum seekers"])
+    with pytest.raises(ValueError, match="does not match"):
+        check_coverage(changed, path)
+
+
+def test_hand_edited_count_is_refused(tmp_path):
+    path = write_coverage(LEXICONS, tmp_path / "coverage.csv")
+    table = pd.read_csv(path)
+    table.loc[table.category == "extremist_framing", "n_multi_word_unmatchable"] = 0
+    table.to_csv(path, index=False)
+    with pytest.raises(ValueError, match="does not match"):
+        check_coverage(LEXICONS, path)
+
+
+def test_missing_table_is_refused(tmp_path):
+    with pytest.raises(ValueError, match="missing"):
+        check_coverage(LEXICONS, tmp_path / "absent.csv")
+
+
+def test_committed_table_matches_committed_lexicons():
+    assert check_coverage(load_lexicons(), RQ2_LEXICON_COVERAGE_CSV)
