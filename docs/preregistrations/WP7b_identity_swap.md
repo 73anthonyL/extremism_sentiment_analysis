@@ -178,3 +178,23 @@ restored predictors: `rq4_identity_swap.csv` and
 `rq4_identity_swap_directions.csv` are byte-identical to the first run, and
 each `identity_swap_test.json` differs only in `swap_map_sha256` and in
 listing `aliens` among `excluded_entries`. No WP7b result changed.
+
+## Amendment 2 (2026-11-05): `aliens` dropped, map restored
+
+Author decision of 2026-11-05 (decision 2 in `docs/DECISIONS_NEEDED.md`):
+`aliens` is removed from the identity lexicon again. It had been taken from
+06's own test top-50 list of lexicon gaps, so the addition was derived from
+test-split attributions; in every dataset post that contains it, it appears
+in the loaded phrase "illegal aliens" rather than as a neutral group
+reference; and it alone moved 06's RQ4 Fisher p below 0.05.
+
+The excluded `aliens` row added by Amendment 1 is therefore removed, and
+`data/lexicons/identity_swap_pairs.csv` is byte-identical to the
+preregistered map again (sha256
+`1e94dd70e48e511d0530592a95044f4e15bb74235853ec04c2356cb32dab406f`); the 21
+excluded entries are those of the preregistration. The slur lexicon from the
+WP3 freeze stays. `identity_swap.py --all --dry-run-population` gives the
+preregistered population, 68 test posts (23 non-extremist, 45 extremist), for
+every technique. Amendment 1 and its re-run are kept above and in git history
+(commit `7b6308ac`); the results of the re-run on the restored map are stated
+below.
