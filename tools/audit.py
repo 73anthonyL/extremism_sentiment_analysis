@@ -320,7 +320,8 @@ def _tool(script, *args):
     if completed.returncode != 0:
         tail = "\n".join(output.splitlines()[-15:])
         raise StageFailed(f"{script} {' '.join(args)} exited {completed.returncode}\n{tail}")
-    lines = output.splitlines()
+    # The tool's own last line, not a library warning on stderr.
+    lines = completed.stdout.strip().splitlines() or output.splitlines()
     return lines[-1] if lines else "ok"
 
 
