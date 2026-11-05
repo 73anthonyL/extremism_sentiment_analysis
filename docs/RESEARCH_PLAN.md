@@ -250,6 +250,15 @@ Other facts that shape the order of work:
   differences are descriptive. The test shows that SHAP finds the words the
   models need, not that the models are right to need them
   (`rq2_faithfulness.csv`).
+  On the validation split's whole-model run
+  (`rq2_faithfulness_validation.csv`; 195 to 200 shared posts, every
+  predictor verified against its validation artifact at the locked
+  threshold, Holm over the 32 shared validation rows) the result replicates:
+  all eight techniques lose more probability with their top-k words than
+  with random words at every k (Holm p <= 2.6e-25), and for 07 and 11 the
+  margin again sits in the flagged posts (flagged margin about twice the
+  all-post margin; median paired difference 0.002 to 0.055). Validation is
+  not the test split, so this spends nothing of the test budget.
 * **RQ4 and WP7 are robust to ambiguous identity words, except for 07's
   significance** (2026-11-04). `tools/identity_sensitivity.py` sets aside 13
   ambiguous lexicon entries (white, black, man, men, boy, boys, girl, girls,
