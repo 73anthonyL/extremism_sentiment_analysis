@@ -94,14 +94,15 @@ Each item cites the artifact that shows it.
    fits the post-level, text-only limitation.
 3. **Identity terms are hard to separate from what surrounds them.** Every technique has a higher FPR on
    benign posts that mention a community (`rq4_identity_fpr.csv`: point
-   estimates 1.9 to 4.2, Fisher p < 0.05 unadjusted for 04, 05 and 11 only).
-   Setting aside 13 ambiguous identity words keeps every ratio above 1 (1.6
-   to 5.0), and the same three stay below p 0.05
+   estimates 1.9 to 4.2, Fisher p < 0.05 unadjusted for 04, 05, 06 and 11,
+   06 at the boundary at 0.049). Setting aside 13 ambiguous identity words
+   keeps every ratio above 1 (1.6 to 4.9), and 04, 05 and 11 stay below p
+   0.05
    (`rq4_identity_fpr_sensitivity.csv`). In the counterfactual test (WP7),
    removing the term lowers p(extremist) on those posts for 7 of 8
    techniques. The same edit also unflags extremist posts. That loss is
-   Holm-significant for 07 and 11 on all 83 posts, and for 11 alone on the
-   59 posts that keep an unambiguous match. There, 07 loses the same share
+   Holm-significant for 07 and 11 on all 84 posts, and for 11 alone on the
+   60 posts that keep an unambiguous match. There, 07 loses the same share
    of flagged posts (about 21%), with too few discordant pairs to reach
    significance (`rq4_identity_counterfactual_sensitivity.csv`). Under the
    stricter substitution control (a neutral group noun in place of the
@@ -113,12 +114,12 @@ Each item cites the artifact that shows it.
    noun rather than the identity term specifically.
    The false-positive flips (5 to 11 posts per model) are descriptive.
    At the point estimates, the identity-share ranking of the eight
-   techniques follows their FPR-ratio ranking (Spearman 0.83, n = 8),
+   techniques follows their FPR-ratio ranking (Spearman 0.87, n = 8),
    through low FPR on posts without identity terms rather than more
    identity-term false positives (`rq2_rq4_relation.csv`). That ranking is
    unstable under resampling, mainly through the FPR ratios, each of which
    rests on 4 to 18 false positives: resampling posts and test rows gives a
-   replicate median of about 0.48, positive in about 90% of replicates
+   replicate median of about 0.50, positive in about 91% of replicates
    (`rq2_rq4_bootstrap_relation.csv`). It is not evidence that reliance on
    identity terms and identity-term false positives go together.
 4. **Transformer explanations are faithful on the posts they flag but unstable across
@@ -138,7 +139,8 @@ Each item cites the artifact that shows it.
    dependent attributions rather than noisier ones. Per-word claims about
    transformers are fragile, and the paper says so.
 5. **Lexicons do not cover the vocabulary.** The "topical" category absorbs
-   80 to 100 percent of positive mass while the slur list is empty (WP3), so
+   about 80 to 100 percent of positive mass even with the lexicons frozen at
+   WP3 (HurtLex slurs reach at most one word per top-50 list), so
    category-level claims depend on curation choices.
 6. **Context matters.** Quotation, reporting and counter-speech use the same
    words as extremist posts, which no word-level method separates.

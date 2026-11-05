@@ -163,20 +163,21 @@ Techniques in the controlled comparison and what each one has today.
 
 | Technique | Result folder | Probability artifact | Attribution run | Coefficients | RQ2 | RQ3 | RQ4 |
 |---|---|---|---|---|---|---|---|
-| `01_LOG-REG_TF-IDF` | yes, derived | yes | 2 whole-model | yes, check PASS | no | no | **yes** |
-| `02_LIN-SVM_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `03_SLP_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `04_CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `05_WORD-CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `06_FASTTEXT-EMB_LOG-REG` | yes, derived | yes | 2 whole-model | yes, check FAIL (calibration point) | no | no | **yes** |
-| `07_TWITTER-ROBERTA_FINE-TUNE` | yes, derived | yes | 2 whole-model | n/a | no | no | **yes** |
-| `11_MULTI-CHECKPOINT_LOGIT-POOL` | yes, derived | yes | 2 whole-model + 4 member (test) | n/a | no | no | **yes** |
+| `01_LOG-REG_TF-IDF` | yes, derived | yes | 2 whole-model | yes, check PASS | **yes** | **yes** | **yes** |
+| `02_LIN-SVM_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `03_SLP_TF-IDF` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `04_CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `05_WORD-CHAR-TF-IDF_LIN-SVM` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `06_FASTTEXT-EMB_LOG-REG` | yes, derived | yes | 2 whole-model | yes, check FAIL (calibration point) | **yes** | **yes** | **yes** |
+| `07_TWITTER-ROBERTA_FINE-TUNE` | yes, derived | yes | 2 whole-model | n/a | **yes** | **yes** | **yes** |
+| `11_MULTI-CHECKPOINT_LOGIT-POOL` | yes, derived | yes | 2 whole-model + 4 member (test) | n/a | **yes** | **yes** | **yes** |
 
 Every result folder is now derived from a committed probability artifact
 (`provenance: derived_from_probs`, `recomputable: true`), from the Kaggle
 reruns of 2026-10-08. The notebook 00 rerun reproduced the frozen split and
-the committed mirror is byte-identical. RQ2 and RQ3 stay "no" until the
-lexicons are frozen (WP3) and the categorisation tools are run (WP5).
+the committed mirror is byte-identical. RQ2 and RQ3 are "yes" since the
+WP3 lexicon freeze (2026-11-04) and the re-run of the categorisation tools;
+RQ3's pretraining-lineage contrast still waits for notebook 12.
 
 Other facts that shape the order of work:
 
@@ -208,20 +209,21 @@ Other facts that shape the order of work:
   of only 0.02 to 0.04, and its difference from 04 spans -0.10 to 0.14. The
   comparison stays descriptive.
 * **The identity counterfactual exists** (WP7, 2026-11-04).
-  `tools/identity_counterfactual.py` re-scores the 150 test posts that
-  contain an identity-lexicon match (67 non-extremist, 83 extremist) with
+  `tools/identity_counterfactual.py` re-scores the 152 test posts that
+  contain an identity-lexicon match (68 non-extremist, 84 extremist; 150,
+  67 and 83 before the WP3 freeze added `aliens`) with
   the matches removed, using each technique's restored predictor at its
   locked threshold. On the original texts every restored predictor matches
-  its committed test probabilities to within 0.0016. On the 67
+  its committed test probabilities to within 0.0016. On the 68
   non-extremist posts, removal lowers p(extremist) for 7 of 8 techniques
-  (Holm-adjusted Wilcoxon p <= 0.0014). 03_SLP_TF-IDF shows no detectable
-  shift (mean delta +0.001, Wilcoxon p = 0.48), which is not evidence that
-  the effect is absent. For 07 and 11 the mean shift is 0.099 and 0.095 but
+  (Holm-adjusted Wilcoxon p <= 8.1e-4). 03_SLP_TF-IDF shows no detectable
+  shift (mean delta +0.002, Wilcoxon p = 0.30), which is not evidence that
+  the effect is absent. For 07 and 11 the mean shift is 0.097 and 0.093 but
   the median is 0.001 and 0.003, so the shift sits in a minority of posts.
   Removal clears 7 of 9 original false positives for 07 and 7 of 8 for 11,
   against 0 to 5 of 5 to 11 for the classical techniques. These counts are
   small, no false-positive flip test survives Holm over the 32 rows
-  (smallest 0.33), and they are descriptive, not a ranking. On the 83
+  (smallest 0.33), and they are descriptive, not a ranking. On the 84
   extremist posts the same edit unflags 15 of 71 flagged posts for 07 and
   22 of 74 for 11 (Holm-adjusted McNemar p = 0.016 and 1.5e-5); no
   classical drop survives Holm. Removal therefore trades false positives for
@@ -230,7 +232,7 @@ Other facts that shape the order of work:
   or 11, so the classical models weight the identity term itself as
   evidence of extremism, while the transformers' removal effect may partly
   reflect deleting a noun rather than the term specifically. The
-  per-model counts, the panel and the limits are under WP7. On the 59
+  per-model counts, the panel and the limits are under WP7. On the 60
   extremist posts that keep an unambiguous identity match, only the 11 drop
   stays Holm-significant (see the sensitivity bullet below).
 * **The SHAP attributions pass a deletion test** (2026-11-04).
@@ -255,11 +257,11 @@ Other facts that shape the order of work:
   ambiguous lexicon entries (white, black, man, men, boy, boys, girl, girls,
   english, native, trans, asylum, indian); the lexicon is unchanged.
   Excluding the 14 non-extremist and 24 extremist test posts whose only
-  matches are those words, every FPR ratio stays above 1 (1.61 to 5.02, 53
-  identity-term negatives). The same three techniques have Fisher p < 0.05
-  (04 0.031, 05 0.017, 11 0.0056). 03 falls to 1.61 (p = 0.49) and 06 to
-  1.83 (p = 0.33); at this n that is not evidence that the effect is absent.
-  On the 59 extremist posts that keep an unambiguous match, removal unflags
+  matches are those words, every FPR ratio stays above 1 (1.57 to 4.91, 54
+  identity-term negatives). Three techniques have Fisher p < 0.05 (04
+  0.032, 05 0.019, 11 0.0062); 06, at p = 0.049 on the full lexicon, is not
+  (2.36, p = 0.10), and 03 falls to 1.57 (p = 0.49); at this n that is not
+  evidence that the effect is absent. On the 60 extremist posts that keep an unambiguous match, removal unflags
   15 of 51 flagged posts for 11 (Holm p = 0.002 over 32 rows) and 10 of 48
   for 07 (raw p = 0.012, Holm p = 0.33). 07's rate, about 21%, equals its
   full-population rate (15 of 71); with fewer discordant pairs the test
@@ -269,24 +271,26 @@ Other facts that shape the order of work:
   recall loss is Holm-significant under every family tried. No non-extremist
   flip survives Holm (`rq4_identity_fpr_sensitivity.csv`,
   `rq4_identity_counterfactual_sensitivity.csv`).
-* **The RQ2-to-RQ4 relation is computed** (WP5, 2026-11-04; provisional until WP3
-  freezes the lexicons). `tools/rq2_rq4_relation.py` ranks the eight
+* **The RQ2-to-RQ4 relation is computed** (WP5, 2026-11-04; re-run on the
+  frozen WP3 lexicons). `tools/rq2_rq4_relation.py` ranks the eight
   techniques by test identity-term share of positive mass and by RQ4 FPR
-  ratio: Spearman 0.83 (exact permutation p = 0.017; |rho| >= 0.73 is needed
-  for p <= 0.05; leave-one-out 0.74 to 0.95). Under section 5 this is
+  ratio: Spearman 0.87 (exact permutation p = 0.008; |rho| >= 0.73 is needed
+  for p <= 0.05; leave-one-out 0.81 to 0.95; 0.83 and p = 0.017 before the
+  freeze). Under section 5 this is
   descriptive at n = 8. It does not show that identity reliance goes with
   identity-term false positives. Identity share against FPR on identity-term
-  negatives is -0.22, and the ratio ordering follows low FPR on the other
-  negatives (05: 4 of 213, 11: 6 of 213). The WP7 removal shift shows no
-  relation to the ratio (rho 0.06). Among the six classical techniques the
-  correlation is 0.60 (p = 0.24). The ranking is unstable under resampling.
+  negatives is -0.23, and the ratio ordering follows low FPR on the other
+  negatives (05: 4 of 212, 11: 6 of 212; share against that FPR -0.54). The
+  WP7 removal shift shows no clear relation to the ratio (rho 0.16). Among
+  the six classical techniques the correlation is 0.71 (p = 0.14). The
+  ranking is unstable under resampling.
   Resampling explained posts for the shares and test rows for the FPR ratios
   (`rq2_rq4_bootstrap_relation.csv`, 2000 replicates) gives a replicate
-  median of 0.48 against the point 0.83; rho is positive in about 90% of
-  replicates and below the point in 94%, with replicates spread from -0.29
-  to 0.89. The instability comes mainly from the FPR ratios: resampling test
-  rows alone gives a median of 0.43, posts alone 0.80. Each ratio rests on 4
-  to 18 false positives, and only 04 [1.06, 6.37] and 11 [1.40, 16.1] keep
+  median of 0.50 against the point 0.87; rho is positive in about 91% of
+  replicates and below the point in 95%, with replicates spread from -0.26
+  to 0.90. The instability comes mainly from the FPR ratios: resampling test
+  rows alone gives a median of 0.53, posts alone 0.83. Each ratio rests on 4
+  to 18 false positives, and only 04 [1.04, 6.19] and 11 [1.36, 15.5] keep
   their ratio above 1 across 95% of replicates. Resampling noisy ratios also
   pulls a rank correlation toward zero, so these figures describe how
   fragile the ordering is, not a confidence interval for rho. The relation
@@ -381,9 +385,12 @@ Other facts that shape the order of work:
   significant only if all eight new pairs are themselves Holm-significant
   (with equal raw p, below about 0.0017). Otherwise it rises to at most
   0.067 and the significant count falls from 7 to 6.
-* **The slur lexicon is empty** (`data/lexicons/slurs.txt`). Until it is
-  populated, every slur is counted as topical or as extremist framing, which
-  biases RQ2 and hides the slur-versus-identity distinction RQ3 turns on.
+* **The lexicons are frozen** (WP3, 2026-11-04). `data/lexicons/slurs.txt`
+  holds 58 HurtLex entries (ethnic and sexual-orientation slurs,
+  conservative level); `aliens` joined the identity list. Every test top-50
+  list except 03's now holds one slur (the same racial slur, two explained
+  posts), at most 0.026 of positive mass, so the slur-versus-identity
+  distinction is measurable but thin.
 * **`tools/scan_text_leakage.py` passes.** The outputs that contained dataset
   text, hashes and row ids were cleared by priming, and the scanner now also
   checks notebook outputs and result files for row ids.
@@ -496,6 +503,17 @@ committed.
 from `categorize_attributions.py` shows no identity-versus-slur collisions,
 and the lists are frozen.
 
+*Status: done 2026-11-04.* Slurs: HurtLex EN 1.2, conservative level,
+categories `ps` and `om`, 58 entries after removing generic insults,
+everyday-sense words, neutral references and non-lemmas (CC BY-NC-SA 4.0;
+source, licence and the removed words in `data/lexicons/README.md` and the
+header of `slurs.txt`). Identity list: `aliens` added (97 entries), the 13
+ambiguous entries kept. Framing list reviewed and unchanged; no entry is
+shared between any two lists. Version note with sha256 in
+`data/lexicons/README.md`. The WP7b swap map gained an excluded row for
+`aliens` (Amendment 1 of its preregistration; population unchanged). RQ2,
+RQ3, RQ4, WP7, WP7b, the relation and the bootstrap were re-run.
+
 ### WP4. Attribution runs for RQ2 and RQ3 (Kaggle)
 
 The primed notebooks export every attribution run in the same Kaggle run
@@ -594,6 +612,11 @@ no loader, as closed lines.
 appears in `report.html` for every curated text.
 
 ### WP7. Identity counterfactual test (local). Closed 2026-11-04.
+
+(The counts in this section are from the first run, before the WP3 freeze
+added `aliens`; the re-run on 152 posts, 68 non-extremist and 84
+extremist, keeps every significance and direction, see section 3 and
+`docs/paper/RESULTS_DRAFT.md` section 8.2.)
 
 `tools/identity_counterfactual.py` takes the 150 test posts with at least one
 identity-lexicon match (67 non-extremist, 83 extremist). It edits them and
@@ -816,7 +839,7 @@ reported.
 **Identity false positives (RQ4).** The Fisher exact test on the 2x2 table
 (identity term present or absent, false positive or true negative) is
 reported with the FPR ratio and the count of negatives with identity terms.
-With 67 such posts in the test split, only large ratios are detectable; a
+With 68 such posts in the test split, only large ratios are detectable; a
 non-significant result is reported as such, not as absence of effect. The
 RQ2-to-RQ4 relation is reported as a rank correlation over techniques with
 n stated; with eight or nine points it is descriptive.
