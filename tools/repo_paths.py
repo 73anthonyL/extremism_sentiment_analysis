@@ -154,3 +154,10 @@ def outside_comparison_technique_dirs(results_dir=None):
     """Technique folders with `"in_comparison": false` (an audited classifier
     that must not move the paper's numbers)."""
     return [d for d in technique_dirs(results_dir) if not in_comparison(d.name, results_dir)]
+
+# Sensitivity of RQ4 / WP7 to ambiguous identity terms, and identity-lexicon
+# gap candidates for WP3; written by tools/identity_sensitivity.py.
+RQ4_IDENTITY_FPR_SENSITIVITY_CSV = RQ_DIR / "rq4_identity_fpr_sensitivity.csv"
+RQ4_IDENTITY_COUNTERFACTUAL_SENSITIVITY_CSV = RQ_DIR / "rq4_identity_counterfactual_sensitivity.csv"
+RQ2_IDENTITY_LEXICON_GAPS_SENSITIVITY_CSV = RQ_DIR / "rq2_identity_lexicon_gaps_sensitivity.csv"
+RQ2_IDENTITY_TOP_K_SENSITIVITY_CSV = RQ_DIR / "rq2_identity_top_k_sensitivity.csv"
