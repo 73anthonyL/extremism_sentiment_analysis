@@ -166,6 +166,9 @@ context (6).
   2026-11-04: `tools/audit.py` and `docs/FRAMEWORK.md`.
 * **WP9. Layer-wise probes on the transformer members (Kaggle GPU).**
   Approved 2026-11-04: the notebook is written locally and run on Kaggle.
+  Preregistered and written 2026-11-05
+  (`docs/preregistrations/WP9_layer_probes.md`,
+  `notebooks/13_TRANSFORMER-LAYER-PROBES.ipynb`); waiting for the Kaggle run.
 * **WP10. Zero-shot LLM comparison with self-explanation.** Approved
   2026-11-04 with an open-weight model on a Kaggle GPU; no dataset text is
   sent to a hosted API. Preregistered in

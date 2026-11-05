@@ -56,7 +56,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-KIT_VERSION = "1.0.0"
+KIT_VERSION = "1.0.1"
 
 # ---------------------------------------------------------------------------
 # Frozen protocol constants (identical to tools/repo_paths.py; pinned by test)
@@ -79,7 +79,14 @@ EXPECTED_SPLIT_COUNTS = {
 }
 SPLIT_NAMES = ("train", "validation", "test")
 
-ROLES = ("foundation", "classical", "transformer", "ensemble")
+# "probe" is the layer-probe analysis of frozen transformers (WP9): it fits no
+# post classifier, selects no threshold, and writes cross-model tables to
+# results_summary/rq/ instead of a technique result folder.
+ROLES = ("foundation", "classical", "transformer", "ensemble", "probe")
+PROBE_ROLE = "probe"
+# The probe role writes its tables to results_summary/rq/; its own helpers,
+# contracts and exports live in tools/probe_kit.py, not here.
+PROBE_RESULTS_SUBDIR = "rq"
 FOUNDATION_TECHNIQUE = "00_create_dataset_and_splits"
 TECHNIQUE_RE = re.compile(r"^\d{2}_[A-Z0-9-]+(_[A-Z0-9-]+)*$")
 CLAIM_TOKENS = ("BEST", "FINAL", "WINNER", "CHAMPION")
@@ -212,6 +219,9 @@ EXTERNAL_KINDS = {
     "probs_members": ("other", False),
     "auxiliary": ("other", False),
     "plots": ("other", False),
+    # Per-post hidden states (probe role). Not text, but derived from it and
+    # per post, so they are flagged as text-bearing to keep them out of the repo.
+    "hidden_states": ("other", True),
 }
 EXTERNAL_ASSETS_FILENAME = "external_assets.json"
 
@@ -392,7 +402,11 @@ def validate_config(config):
             "cell may show dataset text"
         )
 
-    if role != "foundation":
+    if role == PROBE_ROLE:
+        # tools/probe_kit.py::validate_probe_config checks the probe blocks.
+        if config.get("error_analysis", {}).get("include_text_preview") is not False:
+            raise ConfigError("CONFIG['error_analysis']['include_text_preview'] must be False")
+    elif role != "foundation":
         missing = [k for k in REQUIRED_MODEL_CONFIG_KEYS if k not in config]
         if missing:
             raise ConfigError(f"CONFIG is missing required keys {missing}")
@@ -460,7 +474,12 @@ def bootstrap(config, working_root=None, input_roots=None):
         input_roots = (kaggle_input,) if kaggle_input.exists() else (Path.cwd(),)
     input_roots = tuple(Path(p) for p in input_roots)
 
-    results_name = "foundation" if role == "foundation" else technique
+    if role == "foundation":
+        results_name = "foundation"
+    elif role == PROBE_ROLE:
+        results_name = PROBE_RESULTS_SUBDIR
+    else:
+        results_name = technique
     ctx = RunContext(
         technique=technique,
         run_id=f"{technique}_{_now_utc().strftime('%Y%m%dT%H%M%SZ')}",
@@ -476,11 +495,13 @@ def bootstrap(config, working_root=None, input_roots=None):
     ctx.results_dir.mkdir(parents=True, exist_ok=True)
     if role == "foundation":
         ctx.foundation_dir.mkdir(parents=True, exist_ok=True)
+    elif role == PROBE_ROLE:
+        ctx.external_dir.mkdir(parents=True, exist_ok=True)
     else:
         ctx.probs_dir.mkdir(parents=True, exist_ok=True)
         ctx.external_dir.mkdir(parents=True, exist_ok=True)
 
-    if role != "foundation" and importlib.util.find_spec("shap") is None:
+    if role not in ("foundation", PROBE_ROLE) and importlib.util.find_spec("shap") is None:
         raise KitError(
             "the shap package is not installed in this kernel. Every model notebook ends "
             "with SHAP attribution runs, so this is checked before any training starts. "
@@ -1744,6 +1765,8 @@ def finalize(ctx, zip_external=False):
     """
     if ctx.role == "foundation":
         committed_roots = [(ctx.results_dir, TEXT_BEARING_COLUMNS)]
+    elif ctx.role == PROBE_ROLE:
+        committed_roots = [(ctx.results_dir, TEXT_BEARING_COLUMNS + ROW_IDENTITY_COLUMNS)]
     else:
         committed_roots = [
             (ctx.results_dir, TEXT_BEARING_COLUMNS + ROW_IDENTITY_COLUMNS),
@@ -1788,7 +1811,7 @@ def finalize(ctx, zip_external=False):
         mirror = ctx.working_root / "splits" / "split_assignments.csv"
         if mirror.exists():
             members.append(mirror)
-    else:
+    elif ctx.role != PROBE_ROLE:
         members.extend(sorted(ctx.probs_dir.glob(f"{ctx.technique}__*")))
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in members:

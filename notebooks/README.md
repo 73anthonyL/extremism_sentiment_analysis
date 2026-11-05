@@ -39,6 +39,15 @@ artifact, two whole-model attribution runs, and a result folder.
 | `12_ROBERTA-BASE_FINE-TUNE.ipynb` | Fine-tuned `roberta-base`, with notebook 07's recipe unchanged except the base checkpoint. | The no-domain-pretraining control for 07 (RQ3). Primed, not yet run. |
 | `11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb` | Mean log-odds pool over heterogeneous fine-tuned checkpoints, three seeds each. | The ensemble. Its per-component attribution runs are how pretraining lineages are compared (RQ3). |
 
+### Analysis of frozen models
+
+Not a technique in the comparison: it trains no post classifier, selects no
+threshold and writes no probability artifact. Its role is `probe`.
+
+| Notebook | Analysis | Role in the research questions |
+|---|---|---|
+| `13_TRANSFORMER-LAYER-PROBES.ipynb` | WP9, preregistered in `docs/preregistrations/WP9_layer_probes.md`. Linear probes on the mean-pooled states of every layer of 07, the 12 runs of 11's admitted pool and their pretrained checkpoints, for the label, identity-term presence and a word-type control; fine-tuned-minus-base contrasts and selectivity with paired bootstrap intervals; a final-layer identity-direction ablation. Primed, not yet run. | RQ3 (where the label becomes decodable, and what fine-tuning adds over pretraining) and RQ4 (whether the identity direction carries label signal). Writes `results_summary/rq/rq3_layer_probes*.csv`, `rq3_layer_probe_contrasts.csv`, `rq4_identity_direction_ablation.csv` and a run record; checked with `tools/layer_probes_report.py`. |
+
 ### Outside the comparison
 
 Audited like any new classifier (`docs/FRAMEWORK.md`): the same two-artifact
@@ -92,10 +101,21 @@ Notebook 00 has seven sections: Bootstrap, Configuration, Load raw dataset,
 Build processed dataset, Create and verify the split, Foundation summaries,
 Package outputs.
 
+The probe notebook (13) has eleven: Bootstrap (the kit cell, then the
+canonical block that loads `tools/probe_kit.py` as `pk`), Configuration
+(`pk.validate_probe_config`, then `nk.bootstrap`), Load foundation and
+assert the frozen split, Probe targets, Models and representations,
+Representations on train and validation, Probe fit on train, Single test
+evaluation (opened once by `pk.begin_test_evaluation`; the probe kit
+refuses test rows before it), Probe tables (`pk.export_probe_tables`, once),
+Interpretation, Package outputs. The checker refuses a test reference, or
+the string `"test"`, before section 8, and any threshold selection, SHAP run
+or probability export.
+
 Print the section list and the canonical bootstrap cell for a role with:
 
 ```bash
-python3 tools/check_notebook.py --print-template classical   # or transformer, ensemble, foundation
+python3 tools/check_notebook.py --print-template classical   # or transformer, ensemble, foundation, probe
 ```
 
 ## Conventions
@@ -208,8 +228,8 @@ is superseded, so result folders, artifacts, and the records in
 09  multi-checkpoint stacking                   (closed line, superseded by 11)
 10  logit-pooled seed ensemble                  (closed line)
 11  heterogeneous multi-checkpoint logit pool
-12  plain roberta-base control for 07
-13  reserved for the WP9 layer-wise probe notebook
+12  fine-tuned roberta-base (no-domain-pretraining control for 07)
+13  layer-wise probes on the transformers     (analysis, role probe)
 14  zero-shot LLM with self-explanation         (outside the comparison)
 ```
 
