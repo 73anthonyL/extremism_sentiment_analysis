@@ -14,6 +14,33 @@ Remaining author actions: run notebook 12, the WP9 probe notebook and the
 WP10 open-weight LLM notebook on Kaggle; upload external assets before
 submission.
 
+## 2026-11-05 — WP9 and WP10 notebooks written (primed, for Kaggle)
+
+Branches `notebooks/wp10-llm` and `notebooks/wp9-probes`, merged into
+`research/integration`. Both preregistrations were committed before the
+notebooks. Neither notebook has been run; the authors run them on Kaggle.
+
+* Notebook 14 (WP10): zero-shot `Qwen/Qwen3-4B-Instruct-2507` (Apache-2.0),
+  fallback `microsoft/Phi-4-mini-instruct` (MIT) under label-blind rules
+  only; P(extremist) from label-token log-probabilities; validation-only
+  threshold; SHAP at the 07/11 settings; self-explanation overlap and
+  deletion tests (one Holm family of 8). `in_comparison: false`. T4 only,
+  about 1.5-3.5 h for the SHAP runs.
+* Notebook 13 (WP9): linear probes on every layer of 07, the 12 runs of
+  11's members and their pretrained bases, for the label, identity-term
+  presence and a Hewitt-Liang control; identity-direction ablation on the
+  last layer against 10 random directions. Probe code lives in
+  `tools/probe_kit.py`; `notebook_kit.py` gained only a gated `probe` role.
+  About 2.5-4 h; needs the 07 and 11 weights uploaded to Kaggle first.
+
+Adversarial reviews found no blockers in either; they found ways a long
+run could be wasted (a fallback message that would have evaluated a second
+model on test, no early padding check, sklearn-version fragility, late
+reproduction checks, saturated-sigmoid AUC ties). All fixed and recorded as
+dated pre-run amendments.
+
+Checks: all pass (589 tests); check_claims OK.
+
 ## 2026-11-05 — Faithfulness replicates on the validation split
 
 Branch `research/faithfulness-validation`, merged into `research/integration`.
