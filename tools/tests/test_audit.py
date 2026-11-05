@@ -371,13 +371,156 @@ class TestRun:
     def test_counterfactual_needs_the_external_folder(self, tmp_path, make_probs, make_run, results_dir, monkeypatch):
         _contract_met("01_A", make_probs, make_run, results_dir)
         called = self._record_stages(monkeypatch)
-        ctx = audit.Context("01_A", with_counterfactual=True, results_dir=results_dir)
+        ctx = audit.Context("01_A", with_perturbation=True, results_dir=results_dir)
         ok, failed = audit.run_chain(ctx, tmp_path / "external")
         assert not ok and failed == "check-contract" and called == []
 
     def test_a_failing_tool_exit_is_a_stage_failure(self):
         with pytest.raises(audit.StageFailed, match="exited 1"):
             audit._tool("validate_results_folder.py", "--technique", "99_NO-SUCH-TECHNIQUE")
+
+    def test_new_stages_sit_after_their_inputs(self):
+        order = audit.STAGE_ORDER
+        assert order.index("identity_fpr") < order.index("identity_sensitivity_fpr")
+        assert order.index("categorize_attributions") < order.index("same_post_stability")
+        for stage in audit.PERTURBATION_STAGES:
+            assert order.index("same_post_stability") < order.index(stage) < order.index("rq2_rq4_relation")
+        # faithfulness writes into the technique folder, so the manifest refresh comes after it.
+        assert order.index("rq2_rq4_relation") < order.index("refresh_manifest") < order.index("render_tables")
+
+    def test_cli_flag_and_its_alias_set_the_same_option(self, monkeypatch):
+        seen = []
+        monkeypatch.setattr(audit, "run_chain", lambda ctx: (seen.append(ctx.with_perturbation), (True, None))[1])
+        for flag in ("--with-perturbation", "--with-counterfactual"):
+            assert audit.main(["run", "--technique", "01_A", flag]) == audit.EXIT_OK
+        assert audit.main(["run", "--technique", "01_A"]) == audit.EXIT_OK
+        assert seen == [True, True, False]
+
+
+def _no_tool(monkeypatch):
+    """Make any tool call fail the test: a skipped stage must not reach its tool."""
+    def refuse(script, *args):
+        raise AssertionError(f"{script} was called by a stage that should have skipped")
+    monkeypatch.setattr(audit, "_tool", refuse)
+
+
+class TestSkippedStages:
+    """A stage whose inputs are absent says SKIP and why; it never reports OK."""
+
+    @pytest.fixture
+    def two(self, tmp_path, make_probs, make_run, results_dir):
+        for i, technique in enumerate(TECHNIQUES):
+            make_probs(technique, seed=i + 1)
+            _lock_threshold(results_dir, technique)
+            make_run(technique, "shap-partition_test_seed30", WORDS, seed=i + 1, split="test")
+            make_run(technique, "shap-partition_validation_seed30", WORDS, seed=i + 11, split="validation")
+        external = tmp_path / "external"
+        return results_dir, external
+
+    @staticmethod
+    def _local(external, technique, split="test"):
+        path = external / technique / "attributions_local" / f"shap-partition_{split}_seed30.csv"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("row_id,position,token,attribution\n")
+        return path
+
+    @pytest.mark.parametrize("stage", audit.PERTURBATION_STAGES)
+    def test_perturbation_stages_skip_without_the_flag(self, two, monkeypatch, stage):
+        results_dir, external = two
+        _no_tool(monkeypatch)
+        result = getattr(audit, f"stage_{stage}")(audit.Context("01_A", results_dir=results_dir,
+                                                                external_dir=external))
+        assert isinstance(result, audit.Skip) and result.reason == audit.NOT_REQUESTED
+
+    def test_faithfulness_without_per_post_files_is_a_skip_naming_them(self, two, monkeypatch):
+        results_dir, external = two
+        _no_tool(monkeypatch)
+        self._local(external, "01_A")  # its own file is there; 02_B's, needed for the shared posts, is not
+        ctx = audit.Context("01_A", with_perturbation=True, results_dir=results_dir, external_dir=external)
+        result = audit.stage_faithfulness(ctx)
+        assert isinstance(result, audit.Skip)
+        assert "1 per-post attribution file(s) absent" in result.reason and "02_B" in result.reason
+        assert "rq2_faithfulness.csv is left as is" in result.reason
+
+    def test_faithfulness_runs_once_every_file_is_there(self, two, monkeypatch):
+        results_dir, external = two
+        for technique in TECHNIQUES:
+            self._local(external, technique)
+        calls = []
+        monkeypatch.setattr(audit, "_tool", lambda script, *args: calls.append((script, args)) or "ok")
+        ctx = audit.Context("01_A", with_perturbation=True, device="mps", sequential_checkpoints=True,
+                            results_dir=results_dir, external_dir=external)
+        assert audit.stage_faithfulness(ctx) == "ok"
+        assert calls == [("faithfulness.py", ("--technique", "01_A", "--device", "mps",
+                                              "--sequential-checkpoints"))]
+
+    def test_faithfulness_skips_a_run_it_cannot_read(self, two, make_run, make_probs, monkeypatch):
+        results_dir, external = two
+        _no_tool(monkeypatch)
+        make_probs("03_C", seed=5)
+        _lock_threshold(results_dir, "03_C")
+        make_run("03_C", "shap_other_name", WORDS, split="test")
+        ctx = audit.Context("03_C", with_perturbation=True, results_dir=results_dir, external_dir=external)
+        result = audit.stage_faithfulness(ctx)
+        assert isinstance(result, audit.Skip) and "shap-partition_test_seed30" in result.reason
+
+    def test_missing_per_post_files_are_recorded_as_skip_not_ok(self, two, monkeypatch, capsys):
+        """The whole chain: faithfulness requested, files absent, so SKIP is printed and listed."""
+        results_dir, external = two
+        for name in audit.STAGE_ORDER:
+            if name != "faithfulness":
+                monkeypatch.setattr(audit, f"stage_{name}", lambda ctx: "ok")
+        _no_tool(monkeypatch)
+        monkeypatch.setattr(audit, "_check_external",
+                            lambda t, e: audit.ContractItem("restorable predictor under external/", audit.OK, "x",
+                                                            required=False))
+        ctx = audit.Context("01_A", with_perturbation=True, results_dir=results_dir)
+        ok, failed = audit.run_chain(ctx, external)
+        out = capsys.readouterr().out
+        assert ok and failed is None
+        assert "SKIP  faithfulness: 2 per-post attribution file(s) absent" in out
+        assert "OK    faithfulness" not in out
+        assert [name for name, _ in ctx.skipped] == ["faithfulness"]
+        assert "1 stage(s) skipped: faithfulness" in out
+
+    def test_same_post_stability_skips_without_every_comparison_file(self, two, monkeypatch):
+        results_dir, external = two
+        _no_tool(monkeypatch)
+        for technique in TECHNIQUES:
+            self._local(external, technique, "test")
+        self._local(external, "01_A", "validation")
+        result = audit.stage_same_post_stability(audit.Context("01_A", results_dir=results_dir,
+                                                               external_dir=external))
+        assert isinstance(result, audit.Skip) and "02_B" in result.reason and "left as is" in result.reason
+
+    def test_same_post_stability_and_the_relation_skip_an_outside_technique(self, two, make_probs, make_run,
+                                                                           monkeypatch):
+        results_dir, external = two
+        _no_tool(monkeypatch)
+        _contract_met("98_TOY", make_probs, make_run, results_dir, seed=9)
+        _lock_threshold(results_dir, "98_TOY", in_comparison=False)
+        for technique in (*TECHNIQUES, "98_TOY"):
+            for split in ("test", "validation"):
+                self._local(external, technique, split)
+        ctx = audit.Context("98_TOY", results_dir=results_dir, external_dir=external)
+        for stage in (audit.stage_same_post_stability, audit.stage_rq2_rq4_relation):
+            result = stage(ctx)
+            assert isinstance(result, audit.Skip) and "outside the comparison" in result.reason
+
+    def test_relation_skips_while_an_input_lacks_a_comparison_technique(self, two, tmp_path, monkeypatch):
+        results_dir, _ = two
+        _no_tool(monkeypatch)
+        rq_dir = tmp_path / "rq"
+        rq_dir.mkdir()
+        monkeypatch.setattr(audit, "RQ_DIR", rq_dir)
+        pd.DataFrame({"technique": ["01_A"], "population": "non_extremist", "operation": "remove"}).to_csv(
+            rq_dir / "rq4_identity_counterfactual.csv", index=False)
+        pd.DataFrame({"technique": list(TECHNIQUES), "post_set": "common"}).to_csv(
+            rq_dir / "rq2_same_post_category_shares.csv", index=False)
+        result = audit.stage_rq2_rq4_relation(audit.Context("01_A", results_dir=results_dir))
+        assert isinstance(result, audit.Skip)
+        assert "rq4_identity_counterfactual.csv has no row for ['02_B']" in result.reason
+        assert "stale" in result.reason
 
 
 class TestValidateShapStage:

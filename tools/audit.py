@@ -12,11 +12,18 @@ check-contract --technique T
     One line per contract item: OK, MISSING or INVALID (with the validator's
     message). Exits 1 when a required item is missing or invalid.
 
-run --technique T [--with-counterfactual] [--device D] [--sequential-checkpoints]
+run --technique T [--with-perturbation] [--device D] [--sequential-checkpoints]
     check-contract, then the chain in the documented order (CLAUDE.md, "Order
     for a new technique"; RESEARCH_PLAN.md WP5), a manifest refresh for files
     the chain wrote into the technique folder, then every report card. Stops
-    at the first failing stage, whatever the error, and names it.
+    at the first failing stage, whatever the error, and names it. A stage
+    whose inputs are absent (not requested, no per-post files under
+    external/, outside the comparison where the tool has no separate family)
+    prints SKIP with the reason and is listed at the end; a skip is never
+    reported as OK. --with-perturbation runs the stages that restore the
+    predictor from external/ and re-score edited texts (identity
+    counterfactual, its ambiguous-term sensitivity, deletion faithfulness);
+    --with-counterfactual is kept as an alias.
 
 report --technique T | --all
     Reads committed outputs only and writes
@@ -56,6 +63,7 @@ from repo_paths import (  # noqa: E402
     COEFFICIENTS_FILENAME,
     EXPECTED_SPLIT_COUNTS,
     EXTERNAL_DIR,
+    FAITHFULNESS_FILENAME,
     REPO_ROOT,
     REPORT_CARD_JSON_FILENAME,
     REPORT_CARD_MD_FILENAME,
@@ -63,11 +71,16 @@ from repo_paths import (  # noqa: E402
     RESULTS_DIR,
     RQ1_MCNEMAR_PAIRS_CSV,
     RQ1_MCNEMAR_PAIRS_OUTSIDE_CSV,
+    RQ2_FAITHFULNESS_CSV,
+    RQ2_RQ4_RELATION_CSV,
+    RQ2_SAME_POST_CATEGORY_SHARES_CSV,
     RQ2_WORD_AGREEMENT_CSV,
     RQ2_WORD_AGREEMENT_OUTSIDE_CSV,
     RQ3_STABILITY_CSV,
     RQ4_IDENTITY_COUNTERFACTUAL_CSV,
+    RQ4_IDENTITY_COUNTERFACTUAL_SENSITIVITY_CSV,
     RQ4_IDENTITY_FPR_CSV,
+    RQ4_IDENTITY_FPR_SENSITIVITY_CSV,
     RQ_DIR,
     TOOLS_DIR,
     comparison_technique_dirs,
@@ -223,7 +236,7 @@ def _check_external(technique, external_dir):
 
     folder = Path(external_dir) / technique
     name = "restorable predictor under external/"
-    needed = "needed only for identity_counterfactual and curated examples"
+    needed = "needed only for --with-perturbation (counterfactuals, faithfulness) and curated examples"
     if not folder.is_dir():
         return ContractItem(name, MISSING, f"{_rel(folder)} not found; {needed}", required=False)
     try:
@@ -270,13 +283,29 @@ def print_contract(technique, items):
 @dataclass
 class Context:
     technique: str
-    with_counterfactual: bool = False
+    # Opt in to the stages that restore the predictor from external/ and
+    # re-score edited texts. One flag for all of them: they share the
+    # prerequisite (a verified predictor), the memory cost and --device /
+    # --sequential-checkpoints.
+    with_perturbation: bool = False
     device: str = "auto"
     sequential_checkpoints: bool = False
     results_dir: Path = RESULTS_DIR
+    external_dir: Path = EXTERNAL_DIR
     # sha256 of the technique folder once validate_results_folder has passed,
     # so the manifest is refreshed only for files the chain itself changed.
     initial_hashes: dict = field(default_factory=dict)
+    # (stage, reason) for every stage that returned Skip, in order.
+    skipped: list = field(default_factory=list)
+
+
+@dataclass
+class Skip:
+    """Returned by a stage that did not run; the reason is printed and listed, never shown as OK."""
+    reason: str
+
+
+NOT_REQUESTED = "not requested (--with-perturbation)"
 
 
 class StageFailed(AuditError):
@@ -308,7 +337,7 @@ def stage_refresh_manifest(ctx):
 
     The folder matched its manifest when validate_results_folder passed, so a
     refresh here records tool outputs only (coefficient checks, category
-    shares, identity-FPR and counterfactual JSONs). Nothing changed, nothing
+    shares, identity-FPR, counterfactual and faithfulness JSONs). Nothing changed, nothing
     is rewritten, which keeps a rerun byte-identical.
     """
     from run_manifest import hash_committed, manifest_path, refresh
@@ -407,13 +436,138 @@ def stage_word_agreement(ctx):
     return _tool("word_agreement.py")
 
 
-def stage_identity_counterfactual(ctx):
-    if not ctx.with_counterfactual:
-        return "not requested (--with-counterfactual)"
+def stage_identity_sensitivity_fpr(ctx):
+    """RQ4 FPR without the ambiguous identity terms; per-technique rows, no model loaded."""
+    return _tool("identity_sensitivity.py", "fpr", "--technique", ctx.technique)
+
+
+def stage_identity_lexicon_gaps(ctx):
+    """WP3 candidates among this technique's top words; replaces only its rows."""
+    return _tool("identity_sensitivity.py", "lexicon-gaps", "--technique", ctx.technique)
+
+
+def _missing(paths):
+    return [_rel(p) for p in paths if not Path(p).is_file()]
+
+
+def _missing_phrase(missing):
+    shown = ", ".join(missing[:3]) + (f" and {len(missing) - 3} more" if len(missing) > 3 else "")
+    return f"{len(missing)} per-post attribution file(s) absent ({shown})"
+
+
+def same_post_inputs(results_dir, external_dir):
+    """The per-post file of every whole-model run of every comparison technique."""
+    from same_post_stability import local_path
+
+    paths = []
+    for folder in comparison_technique_dirs(results_dir):
+        by_split, _ = _whole_runs(folder.name, results_dir)
+        for split in ("test", "validation"):
+            paths += [local_path(folder.name, run_id, external_dir) for run_id in by_split.get(split, [])]
+    return paths
+
+
+def stage_same_post_stability(ctx):
+    """Same-post support, split agreement and category shares over the comparison's common posts.
+
+    The tool defines the common post set over the comparison techniques and
+    rewrites its three tables whole, with no separate family for a technique
+    outside the comparison, so it is kept out of such a run.
+    """
+    if not in_comparison(ctx.technique, ctx.results_dir):
+        return Skip(f"{ctx.technique} is outside the comparison; same_post_stability.py defines the common "
+                    "post set over the comparison and has no outside family, so its tables are left as is")
+    missing = _missing(same_post_inputs(ctx.results_dir, ctx.external_dir))
+    if missing:
+        return Skip(f"{_missing_phrase(missing)}; download them to external/ to rebuild the same-post tables, "
+                    "which are left as is")
+    return _tool("same_post_stability.py")
+
+
+def _perturbation_args(ctx):
     args = ["--technique", ctx.technique, "--device", ctx.device]
     if ctx.sequential_checkpoints:
         args.append("--sequential-checkpoints")
-    return _tool("identity_counterfactual.py", *args)
+    return args
+
+
+def stage_identity_counterfactual(ctx):
+    if not ctx.with_perturbation:
+        return Skip(NOT_REQUESTED)
+    return _tool("identity_counterfactual.py", *_perturbation_args(ctx))
+
+
+def stage_identity_sensitivity_counterfactual(ctx):
+    """WP7 remove on the posts with an unambiguous identity match; loads the predictor."""
+    if not ctx.with_perturbation:
+        return Skip(NOT_REQUESTED)
+    return _tool("identity_sensitivity.py", "counterfactual", *_perturbation_args(ctx))
+
+
+def faithfulness_inputs(technique, results_dir, external_dir):
+    """(committed word table, per-post files) faithfulness.py needs for this technique.
+
+    The shared population is the posts every comparison technique explained,
+    so every comparison technique's per-post test file is needed too.
+    """
+    from split_beeswarms import LOCAL_SUBDIR
+    from split_beeswarms import run_id as local_run_id
+
+    name = f"{local_run_id('test')}.csv"
+    techniques = [d.name for d in comparison_technique_dirs(results_dir)]
+    if technique not in techniques:
+        techniques.append(technique)
+    word_table = attributions_dir(technique, results_dir) / name
+    return word_table, [Path(external_dir) / t / LOCAL_SUBDIR / name for t in techniques]
+
+
+def stage_faithfulness(ctx):
+    """Deletion faithfulness of the whole-model test run; loads the predictor.
+
+    faithfulness.py gives a technique outside the comparison its own Holm
+    family, so the comparison rows are unchanged.
+    """
+    if not ctx.with_perturbation:
+        return Skip(NOT_REQUESTED)
+    word_table, per_post = faithfulness_inputs(ctx.technique, ctx.results_dir, ctx.external_dir)
+    if not word_table.is_file():
+        return Skip(f"no committed whole-model test run named {word_table.stem}; faithfulness.py reads only "
+                    f"that run, so {RQ2_FAITHFULNESS_CSV.name} is left as is")
+    missing = _missing(per_post)
+    if missing:
+        return Skip(f"{_missing_phrase(missing)}; the shared population needs every comparison technique's "
+                    f"test file, so {RQ2_FAITHFULNESS_CSV.name} is left as is")
+    return _tool("faithfulness.py", *_perturbation_args(ctx))
+
+
+def relation_gaps(results_dir, rq_dir):
+    """Comparison techniques missing from an input rq2_rq4_relation.py needs beyond the always-run tables."""
+    techniques = {d.name for d in comparison_technique_dirs(results_dir)}
+    gaps = []
+    for path, keep in ((RQ4_IDENTITY_COUNTERFACTUAL_CSV,
+                        lambda t: (t["population"] == "non_extremist") & (t["operation"] == "remove")),
+                       (RQ2_SAME_POST_CATEGORY_SHARES_CSV, lambda t: t["post_set"] == "common")):
+        path = Path(rq_dir) / path.name
+        present = set()
+        if path.exists():
+            table = pd.read_csv(path)
+            present = set(table.loc[keep(table), "technique"])
+        missing = sorted(techniques - present)
+        if missing:
+            gaps.append(f"{path.name} has no row for {missing}")
+    return gaps
+
+
+def stage_rq2_rq4_relation(ctx):
+    """The RQ2-RQ4 rank relation over the comparison techniques; committed tables only."""
+    if not in_comparison(ctx.technique, ctx.results_dir):
+        return Skip(f"{ctx.technique} is outside the comparison; the relation is computed over the comparison "
+                    "techniques only")
+    gaps = relation_gaps(ctx.results_dir, RQ_DIR)
+    if gaps:
+        return Skip("; ".join(gaps) + f". {RQ2_RQ4_RELATION_CSV.name} is left as is and is stale until those "
+                    "stages run (--with-perturbation, per-post files under external/)")
+    return _tool("rq2_rq4_relation.py")
 
 
 def stage_render_tables(ctx):
@@ -433,25 +587,37 @@ STAGE_ORDER = (
     "categorize_attributions",
     "compare_reliance",
     "identity_fpr",
+    "identity_sensitivity_fpr",
     "mcnemar_pairs",
     "word_agreement",
+    "identity_lexicon_gaps",
+    "same_post_stability",
+    # The three stages that load the predictor, one process at a time.
     "identity_counterfactual",
+    "identity_sensitivity_counterfactual",
+    "faithfulness",
+    "rq2_rq4_relation",
     "refresh_manifest",
     "render_tables",
     "report",
 )
 
+# Stages that restore the predictor from external/ (--with-perturbation).
+PERTURBATION_STAGES = ("identity_counterfactual", "identity_sensitivity_counterfactual", "faithfulness")
+
 
 def run_chain(ctx, external_dir=None):
-    """Return (ok, failed_stage). Prints one line per stage."""
-    items = check_contract(ctx.technique, results_dir=ctx.results_dir, external_dir=external_dir)
+    """Return (ok, failed_stage). Prints one line per stage; skipped stages land in ctx.skipped."""
+    if external_dir is not None:
+        ctx.external_dir = Path(external_dir)
+    items = check_contract(ctx.technique, results_dir=ctx.results_dir, external_dir=ctx.external_dir)
     if not print_contract(ctx.technique, items):
         print("STOPPED at stage check-contract")
         return False, "check-contract"
-    if ctx.with_counterfactual:
+    if ctx.with_perturbation:
         external = next(item for item in items if item.name.startswith("restorable predictor"))
         if external.status != OK:
-            print(f"STOPPED at stage check-contract: --with-counterfactual needs {external.detail}")
+            print(f"STOPPED at stage check-contract: --with-perturbation needs {external.detail}")
             return False, "check-contract"
 
     module = sys.modules[__name__]
@@ -467,8 +633,16 @@ def run_chain(ctx, external_dir=None):
             print(f"FAIL  {name}")
             print(f"STOPPED at stage {name}: unexpected {type(error).__name__}: {error}")
             return False, name
+        if isinstance(message, Skip):
+            ctx.skipped.append((name, message.reason))
+            print(f"SKIP  {name}: {message.reason}")
+            continue
         print(f"OK    {name}: {message}")
-    print(f"audit of {ctx.technique} complete")
+    if ctx.skipped:
+        print(f"audit of {ctx.technique} complete; {len(ctx.skipped)} stage(s) skipped: "
+              f"{', '.join(name for name, _ in ctx.skipped)}")
+    else:
+        print(f"audit of {ctx.technique} complete")
     return True, None
 
 
@@ -1014,8 +1188,10 @@ def main(argv=None):
 
     run = sub.add_parser("run", help="check the contract, run the chain, write the report cards")
     run.add_argument("--technique", required=True)
-    run.add_argument("--with-counterfactual", action="store_true",
-                     help="also run identity_counterfactual.py (needs external/<TECHNIQUE>/)")
+    run.add_argument("--with-perturbation", "--with-counterfactual", dest="with_perturbation",
+                     action="store_true",
+                     help="also run the stages that restore the predictor from external/<TECHNIQUE>/: "
+                          "identity_counterfactual, identity_sensitivity counterfactual, faithfulness")
     run.add_argument("--device", default="auto")
     run.add_argument("--sequential-checkpoints", action="store_true")
 
@@ -1031,7 +1207,7 @@ def main(argv=None):
         return EXIT_OK if print_contract(args.technique, items) else EXIT_FAILED
 
     if args.command == "run":
-        ctx = Context(args.technique, args.with_counterfactual, args.device, args.sequential_checkpoints)
+        ctx = Context(args.technique, args.with_perturbation, args.device, args.sequential_checkpoints)
         ok, _ = run_chain(ctx)
         return EXIT_OK if ok else EXIT_FAILED
 
