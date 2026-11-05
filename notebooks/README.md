@@ -36,6 +36,7 @@ artifact, two whole-model attribution runs, and a result folder.
 | `05_WORD-CHAR-TF-IDF_LIN-SVM.ipynb` | Calibrated linear SVM over word plus character TF-IDF. | The hybrid between 02 and 04. |
 | `06_FASTTEXT-EMB_LOG-REG.ipynb` | Logistic regression over pooled FastText vectors. | Static-embedding control between lexical models and transformers. Exports a word-level projection of its coefficients as a second calibration point. |
 | `07_TWITTER-ROBERTA_FINE-TUNE.ipynb` | Fine-tuned Twitter-RoBERTa (hate-speech pretrained). | The single-transformer reference. |
+| `12_ROBERTA-BASE_FINE-TUNE.ipynb` | Fine-tuned `roberta-base`, with notebook 07's recipe unchanged except the base checkpoint. | The no-domain-pretraining control for 07 (RQ3). Primed, not yet run. |
 | `11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb` | Mean log-odds pool over heterogeneous fine-tuned checkpoints, three seeds each. | The ensemble. Its per-component attribution runs are how pretraining lineages are compared (RQ3). |
 
 ### Closed lines
