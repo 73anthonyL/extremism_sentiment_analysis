@@ -217,9 +217,8 @@ answer the RQ2 hypothesis about slurs versus identity terms. The bootstrap
 SDs (0.016 [C115] to 0.036 [C133]) are larger than the two-run SDs (0.002 [C156] to
 0.023 [C126]), so the SD the decision rule names understates post-sampling
 spread. Multi-word lexicon entries cannot match word-level artifacts; the
-decision rules ask for their count, but `categorize_attributions.py` only
-prints it and no committed artifact records it. **TODO(author):** commit
-that count (for example in the category-share sidecar) and report it here.
+current lexicons contain 0 [C820] such entries, so no lexicon entry is lost
+to word-level matching.[^cov]
 **TODO(author):** decide whether the section 5 difference rule uses the
 two-run SD (as preregistered) or the bootstrap intervals. **TODO(author):**
 WP3 (populate `slurs.txt` from a citable source, review the identity and
@@ -779,6 +778,8 @@ stated); the transformers in RQ3 differ in more than pretraining. The
 framework audits detectors of extremist content in single posts and is not a
 deployment recommendation.
 
+[^cov]: `results_summary/rq/rq2_lexicon_coverage.csv`.
+
 ## TODO(author) summary
 
 1. Notebook 12 (plain RoBERTa control): run it, rerun RQ1 (Holm family
@@ -786,15 +787,13 @@ deployment recommendation.
 2. WP3 lexicon freeze: populate `slurs.txt` from a citable source, review the
    identity list (the gap candidates) and the framing list, freeze, rerun RQ2
    and RQ4, and remove "provisional" from sections 6 to 8.
-3. Commit the count of skipped multi-word lexicon entries, as the decision
-   rules require it reported.
-4. Section 5 rule: two-run SD (preregistered) or bootstrap intervals for
+3. Section 5 rule: two-run SD (preregistered) or bootstrap intervals for
    share differences.
-5. Validation-split member runs for 11, if RQ3 prose needs member SDs.
-6. WP9 (layer-wise probes) and WP10 (zero-shot LLM, data-sharing decision).
-7. A qualitative read of the shared errors, outside the repository; evidence
+4. Validation-split member runs for 11, if RQ3 prose needs member SDs.
+5. WP9 (layer-wise probes) and WP10 (zero-shot LLM, data-sharing decision).
+6. A qualitative read of the shared errors, outside the repository; evidence
    or hypothesis status for C3 item 6.
-8. Redact slurs in any report-card figure.
-9. Upload and record external assets before submission.
-10. Citations: place the related-work entries (`docs/RELATED_WORK.md`) in the
+7. Redact slurs in any report-card figure.
+8. Upload and record external assets before submission.
+9. Citations: place the related-work entries (`docs/RELATED_WORK.md`) in the
     Results prose; none are cited in this draft.
