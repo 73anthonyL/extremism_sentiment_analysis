@@ -186,9 +186,7 @@
         "top_k": 50
       }
     ],
-    "empty_lexicon_categories": [
-      "slur"
-    ],
+    "empty_lexicon_categories": [],
     "least_agreeing_by_jaccard": "03_SLP_TF-IDF",
     "least_agreeing_by_spearman": "03_SLP_TF-IDF",
     "most_agreeing_by_jaccard": "07_TWITTER-ROBERTA_FINE-TUNE",
@@ -208,7 +206,7 @@
         "word": "jew"
       },
       {
-        "category": "topical",
+        "category": "slur",
         "mean_attribution": 0.462578,
         "support": 2,
         "word": "nigger"
@@ -276,28 +274,28 @@
     ]
   },
   "rq4": {
-    "fisher_p_value": 0.00639517,
-    "fpr_ratio": 4.23881,
-    "fpr_with_identity_terms": 0.119403,
-    "fpr_without_identity_terms": 0.028169,
+    "fisher_p_value": 0.00707546,
+    "fpr_ratio": 4.15686,
+    "fpr_with_identity_terms": 0.117647,
+    "fpr_without_identity_terms": 0.0283019,
     "n_negative": 280,
-    "n_negative_with_identity_terms": 67,
-    "n_negative_without_identity_terms": 213,
+    "n_negative_with_identity_terms": 68,
+    "n_negative_without_identity_terms": 212,
     "sources": [
       "results_summary/rq/rq4_identity_fpr.csv"
     ],
     "threshold": 0.5
   },
   "rq4_ambiguous_terms_sensitivity": {
-    "fisher_p_value": 0.00555713,
-    "fpr_ratio": 4.68868,
-    "fpr_with_identity_terms": 0.132075,
-    "fpr_without_identity_terms": 0.028169,
+    "fisher_p_value": 0.00623449,
+    "fpr_ratio": 4.58025,
+    "fpr_with_identity_terms": 0.12963,
+    "fpr_without_identity_terms": 0.0283019,
     "n_negative_excluded": 14,
-    "n_negative_with_identity_terms": 53,
-    "n_negative_without_identity_terms": 213,
+    "n_negative_with_identity_terms": 54,
+    "n_negative_without_identity_terms": 212,
     "n_positive_excluded": 24,
-    "n_positive_with_identity_terms": 59,
+    "n_positive_with_identity_terms": 60,
     "sources": [
       "results_summary/rq/rq4_identity_fpr_sensitivity.csv"
     ],
@@ -317,23 +315,23 @@
     "rows": [
       {
         "mcnemar_p_holm": 1.0,
-        "mean_delta": 0.0948202,
+        "mean_delta": 0.0933462,
         "n_flagged_original": 8,
         "n_flip_neg_to_pos": 1,
         "n_flip_pos_to_neg": 7,
-        "n_posts": 67,
+        "n_posts": 68,
         "population": "non_extremist",
-        "wilcoxon_p_holm": 9.78032e-06
+        "wilcoxon_p_holm": 7.52014e-06
       },
       {
         "mcnemar_p_holm": 1.52588e-05,
-        "mean_delta": 0.198292,
+        "mean_delta": 0.197229,
         "n_flagged_original": 74,
         "n_flip_neg_to_pos": 0,
         "n_flip_pos_to_neg": 22,
-        "n_posts": 83,
+        "n_posts": 84,
         "population": "extremist",
-        "wilcoxon_p_holm": 2.51331e-12
+        "wilcoxon_p_holm": 1.64841e-12
       }
     ],
     "sources": [
@@ -344,23 +342,23 @@
       "rows": [
         {
           "mcnemar_p_holm": 1.0,
-          "mean_delta": 0.103517,
+          "mean_delta": 0.101503,
           "n_flagged_original": 7,
           "n_flip_neg_to_pos": 1,
           "n_flip_pos_to_neg": 6,
-          "n_posts": 53,
+          "n_posts": 54,
           "population": "non_extremist, unambiguous match",
-          "wilcoxon_p_holm": 0.000176166
+          "wilcoxon_p_holm": 0.000137969
         },
         {
           "mcnemar_p_holm": 0.00195313,
-          "mean_delta": 0.201736,
+          "mean_delta": 0.200191,
           "n_flagged_original": 51,
           "n_flip_neg_to_pos": 0,
           "n_flip_pos_to_neg": 15,
-          "n_posts": 59,
+          "n_posts": 60,
           "population": "extremist, unambiguous match",
-          "wilcoxon_p_holm": 1.47314e-08
+          "wilcoxon_p_holm": 9.58049e-09
         }
       ],
       "sources": [

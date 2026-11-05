@@ -186,9 +186,7 @@
         "top_k": 50
       }
     ],
-    "empty_lexicon_categories": [
-      "slur"
-    ],
+    "empty_lexicon_categories": [],
     "least_agreeing_by_jaccard": "06_FASTTEXT-EMB_LOG-REG",
     "least_agreeing_by_spearman": "06_FASTTEXT-EMB_LOG-REG",
     "most_agreeing_by_jaccard": "05_WORD-CHAR-TF-IDF_LIN-SVM",
@@ -202,7 +200,7 @@
     ],
     "top_words_by_positive_mean_attribution": [
       {
-        "category": "topical",
+        "category": "slur",
         "mean_attribution": 0.230371,
         "support": 2,
         "word": "nigger"
@@ -276,28 +274,28 @@
     ]
   },
   "rq4": {
-    "fisher_p_value": 0.0298498,
-    "fpr_ratio": 2.60109,
-    "fpr_with_identity_terms": 0.134328,
-    "fpr_without_identity_terms": 0.0516432,
+    "fisher_p_value": 0.0322452,
+    "fpr_ratio": 2.5508,
+    "fpr_with_identity_terms": 0.132353,
+    "fpr_without_identity_terms": 0.0518868,
     "n_negative": 280,
-    "n_negative_with_identity_terms": 67,
-    "n_negative_without_identity_terms": 213,
+    "n_negative_with_identity_terms": 68,
+    "n_negative_without_identity_terms": 212,
     "sources": [
       "results_summary/rq/rq4_identity_fpr.csv"
     ],
     "threshold": 0.5
   },
   "rq4_ambiguous_terms_sensitivity": {
-    "fisher_p_value": 0.0310225,
-    "fpr_ratio": 2.92281,
-    "fpr_with_identity_terms": 0.150943,
-    "fpr_without_identity_terms": 0.0516432,
+    "fisher_p_value": 0.0322087,
+    "fpr_ratio": 2.85522,
+    "fpr_with_identity_terms": 0.148148,
+    "fpr_without_identity_terms": 0.0518868,
     "n_negative_excluded": 14,
-    "n_negative_with_identity_terms": 53,
-    "n_negative_without_identity_terms": 213,
+    "n_negative_with_identity_terms": 54,
+    "n_negative_without_identity_terms": 212,
     "n_positive_excluded": 24,
-    "n_positive_with_identity_terms": 59,
+    "n_positive_with_identity_terms": 60,
     "sources": [
       "results_summary/rq/rq4_identity_fpr_sensitivity.csv"
     ],
@@ -317,23 +315,23 @@
     "rows": [
       {
         "mcnemar_p_holm": 1.0,
-        "mean_delta": 0.0217784,
+        "mean_delta": 0.0227628,
         "n_flagged_original": 9,
         "n_flip_neg_to_pos": 0,
         "n_flip_pos_to_neg": 5,
-        "n_posts": 67,
+        "n_posts": 68,
         "population": "non_extremist",
-        "wilcoxon_p_holm": 0.00137808
+        "wilcoxon_p_holm": 0.000808017
       },
       {
         "mcnemar_p_holm": 0.171875,
-        "mean_delta": 0.0500685,
+        "mean_delta": 0.0500825,
         "n_flagged_original": 53,
         "n_flip_neg_to_pos": 0,
         "n_flip_pos_to_neg": 8,
-        "n_posts": 83,
+        "n_posts": 84,
         "population": "extremist",
-        "wilcoxon_p_holm": 6.47363e-13
+        "wilcoxon_p_holm": 4.31091e-13
       }
     ],
     "sources": [
@@ -344,23 +342,23 @@
       "rows": [
         {
           "mcnemar_p_holm": 1.0,
-          "mean_delta": 0.0275834,
+          "mean_delta": 0.0287155,
           "n_flagged_original": 8,
           "n_flip_neg_to_pos": 0,
           "n_flip_pos_to_neg": 5,
-          "n_posts": 53,
+          "n_posts": 54,
           "population": "non_extremist, unambiguous match",
-          "wilcoxon_p_holm": 0.000349329
+          "wilcoxon_p_holm": 0.000208533
         },
         {
           "mcnemar_p_holm": 1.0,
-          "mean_delta": 0.0537993,
+          "mean_delta": 0.0537567,
           "n_flagged_original": 36,
           "n_flip_neg_to_pos": 0,
           "n_flip_pos_to_neg": 4,
-          "n_posts": 59,
+          "n_posts": 60,
           "population": "extremist, unambiguous match",
-          "wilcoxon_p_holm": 6.33354e-09
+          "wilcoxon_p_holm": 4.17347e-09
         }
       ],
       "sources": [

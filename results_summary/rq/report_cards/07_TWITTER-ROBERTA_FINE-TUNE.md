@@ -35,12 +35,12 @@ Sources: `results_summary/07_TWITTER-ROBERTA_FINE-TUNE/attributions/shap-partiti
 
 No coefficients to check against; the attributions rest on the anchor's pipeline check.
 
-Top 10 words with positive mean attribution (toward EXTREMIST) in the test run `shap-partition_test_seed30` (200 posts explained). Category comes from the committed lexicons. The slur lexicon is empty (RESEARCH_PLAN WP3), so words of that kind are counted as topical here.
+Top 10 words with positive mean attribution (toward EXTREMIST) in the test run `shap-partition_test_seed30` (200 posts explained). Category comes from the committed lexicons.
 
 | Rank | Word | Category | Mean attribution | Support (posts) |
 |---|---|---|---|---|
 | 1 | `jew` | identity_term | 0.7940 | 1 |
-| 2 | `nigger` | topical | 0.6134 | 2 |
+| 2 | `nigger` | slur | 0.6134 | 2 |
 | 3 | `refugeesnotwelcome` | topical | 0.6077 | 1 |
 | 4 | `purity` | topical | 0.5312 | 1 |
 | 5 | `china` | topical | 0.5009 | 1 |
@@ -89,12 +89,12 @@ Source: `results_summary/rq/rq4_identity_fpr.csv`.
 
 | Non-extremist test posts | n | False-positive rate |
 |---|---|---|
-| with an identity term | 67 | 0.134 |
-| without | 213 | 0.070 |
+| with an identity term | 68 | 0.132 |
+| without | 212 | 0.071 |
 
-Ratio 1.91, Fisher exact p 0.131, at the locked threshold 0.555. This is a correlation; the counterfactual below is the intervention.
+Ratio 1.87, Fisher exact p 0.135, at the locked threshold 0.555. This is a correlation; the counterfactual below is the intervention.
 
-Ambiguous identity words (`results_summary/rq/rq4_identity_fpr_sensitivity.csv`, variant `exclude_ambiguous_only`): dropping the 14 non-extremist posts whose only identity matches are ambiguous words (colour words, interjections; declared in `tools/identity_sensitivity.py`, the lexicon is unchanged) leaves 53 with an identity term (FPR 0.132) and 213 without (FPR 0.070): ratio 1.88, Fisher exact p 0.164.
+Ambiguous identity words (`results_summary/rq/rq4_identity_fpr_sensitivity.csv`, variant `exclude_ambiguous_only`): dropping the 14 non-extremist posts whose only identity matches are ambiguous words (colour words, interjections; declared in `tools/identity_sensitivity.py`, the lexicon is unchanged) leaves 54 with an identity term (FPR 0.130) and 212 without (FPR 0.071): ratio 1.83, Fisher exact p 0.170.
 
 ## WP7. Identity counterfactual (remove the term)
 
@@ -102,10 +102,10 @@ Sources: `results_summary/rq/rq4_identity_counterfactual.csv`, `results_summary/
 
 | Population | n | Mean delta | Flagged before | Flips to not flagged | Flips to flagged | Wilcoxon Holm p | McNemar Holm p |
 |---|---|---|---|---|---|---|---|
-| non_extremist | 67 | 0.0990 | 9 | 7 | 0 | 3.3e-05 | 0.328 |
-| extremist | 83 | 0.1559 | 71 | 15 | 1 | 7.3e-10 | 0.016 |
-| non_extremist, unambiguous match | 53 | 0.0930 | 7 | 5 | 0 | 4.4e-05 | 1.000 |
-| extremist, unambiguous match | 59 | 0.1569 | 48 | 10 | 1 | 2.1e-06 | 0.328 |
+| non_extremist | 68 | 0.0967 | 9 | 7 | 0 | 8.7e-05 | 0.328 |
+| extremist | 84 | 0.1538 | 71 | 15 | 1 | 2.3e-09 | 0.016 |
+| non_extremist, unambiguous match | 54 | 0.0902 | 7 | 5 | 0 | 0.00012 | 1.000 |
+| extremist, unambiguous match | 60 | 0.1539 | 48 | 10 | 1 | 6.1e-06 | 0.328 |
 
 Rows marked `unambiguous match` are the posts that keep at least one identity match outside the ambiguous list, with every match removed. Their Holm p values are over the sensitivity table's own rows, not the WP7 family. A smaller population has less power; its effect size is that of the restricted posts.
 
