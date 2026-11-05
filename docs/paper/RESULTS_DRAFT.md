@@ -27,8 +27,8 @@ Scope, stated once for every section below: labels are post-level and
 features are text-only. The classifiers detect extremist content in a single
 post. They do not detect accounts, intent or radicalization over time, and
 nothing here supports a claim about those. This differs from work that also
-uses user and network signals (Ferrara et al., 2016) or models
-radicalisation over a user's history (Fernandez et al., 2018).
+uses user and network signals (Ferrara et al., 2016) or models user-level
+radicalisation influence (Fernandez et al., 2018).
 
 Technique names used throughout: 01 word TF-IDF + logistic regression (LR);
 02 word TF-IDF + linear SVM; 03 word TF-IDF + single-layer perceptron (SLP);
@@ -39,9 +39,13 @@ which is itself the average of three seeds. 01 to 06 are "classical", 07 and
 11 "transformer". The classical techniques use the feature families
 surveyed by Schmidt and Wiegand (2017) (word and character n-grams,
 embeddings); character n-grams on tweets go back at least to Waseem and
-Hovy (2016). 07 fine-tunes a checkpoint of the Twitter-RoBERTa lineage
-introduced with TweetEval (Barbieri et al., 2020), whose hate-latest model
-cards point to Antypas and Camacho-Collados (2023). **TODO(author):**
+Hovy (2016). 07 fine-tunes cardiffnlp's twitter-roberta-base-hate-latest
+checkpoint, whose model card cites Antypas and Camacho-Collados (2023).
+The Twitter-RoBERTa lineage itself goes back to TweetEval (Barbieri et al.,
+2020). **TODO(author):** the hate-latest checkpoints are fine-tuned from the
+TimeLMs `twitter-roberta-*-2022-154m` checkpoints; consider citing Loureiro
+et al. 2022 (TimeLMs) after adding a verified entry to
+`docs/RELATED_WORK.md`. **TODO(author):**
 `docs/RELATED_WORK.md` has no entry for TF-IDF, logistic regression, linear
 SVMs, the perceptron, FastText embeddings or logit pooling; add references
 there before citing them. The data are 2999 [C814] posts on one frozen split (2099 [C817]
@@ -58,8 +62,8 @@ training posts); the test split has 450 [C818] posts (280 [C815] non-extremist,
 Table 1 gives the test metrics at each technique's validation-locked
 threshold. Accuracy runs from 0.831 [C016] (04) to 0.909 [C036] (11). We call one
 technique more accurate than another only when the exact McNemar test on
-discordant posts (McNemar, 1947), the test recommended for comparing
-classifiers on a single held-out split (Dietterich, 1998), is significant
+discordant posts (McNemar, 1947), the test Dietterich (1998) recommends
+when each learner is trained once, is significant
 after Holm correction (Holm, 1979) over all 28 [C057] pairs.[^rq1]
 
 **Table 1.** Test metrics (one evaluation per technique).[^t1]
@@ -137,20 +141,22 @@ update Table 2 and this paragraph after 12 runs.
 
 ### 6.1 The attribution pipeline recovers known coefficients
 
-Before any cross-model claim, the SHAP pipeline (Lundberg and Lee, 2017)
-(partition explainer over a word-level text masker, one method for every
+Before any cross-model claim, the SHAP pipeline (Lundberg and Lee, 2017;
+a partition explainer over a word-level text masker, one method for every
 technique) was checked against the coefficients of the word-level logistic
-regression (01). The Partition explainer computes Owen values over the
-masker's word hierarchy (Owen, 1977), not exact Shapley values (Shapley,
-1953). One masker and one explainer are fixed for every technique because
-different value functions give different "Shapley values" (Sundararajan and
-Najmi, 2020); the masker deletes words, an interventional removal (Janzing
-et al., 2020); and a word-level masker puts classical and subword
-transformer attributions on the same vocabulary, following the adaptation
-of SHAP to BERT inputs by Kokalj et al. (2021). The check is motivated by
-SHAP's linear-model result (Lundberg and Lee, 2017), whose exact identity
-does not hold for a probability-output LR with word deletion, so a weaker
-property is tested. The
+regression (01). The Partition explainer computes Owen values (Owen, 1977),
+applied recursively over the masker's hierarchy and approximated under the
+max_evals budget, not exact Shapley values (Shapley, 1953). One masker and
+one explainer are fixed for every technique because different value
+functions give different "Shapley values" (Sundararajan and Najmi, 2020).
+The masker replaces masked words with a fixed token ("..."), a
+fixed-baseline intervention rather than a conditional expectation (Janzing
+et al., 2020; Sundararajan and Najmi, 2020). A word-level masker also puts
+classical and subword transformer attributions on the same vocabulary,
+following the adaptation of SHAP to BERT inputs by Kokalj et al. (2021).
+The check is motivated by SHAP's linear-model result (Lundberg and Lee,
+2017), whose exact identity does not hold for a probability-output LR with
+word masking, so a weaker property is tested. The
 preregistered bars are Spearman of at least 0.80 [C190] between mean
 attribution and coefficient, and top-50 sign agreement of at least
 0.90 [C191]. 01 reaches Spearman 0.873 [C100] on the test run and 0.865 [C101] on the
@@ -171,10 +177,13 @@ run.
 
 A deletion test checks that each technique's top-attributed words matter to
 that technique. It is close to ERASER's comprehensiveness, the probability
-change when the top-k tokens are removed (DeYoung et al., 2020). It does
-not retrain the model, so it is the cheaper, non-retrained form of
-deletion-based faithfulness whose strict form is remove-and-retrain
-(Hooker et al., 2019). For each test post, the k words with the highest positive
+change when the top-k tokens are removed (DeYoung et al., 2020). Without
+retraining, part of the probability drop can come from the edited text
+being off the training distribution, which remove-and-retrain (Hooker et
+al., 2019) controls for and this test does not. Comparing against random
+deletion of the same number of words (the baseline below) partly controls
+for it, since both arms edit the post by the same amount. For
+each test post, the k words with the highest positive
 attribution toward extremist are deleted and the drop in p(extremist) is
 compared with deleting k random words of the same post (5 [C257] seeds). On
 the posts all eight techniques explained, top-k deletion lowers
@@ -334,8 +343,8 @@ the second (Jacovi and Goldberg, 2020).
 
 Table 5 compares the single Twitter-RoBERTa (07), the four members of the
 ensemble's primary pool, their mean, and the pooled ensemble (11). Member A,
-member E and 07 start from Twitter-RoBERTa hate checkpoints (Barbieri et
-al., 2020; Antypas and Camacho-Collados, 2023); member B from a model
+member E and 07 start from cardiffnlp's Twitter-RoBERTa hate-latest
+checkpoints (Antypas and Camacho-Collados, 2023); member B from a model
 trained on dynamically generated hate data (Vidgen et al., 2021); and
 member C from HateBERT, BERT retrained for abusive language (Caselli et al.,
 2021). The members do not share 07's training recipe, so Table 5 is not a controlled
@@ -419,9 +428,10 @@ explains the validation split, which would give members an across-run SD
 
 ### 7.2 Stability across post samples
 
-Explanation stability is one of the properties on which saliency methods
-for language models have been evaluated (Ding and Koehn, 2021); here it is
-measured across post samples. Each technique has two whole-model runs over
+Ding and Koehn (2021) test whether saliency stays consistent across a
+distilled model and under input substitution. Table 6 measures a
+different, aggregate notion: whether a technique's word-level ranking,
+averaged over posts, is reproduced on a different sample of posts. Each technique has two whole-model runs over
 different posts (test and validation). Table 6 gives their agreement on the same post count (200 per
 split).
 
@@ -469,10 +479,12 @@ post samples. The pretraining-lineage comparison waits for notebook 12.
 ### 8.1 Correlation: false-positive rates with and without identity terms
 
 Toxicity classifiers are known to over-flag benign text that names identity
-groups (Dixon et al., 2018), and hate-speech benchmarks label the targeted
-group (Zampieri et al., 2019) or are built around named target groups
-(Basile et al., 2019). Table 7 applies the false-positive comparison of Dixon et al. (2018)
-to extremism labels at each locked threshold.
+groups (Dixon et al., 2018), and hate-speech benchmarks label whether the
+target is a group (Zampieri et al., 2019) or are built around named target
+groups (Basile et al., 2019). Table 7 compares false-positive rates with
+and without identity terms in the spirit of Dixon et al. (2018), on real
+posts rather than templates, with extremism labels at each locked
+threshold.
 Of the 280 [C465] non-extremist test posts, 67 [C464] contain at least one
 identity-lexicon match (83 [C466] extremist posts do).[^rq4n] Every technique
 has a higher false-positive rate on those 67 [C464] than on the other
@@ -480,9 +492,12 @@ has a higher false-positive rate on those 67 [C464] than on the other
 exact p is below 0.05 for 04, 05 and 11 only. With so few such posts, only
 large ratios are detectable, so a non-significant ratio is not evidence that
 the effect is absent. The identity matches come from the lexicon, so these
-rates are provisional until WP3. That every technique, classical or
-transformer, has a ratio above 1 fits the finding that such bias comes
-from the datasets rather than from one model (Davidson et al., 2019).
+rates are provisional until WP3. That the point estimate exceeds 1 for
+every technique, classical or transformer, is consistent with the bias
+being learned from the training data rather than introduced by one
+architecture, as Davidson et al. (2019) found for dialect bias across five
+abuse datasets; only three of the eight ratios reach unadjusted Fisher
+p < 0.05.
 Threshold-free subgroup and BPSN/BNSP AUCs (Borkan et al., 2019) would
 complement these rates and can be computed from the committed
 probabilities; they are not reported here.
@@ -526,12 +541,13 @@ the techniques.
 The correlation does not show that the identity term causes the false
 positive, and neither does a SHAP attribution on its own: Shapley-based
 attributions do not answer what would have to change to change the outcome
-(Kumar et al., 2020), and perturbation explainers query the model on masked
-texts off the data distribution (Slack et al., 2020). WP7 is therefore an
-input-level intervention in the line of counterfactual token fairness
-(Garg et al., 2019) and perturbation sensitivity analysis (Prabhakaran et
-al., 2019), and the substitution panel is an invariance test in the sense
-of CheckList (Ribeiro et al., 2020). WP7 edits every identity-lexicon match in the 150 [C623] test posts
+(Kumar et al., 2020), and perturbation explainers query the model off the
+data distribution (Slack et al., 2020), as our masked texts are. WP7 is
+therefore an input-level intervention in the line of perturbation
+sensitivity analysis (Prabhakaran et al., 2019). Its substitution arm,
+which swaps the identity term for a neutral group noun, is the direct
+analogue of counterfactual token fairness (Garg et al., 2019) and an
+invariance test in the sense of CheckList (Ribeiro et al., 2020). WP7 edits every identity-lexicon match in the 150 [C623] test posts
 that have one and re-scores the edited posts with each technique's restored
 predictor at its locked threshold. Before scoring, each restored predictor
 reproduces the committed test probabilities to within 0.0016 [C621]. This
@@ -632,8 +648,11 @@ threshold. That is threshold-local necessity, not proof that the term causes
 the error. Deletion also changes TF-IDF normalization and character n-grams
 across the join, the panel words are rare in training, and the lexicon
 covers only the identity terms it lists. The models are not retrained
-after the edit, so WP7 is the cheaper variant of remove-and-retrain (Hooker
-et al., 2019).
+after the edit. Without retraining, part of the probability drop can come
+from the edited text being off the training distribution, which
+remove-and-retrain (Hooker et al., 2019) controls for and WP7 does not.
+Unlike remove-and-retrain and the deletion test of section 6.2, WP7's edit
+set comes from the identity lexicon, not from attribution rank.
 
 ### 8.3 Does RQ2 reliance predict RQ4 false positives?
 
@@ -694,7 +713,7 @@ ordering of reliance and false positives is not established.
 
 Each item cites the evidence above; "avenue" names what would address it.
 None of these is a claim that the task is new: extremism and hate-speech
-detection are established research areas, with systematic reviews of
+detection are established research areas, with reviews and surveys of
 extremism detection (Gaikwad et al., 2021; Aldera et al., 2021; Torregrosa
 et al., 2023) and surveys of hate-speech detection (Schmidt and Wiegand,
 2017; Fortuna and Nunes, 2018). The aim is to say where the
@@ -730,8 +749,9 @@ remaining difficulty sits.
    and for the transformers its effect is concentrated in flagged posts
    (Table 3); yet their word rankings agree least across post samples
    (Spearman, Table 6). Per-word claims about transformers are fragile.
-   Avenue: report explanation stability (Ding and Koehn, 2021) and
-   deletion faithfulness (DeYoung et al., 2020) as standard metrics.
+   Avenue: report explanation stability across post samples, saliency
+   consistency (Ding and Koehn, 2021) and deletion faithfulness (DeYoung et
+   al., 2020) as standard metrics.
 5. **Lexicons do not cover the vocabulary.** The topical category takes
    0.81 [C158] to 1.00 [C159] of positive mass, the framing lexicon matches almost
    none of the top words, the slur list is empty, and 14 [C703] distinct
