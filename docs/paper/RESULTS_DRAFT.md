@@ -15,7 +15,8 @@ without its claim fails. Footnotes give the artifact paths. Numbers that are
 protocol constants rather than results (top-50, k in {1, 3, 5, 10}, alpha
 0.05, the 14-row McNemar rule of thumb from the plan, section and technique
 numbers) are not claims. The bracketed labels are claim ids, not
-citations.
+citations. Citations are author-year in parentheses and are listed under
+References at the end; every one is an entry of `docs/RELATED_WORK.md`.
 
 Items that need an author decision or a result that does not exist yet are
 marked **TODO(author)**. All category-level results (RQ2, RQ3 and the
@@ -25,7 +26,9 @@ lexicons: the slur list is empty today, so slurs are counted as topical.
 Scope, stated once for every section below: labels are post-level and
 features are text-only. The classifiers detect extremist content in a single
 post. They do not detect accounts, intent or radicalization over time, and
-nothing here supports a claim about those.
+nothing here supports a claim about those. This differs from work that also
+uses user and network signals (Ferrara et al., 2016) or models
+radicalisation over a user's history (Fernandez et al., 2018).
 
 Technique names used throughout: 01 word TF-IDF + logistic regression (LR);
 02 word TF-IDF + linear SVM; 03 word TF-IDF + single-layer perceptron (SLP);
@@ -33,7 +36,15 @@ Technique names used throughout: 01 word TF-IDF + logistic regression (LR);
 06 FastText embeddings + LR; 07 fine-tuned Twitter-RoBERTa (one seed);
 11 a logit-pooled ensemble of four fine-tuned transformer members, each of
 which is itself the average of three seeds. 01 to 06 are "classical", 07 and
-11 "transformer". The data are 2999 [C814] posts on one frozen split (2099 [C817]
+11 "transformer". The classical techniques use the feature families
+surveyed by Schmidt and Wiegand (2017) (word and character n-grams,
+embeddings); character n-grams on tweets go back at least to Waseem and
+Hovy (2016). 07 fine-tunes a checkpoint of the Twitter-RoBERTa lineage
+introduced with TweetEval (Barbieri et al., 2020), whose hate-latest model
+cards point to Antypas and Camacho-Collados (2023). **TODO(author):**
+`docs/RELATED_WORK.md` has no entry for TF-IDF, logistic regression, linear
+SVMs, the perceptron, FastText embeddings or logit pooling; add references
+there before citing them. The data are 2999 [C814] posts on one frozen split (2099 [C817]
 training posts); the test split has 450 [C818] posts (280 [C815] non-extremist,
 170 [C816] extremist) and is evaluated once per technique.[^data]
 
@@ -47,8 +58,9 @@ training posts); the test split has 450 [C818] posts (280 [C815] non-extremist,
 Table 1 gives the test metrics at each technique's validation-locked
 threshold. Accuracy runs from 0.831 [C016] (04) to 0.909 [C036] (11). We call one
 technique more accurate than another only when the exact McNemar test on
-discordant posts is significant after Holm correction over all 28 [C057]
-pairs.[^rq1]
+discordant posts (McNemar, 1947), the test recommended for comparing
+classifiers on a single held-out split (Dietterich, 1998), is significant
+after Holm correction (Holm, 1979) over all 28 [C057] pairs.[^rq1]
 
 **Table 1.** Test metrics (one evaluation per technique).[^t1]
 
@@ -110,7 +122,10 @@ is 17 [C093]).[^err]
 
 RQ1 reading. The ensemble is more accurate than every classical technique on
 this split; 07 is more accurate than 04 and than no other technique. Every
-other ordering in Table 1 is descriptive. **TODO(author):** adding notebook
+other ordering in Table 1 is descriptive, and all of them hold for this one
+split; cross-dataset evaluation of hate-speech detectors (Antypas and
+Camacho-Collados, 2023) is the setting in which they would have to be
+re-examined. **TODO(author):** adding notebook
 12 (plain RoBERTa control) adds 12's pairs to the Holm family. 01 vs 11
 (Holm p 0.049 [C061]) then stays significant only if every new pair is itself
 Holm-significant (RESEARCH_PLAN section 3). Rerun `mcnemar_pairs.py` and
@@ -122,9 +137,20 @@ update Table 2 and this paragraph after 12 runs.
 
 ### 6.1 The attribution pipeline recovers known coefficients
 
-Before any cross-model claim, the SHAP pipeline (partition explainer over a
-word-level text masker, one method for every technique) was checked against
-the coefficients of the word-level logistic regression (01). The
+Before any cross-model claim, the SHAP pipeline (Lundberg and Lee, 2017)
+(partition explainer over a word-level text masker, one method for every
+technique) was checked against the coefficients of the word-level logistic
+regression (01). The Partition explainer computes Owen values over the
+masker's word hierarchy (Owen, 1977), not exact Shapley values (Shapley,
+1953). One masker and one explainer are fixed for every technique because
+different value functions give different "Shapley values" (Sundararajan and
+Najmi, 2020); the masker deletes words, an interventional removal (Janzing
+et al., 2020); and a word-level masker puts classical and subword
+transformer attributions on the same vocabulary, following the adaptation
+of SHAP to BERT inputs by Kokalj et al. (2021). The check is motivated by
+SHAP's linear-model result (Lundberg and Lee, 2017), whose exact identity
+does not hold for a probability-output LR with word deletion, so a weaker
+property is tested. The
 preregistered bars are Spearman of at least 0.80 [C190] between mean
 attribution and coefficient, and top-50 sign agreement of at least
 0.90 [C191]. 01 reaches Spearman 0.873 [C100] on the test run and 0.865 [C101] on the
@@ -134,7 +160,9 @@ words seen in at least two explained posts the correlations are 0.932 [C104] and
 coefficients act on embedding dimensions rather than words, reaches
 0.745 [C106] and 0.757 [C107] with sign agreement 1.00 [C109]; it does not pass
 (passed: false [C108]) and is reported as the calibration point, as
-planned.[^wp2]
+planned.[^wp2] This check is related to, but distinct from, the model- and
+label-randomization sanity checks of Adebayo et al. (2018), which were not
+run.
 
 [^wp2]: `results_summary/01_LOG-REG_TF-IDF/attributions/shap-partition_{test,validation}_seed30__coefficient_check.json`;
     `results_summary/06_FASTTEXT-EMB_LOG-REG/attributions/shap-partition_{test,validation}_seed30__coefficient_check.json`.
@@ -142,7 +170,11 @@ planned.[^wp2]
 ### 6.2 The attributions name words the models need
 
 A deletion test checks that each technique's top-attributed words matter to
-that technique. For each test post, the k words with the highest positive
+that technique. It is close to ERASER's comprehensiveness, the probability
+change when the top-k tokens are removed (DeYoung et al., 2020). It does
+not retrain the model, so it is the cheaper, non-retrained form of
+deletion-based faithfulness whose strict form is remove-and-retrain
+(Hooker et al., 2019). For each test post, the k words with the highest positive
 attribution toward extremist are deleted and the drop in p(extremist) is
 compared with deleting k random words of the same post (5 [C257] seeds). On
 the posts all eight techniques explained, top-k deletion lowers
@@ -175,7 +207,9 @@ Their median paired difference is 0.001 [C253] to 0.010 [C254] (07) and 0.005 [C
 0.024 [C256] (11) across k, while their margin on flagged posts at k = 1
 (0.231 [C239] and 0.204 [C245]) is above every classical technique's (0.016 [C258] to
 0.091 [C259]). The test shows that the attributions find words the models use,
-not that the models are right to use them.
+not that the models are right to use them. **TODO(author):** `docs/RELATED_WORK.md` has no entry for the
+Wilcoxon signed-rank test, Fisher's exact test or the percentile bootstrap,
+all used below; add references there before citing them.
 
 ### 6.3 Category shares
 
@@ -249,7 +283,13 @@ Jaccard 0.67 [C164]), as do char and word+char TF-IDF (Spearman 0.85 [C167]) and
 the two transformers (0.76 [C165] and 0.54 [C166]). Across families agreement is
 low: 07 against the six classical techniques gives Spearman 0.21 [C168] to
 0.28 [C169], and 11 gives 0.26 [C170] to 0.32 [C171]. FastText agrees little even
-with the word TF-IDF LR (0.17 [C172]).[^agree]
+with the word TF-IDF LR (0.17 [C172]).[^agree] This is disagreement between
+models under one explainer. Disagreement between explanation methods on
+the same model is documented separately (Krishna et al., 2024), and the
+cross-family figures should be read next to that baseline. The closest
+cross-architecture precedent (Atanasova et al., 2020) varied both the
+explainer and the neural architecture in order to evaluate the explainers;
+here the explainer is fixed and the model families vary.
 
 [^agree]: `results_summary/rq/rq2_shared_top_words.csv`,
     `results_summary/rq/rq2_word_agreement_pairs.csv`
@@ -281,7 +321,10 @@ comparison is descriptive.[^support]
 RQ2 reading. The deletion test supports reading the word tables as what each
 model uses. The models share a small core of words (a racial slur, "kill",
 "genocide") and otherwise rely on different words, and the split runs along
-feature family. Category-level conclusions wait for WP3.
+feature family. Category-level conclusions wait for WP3. The lexicon
+shares measure a plausibility-style alignment with curated word lists, and
+the deletion test measures faithfulness; the first does not stand in for
+the second (Jacovi and Goldberg, 2020).
 
 ---
 
@@ -290,8 +333,12 @@ feature family. Category-level conclusions wait for WP3.
 ### 7.1 Pretraining lineage and pooling
 
 Table 5 compares the single Twitter-RoBERTa (07), the four members of the
-ensemble's primary pool, their mean, and the pooled ensemble (11). The
-members do not share 07's training recipe, so Table 5 is not a controlled
+ensemble's primary pool, their mean, and the pooled ensemble (11). Member A,
+member E and 07 start from Twitter-RoBERTa hate checkpoints (Barbieri et
+al., 2020; Antypas and Camacho-Collados, 2023); member B from a model
+trained on dynamically generated hate data (Vidgen et al., 2021); and
+member C from HateBERT, BERT retrained for abusive language (Caselli et al.,
+2021). The members do not share 07's training recipe, so Table 5 is not a controlled
 lineage comparison:
 
 * 07 is one seed (30 [C711]) at learning rate 2e-5 [C710], starting from
@@ -363,8 +410,8 @@ excludes zero (the bounds nearest zero are -0.020 [C336] against 03 and 0.028 [C
 against 04). These intervals cover post sampling only.[^rq3a]
 
 The lineage question itself is not answered yet. The hypothesis contrasts
-hate-speech pretraining with a plain RoBERTa control, and that control has
-not run. **TODO(author):** run notebook 12 (`12_ROBERTA-BASE_FINE-TUNE`,
+hate-speech pretraining with a plain RoBERTa control (Liu et al., 2019),
+and that control has not run. **TODO(author):** run notebook 12 (`12_ROBERTA-BASE_FINE-TUNE`,
 07's recipe with only the checkpoint changed), then rerun the RQ3 chain and
 replace Table 5. **TODO(author):** decide whether the member loop also
 explains the validation split, which would give members an across-run SD
@@ -372,8 +419,10 @@ explains the validation split, which would give members an across-run SD
 
 ### 7.2 Stability across post samples
 
-Each technique has two whole-model runs over different posts (test and
-validation). Table 6 gives their agreement on the same post count (200 per
+Explanation stability is one of the properties on which saliency methods
+for language models have been evaluated (Ding and Koehn, 2021); here it is
+measured across post samples. Each technique has two whole-model runs over
+different posts (test and validation). Table 6 gives their agreement on the same post count (200 per
 split).
 
 **Table 6.** Test-versus-validation agreement of word attributions on 200
@@ -419,6 +468,11 @@ post samples. The pretraining-lineage comparison waits for notebook 12.
 
 ### 8.1 Correlation: false-positive rates with and without identity terms
 
+Toxicity classifiers are known to over-flag benign text that names identity
+groups (Dixon et al., 2018), and hate-speech benchmarks label the targeted
+group (Zampieri et al., 2019) or are built around named target groups
+(Basile et al., 2019). Table 7 applies the false-positive comparison of Dixon et al. (2018)
+to extremism labels at each locked threshold.
 Of the 280 [C465] non-extremist test posts, 67 [C464] contain at least one
 identity-lexicon match (83 [C466] extremist posts do).[^rq4n] Every technique
 has a higher false-positive rate on those 67 [C464] than on the other
@@ -426,7 +480,12 @@ has a higher false-positive rate on those 67 [C464] than on the other
 exact p is below 0.05 for 04, 05 and 11 only. With so few such posts, only
 large ratios are detectable, so a non-significant ratio is not evidence that
 the effect is absent. The identity matches come from the lexicon, so these
-rates are provisional until WP3.
+rates are provisional until WP3. That every technique, classical or
+transformer, has a ratio above 1 fits the finding that such bias comes
+from the datasets rather than from one model (Davidson et al., 2019).
+Threshold-free subgroup and BPSN/BNSP AUCs (Borkan et al., 2019) would
+complement these rates and can be computed from the committed
+probabilities; they are not reported here.
 
 [^rq4n]: `results_summary/rq/rq4_identity_fpr.csv`,
     `results_summary/rq/rq2_rq4_relation_inputs.csv`.
@@ -465,7 +524,14 @@ the techniques.
 ### 8.2 Intervention: editing the identity term
 
 The correlation does not show that the identity term causes the false
-positive. WP7 edits every identity-lexicon match in the 150 [C623] test posts
+positive, and neither does a SHAP attribution on its own: Shapley-based
+attributions do not answer what would have to change to change the outcome
+(Kumar et al., 2020), and perturbation explainers query the model on masked
+texts off the data distribution (Slack et al., 2020). WP7 is therefore an
+input-level intervention in the line of counterfactual token fairness
+(Garg et al., 2019) and perturbation sensitivity analysis (Prabhakaran et
+al., 2019), and the substitution panel is an invariance test in the sense
+of CheckList (Ribeiro et al., 2020). WP7 edits every identity-lexicon match in the 150 [C623] test posts
 that have one and re-scores the edited posts with each technique's restored
 predictor at its locked threshold. Before scoring, each restored predictor
 reproduces the committed test probabilities to within 0.0016 [C621]. This
@@ -565,12 +631,17 @@ A flip shows that one perturbation moved one post across the locked
 threshold. That is threshold-local necessity, not proof that the term causes
 the error. Deletion also changes TF-IDF normalization and character n-grams
 across the join, the panel words are rare in training, and the lexicon
-covers only the identity terms it lists.
+covers only the identity terms it lists. The models are not retrained
+after the edit, so WP7 is the cheaper variant of remove-and-retrain (Hooker
+et al., 2019).
 
 ### 8.3 Does RQ2 reliance predict RQ4 false positives?
 
 This section is descriptive and, because both sides depend on the lexicons,
-provisional until WP3. Ranking the eight techniques by RQ2 identity-term
+provisional until WP3. The closest precedent for linking post-hoc
+attribution to identity-term over-reliance in hate classifiers is Kennedy
+et al. (2020); the difference here is the comparison across model families
+and the intervention of section 8.2. Ranking the eight techniques by RQ2 identity-term
 share (Table 4) and by FPR ratio (Table 7) gives Spearman rho = 0.83 [C630] at
 n = 8 [C631] (leave-one-out 0.74 [C634] to 0.95 [C635]; Holm p over the two
 preregistered rows 0.034 [C655], from which no inference is drawn at this n).
