@@ -297,8 +297,10 @@ Conventions:
   *Explainable AI: Interpreting, Explaining and Visualizing Deep Learning*,
   LNCS, pp. 267-280. DOI 10.1007/978-3-030-28954-6_14.
   *Relation:* attributions can change under input shifts that do not change
-  the model's function. This is a caution on the transformer instability in
-  RQ3 (test/validation top-50 overlap of 0.18 to 0.22).
+  the model's function. It is a general caution on how reliable attribution
+  rankings are. (RQ3's low test/validation top-50 overlap for the
+  transformers, 0.18 to 0.22, comes from different post samples, not from
+  such shifts, so this paper does not explain it.)
 * **Jain, S., Wallace, B. C. (2019).** Attention is not Explanation.
   *NAACL 2019*. DOI 10.18653/v1/N19-1357.
   *Relation:* the reason we do not use attention weights as a second
@@ -357,8 +359,9 @@ Conventions:
   *Relation:* defines comprehensiveness and sufficiency (the probability
   change when the top-k tokens are removed or kept alone). These can be
   computed from our restored predictors and attribution runs, and are the
-  natural faithfulness metric for RQ2's top words. WP7 is already a
-  comprehensiveness test restricted to identity terms.
+  natural faithfulness metric for RQ2's top words. WP7 is
+  comprehensiveness-like, but its deletion set is defined by the identity
+  lexicon rather than by attribution rank.
 * **Jacovi, A., Goldberg, Y. (2020).** Towards Faithfully Interpretable NLP
   Systems: How Should We Define and Evaluate Faithfulness? *ACL 2020*.
   ACL Anthology 2020.acl-main.386. arXiv:2004.03685.
