@@ -699,8 +699,13 @@ category, changes form, repeats the source's group or uses an ambiguous
 term. It verifies each restored predictor against the committed artifact
 before scoring. It writes `identity_swap_test.json` per technique,
 `rq/rq4_identity_swap.csv` and the descriptive
-`rq/rq4_identity_swap_directions.csv`. The interpretation is pending author
-review and is not yet folded into section 3 or the results draft.
+`rq/rq4_identity_swap_directions.csv`. The authors adopted the cautious
+reading on 2026-11-04 (`docs/DECISIONS_NEEDED.md`, decision 5): substitution
+is the stricter control; the classical models weigh identity terms under
+every edit; the transformers respond to a group being named rather than
+which group, and part of their removal effect may be the loss of a noun. The
+paper does not claim the transformers treat identity terms as evidence of
+extremism. Folding WP7b into the results draft is pending.
 
 *Results, descriptive, with the preregistered rule applied as written.*
 Here delta is p(extremist) before minus after the edit, and p values are
@@ -792,7 +797,10 @@ descriptive.
 **Reliance (RQ2, RQ3).** A category share is reported only with its
 across-run standard deviation from `rq3_stability.csv`. A difference in
 share between two techniques is described as a difference only if it exceeds
-the pooled across-run standard deviation of the two. Top-K is 50 throughout;
+the pooled across-run standard deviation of the two. This preregistered rule
+stays the primary criterion (author decision, 2026-11-04); the post-level
+bootstrap intervals (`rq2_bootstrap_category_shares.csv`) are reported next
+to it as a stricter check, and the paper says which differences pass both. Top-K is 50 throughout;
 changing it re-runs everything and is stated. Runs are compared only when
 they explain the same number of posts with the same evaluation budget; the
 sidecar records both. Multi-word lexicon entries
@@ -850,16 +858,20 @@ Not part of this paper, and not to be started on this branch of work:
 
 ## 7. Open decisions for the authors
 
-Each of these changes an artifact and must be settled before the package
-that depends on it closes.
-
-| Decision | Blocks | Default if not decided |
-|---|---|---|
-| Source lexicon for `slurs.txt` | WP3 | Not populated; RQ2 slur column reported as unavailable and the limitation stated. |
-| ~~SHAP background size and seeds for the second runs~~ | WP4 | Decided 2026-10-02: the text masker uses no background sample; run 2 explains the validation split with the same seed; transformer families explain 200 posts per split. |
-| Whether notebook 12 also gets a large-scale twin | WP4 | No. One control is enough for the lineage question. |
-| Whether per-member runs for 11 include the excluded DeBERTa member | WP4 | No. Excluded members are not part of the ensemble's reliance. |
-| Holm family for RQ1: all 36 pairs or only the 8 pairs against 07 | WP5 | All pairs reported; the 07 column highlighted. |
+All open decisions were settled on 2026-11-04; `docs/DECISIONS_NEEDED.md`
+records each with its context and the option chosen. In short: slurs from
+HurtLex (conservative level, English slur categories, source and licence
+recorded in `data/lexicons/README.md`); identity list gains only terms with
+support >= 3 (currently `aliens`), ambiguous entries kept and reported via
+the sensitivity check; the section 5 share rule stays primary with the
+bootstrap reported alongside; notebook 12 will be run by the authors; WP7
+and WP7b take the cautious reading; WP10 uses an open-weight model on a
+Kaggle GPU, so no dataset text leaves the authors' control; WP9 probes are
+done now (notebook written locally, run on Kaggle); report-card slurs are
+redacted in figures only; the SHAP check keeps its preregistered rule;
+external assets are uploaded before submission. Earlier decisions (SHAP
+background, notebook 12 twin, DeBERTa member, RQ1 Holm family) stand as
+recorded in the git history of this section.
 
 ## 8. Order of execution
 

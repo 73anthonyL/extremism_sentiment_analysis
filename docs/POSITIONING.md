@@ -165,5 +165,7 @@ context (6).
 * **WP8. Framework entry point and report card (local).** Closed
   2026-11-04: `tools/audit.py` and `docs/FRAMEWORK.md`.
 * **WP9. Layer-wise probes on the transformer members (Kaggle GPU).**
-* **WP10. Zero-shot LLM comparison with self-explanation (author decision on
-  data sharing first).**
+  Approved 2026-11-04: the notebook is written locally and run on Kaggle.
+* **WP10. Zero-shot LLM comparison with self-explanation.** Approved
+  2026-11-04 with an open-weight model on a Kaggle GPU; no dataset text is
+  sent to a hosted API.
