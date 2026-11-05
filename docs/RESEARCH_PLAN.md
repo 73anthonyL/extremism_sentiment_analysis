@@ -1,6 +1,6 @@
 # Research plan
 
-Status as of 2026-11-04 (WP0, WP1, WP2 and WP7 closed). This is the working plan for the paper. It says what
+Status as of 2026-11-04 (WP0, WP1, WP2, WP7 and WP8 closed). This is the working plan for the paper. It says what
 the paper claims, which research question each piece of work serves, what
 exists today, what is missing, in what order the gaps get closed, and what
 rule decides when each question is answered. Update it when a work package
@@ -221,6 +221,24 @@ Other facts that shape the order of work:
   of extremism whatever the label, and removing them trades false positives
   for recall. Substitution with a control panel is a sensitivity check;
   the per-model counts, the panel and the limits are under WP7.
+* **The framework has one entry point** (WP8, 2026-11-04).
+  `tools/audit.py` checks a technique against the contract
+  (`check-contract`), runs the documented tool chain in order and stops at
+  the first failing stage (`run`), and writes one text-free report card per
+  technique to `results_summary/rq/report_cards/` (`report`). Running it on
+  `01_LOG-REG_TF-IDF` against the committed state reproduces every committed
+  table, coefficient check and card byte for byte, so the chain is
+  deterministic. The coefficient checks cover every whole-model run of 01
+  and 06 (test and validation, four files); each now also records the
+  Spearman over words with support >= 2 as a diagnostic (01: 0.932 / 0.939,
+  06: 0.873 / 0.864), with the preregistered pass rule unchanged, so 01
+  passes and 06 stays the WP2 calibration point. A FAIL on the anchor 01
+  stops the chain; a FAIL on any other technique is recorded on its card,
+  whose RQ2 section then rules out a cross-model claim on its words. A
+  technique with `in_comparison: false` gets its own Holm family and is kept
+  out of the comparison tables and the rendered docs, so auditing a new
+  classifier leaves the eight-technique results unchanged. The user guide
+  is `docs/FRAMEWORK.md`.
 * **Every technique has its attribution runs.** Two whole-model SHAP runs
   per technique (test and validation samples), and one test run per
   admitted member of 11 (`A_anchor`, `B_dynabench`, `C_hatebert`,
