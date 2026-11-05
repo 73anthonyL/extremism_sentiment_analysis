@@ -2,26 +2,29 @@
 
 A running record of work done without a human in the loop, newest first.
 Each entry says what was done, on which branch, what was checked, and what
-comes next. Nothing in this log has been pushed; the author reviews and
-pushes. Work that needs an author decision, a Kaggle GPU, or sending
-dataset text to an external API is listed under "Blocked" and not attempted.
+comes next. Work is done on local branches and merged into
+`research/integration`; the author decides when it is pushed. Work that
+needs an author decision, a Kaggle GPU, or sending dataset text to an
+external API is listed under "Blocked" and not attempted.
 
 ## Blocked on the author
 
-* WP3: the slur lexicon source (`data/lexicons/slurs.txt` is empty) and the
-  identity-list review. Candidates are in
-  `results_summary/rq/rq2_identity_lexicon_gaps_sensitivity.csv`. RQ2-RQ4
-  category results stay provisional until the lists are frozen.
-* Running notebook 12 on Kaggle (RQ3 plain RoBERTa control). Note: it grows
-  the RQ1 Holm family from 28 to 36 and will very likely cost 01 vs 11 its
-  significance.
-* WP9 probes (Kaggle GPU) and WP10 zero-shot LLM baseline (data-sharing
-  decision).
-* Whether section 5's share-difference rule should use the bootstrap SD
-  (`rq2_bootstrap_category_shares.csv`) instead of the two-run SD.
-* Whether report cards may print a slur verbatim; whether support >= 2
-  becomes the SHAP pass rule; dropping `--primed` from the CLAUDE.md
-  pre-commit list now that notebooks carry outputs.
+All twelve open decisions were settled on 2026-11-04 (`docs/DECISIONS_NEEDED.md`).
+Remaining author actions: run notebook 12, the WP9 probe notebook and the
+WP10 open-weight LLM notebook on Kaggle; upload external assets before
+submission.
+
+## 2026-11-04 — Author decisions recorded; PR #22 merged; integration pushed
+
+The authors settled all twelve decisions (interview, 2026-11-04). Recorded
+in `docs/DECISIONS_NEEDED.md`, `docs/RESEARCH_PLAN.md` sections 5 and 7 and
+WP7b, and `docs/POSITIONING.md` (WP9, WP10). The local CLAUDE.md checklist
+drops `--primed` for the all-notebook check and adds `check_claims.py`.
+PR #22 was merged into main; `research/integration` was merged with
+`origin/main`, checked (529 tests, check_claims OK) and pushed as one PR.
+
+Next: WP3 (HurtLex slurs, `aliens`, freeze, full re-run) and the WP9 and
+WP10 notebooks.
 
 ## 2026-11-04 — Citations in the Results draft
 
