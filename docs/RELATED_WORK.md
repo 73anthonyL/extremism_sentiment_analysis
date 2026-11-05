@@ -365,8 +365,10 @@ Conventions:
   *Relation:* compares explainers across architectures on agreement with
   humans, faithfulness and consistency. It is the closest methodological
   precedent for a cross-architecture attribution comparison (RQ2, RQ3). It
-  holds the task fixed and varies the explainer, while we hold the explainer
-  fixed and vary the model.
+  varies both the explainer and the (neural) architecture, but its aim is to
+  evaluate the explainers. We fix one explainer and ask how reliance differs
+  across model families, including non-neural TF-IDF and fastText models and
+  several pretraining lineages.
 * **Ding, S., Koehn, P. (2021).** Evaluating Saliency Methods for Neural
   Language Models. *NAACL-HLT 2021*. DOI 10.18653/v1/2021.naacl-main.399.
   *Relation:* evaluates saliency on plausibility and faithfulness, including
@@ -675,8 +677,12 @@ one attribution method (Lundberg and Lee 2017, Partition/Owen values), which
 is first checked against known linear coefficients (cf. Adebayo et al.
 2018). Their word-level reliance is compared across families (RQ2) and
 across pretraining lineages and pooling (RQ3). Prior cross-method studies
-held the model fixed and varied the explainer (Atanasova et al. 2020;
-Krishna et al. 2024); we hold the explainer fixed and vary the model. Because
+were designed to evaluate explainers: Atanasova et al. (2020) varied both
+explainers and neural architectures to judge the explainers, and Krishna et
+al. (2024) measured how far explainers disagree on the same model. We fix one
+explainer and use it to ask how reliance differs across model families,
+including non-neural TF-IDF and fastText models, and across pretraining
+lineages. Because
 Shapley-based attributions are not causal by themselves (Kumar et al. 2020;
 Slack et al. 2020), RQ4's correlation is followed by an input-level
 intervention (WP7) in the line of counterfactual token fairness and
