@@ -25,7 +25,80 @@
   },
   "committed_hashed_utc": "2026-11-05T09:31:19+00:00",
   "created_utc": "2026-10-08T16:37:58+00:00",
-  "external_assets": [],
+  "external_assets": [
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-03-slp-tf-idf-external/v1/attributions_local/shap-partition_test_seed30.csv",
+      "sha256": "0a01cab39b2373cc1d4e532a064a7396300541bfadafd86345a5a861b6d3b55f",
+      "size_bytes": 392911
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-03-slp-tf-idf-external/v1/attributions_local/shap-partition_validation_seed30.csv",
+      "sha256": "a72e5e7b302e344d17f21ddd2ea545e9912fefe7bf0987cacfa01f182eaf6375",
+      "size_bytes": 402102
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-03-slp-tf-idf-external/v1/plots/diagnostics_test.png",
+      "sha256": "5929e12e85667c828f18ba7b2d9e76c879c9c239016979f4abeb962f635f0999",
+      "size_bytes": 161339
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "predictions_with_text",
+      "location": "kaggle://datasets/anthony73/esa-03-slp-tf-idf-external/v1/predictions/predictions_test.csv",
+      "sha256": "45e9a1325d2fd429a8dd56e95268e4c346ec06645b9798537703b90729e62bdf",
+      "size_bytes": 79663
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "predictions_with_text",
+      "location": "kaggle://datasets/anthony73/esa-03-slp-tf-idf-external/v1/predictions/predictions_validation.csv",
+      "sha256": "9dd5b339adb626703971cf4885b3b8d931b5a2eba2d7d5a4fa273b9a8e452420",
+      "size_bytes": 83989
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "training_log",
+      "location": "kaggle://datasets/anthony73/esa-03-slp-tf-idf-external/v1/training_logs/training_history.csv",
+      "sha256": "efcd83f63b8a2796e8ed89e60955b791eb25989342ffa2100e4226817c85e98c",
+      "size_bytes": 991
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-03-slp-tf-idf-external/v1/weights/slp_state_dict.pt",
+      "sha256": "bb2ad82e74c9233c5e902b4715611c49b2cb8f2bb38d19b0e688ef4c79d9c506",
+      "size_bytes": 82013
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-03-slp-tf-idf-external/v1/weights/vectorizer.joblib",
+      "sha256": "f682b5323f5d9d2cff1b0db97db2c83afa79591909c252906aa3a74992029c0f",
+      "size_bytes": 799612
+    }
+  ],
   "run_id": "03_SLP_TF-IDF_20261008T082623Z",
   "source": {
     "git_commit": "6875c59b",

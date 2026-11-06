@@ -40,7 +40,611 @@
   },
   "committed_hashed_utc": "2026-11-05T09:31:19+00:00",
   "created_utc": "2026-10-08T15:51:56+00:00",
-  "external_assets": [],
+  "external_assets": [
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/attributions_local/shap-partition_test_seed30.csv",
+      "sha256": "d83df2fc5b2148233f0a348560912fffd9cf69424b2f706cb8881b964add143c",
+      "size_bytes": 184695
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/attributions_local/shap-partition_test_seed30_member-A_anchor.csv",
+      "sha256": "3567b65b8892e3383a4f11272192d11d398d78adae672cd17ecb0b658431cf04",
+      "size_bytes": 183510
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/attributions_local/shap-partition_test_seed30_member-B_dynabench.csv",
+      "sha256": "eb8cdbd72a144e87bced67ba35d452a7a63ed8fd5ca61fd56dcd169f2d7bfdb1",
+      "size_bytes": 184542
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/attributions_local/shap-partition_test_seed30_member-C_hatebert.csv",
+      "sha256": "18294c26c62aac5accd419f63cb086038adbe130d285c51526298af89243cc08",
+      "size_bytes": 183817
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/attributions_local/shap-partition_test_seed30_member-E_twitter_large.csv",
+      "sha256": "5e7d684d366bf73f86c7c1ac65b3233adb91e01befb94d0c222e5ba31031346c",
+      "size_bytes": 184926
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/attributions_local/shap-partition_validation_seed30.csv",
+      "sha256": "c0c31e54a94b694f7de28b30bc8c7ec7020e06aec598e858d5326abfbb5faa59",
+      "size_bytes": 180538
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/plots/diagnostics_test.png",
+      "sha256": "ce0cd81bd5c59206cec623c6621f8c21ea5d1c8e911d0f565a0058be40f2f7ed",
+      "size_bytes": 165612
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "predictions_with_text",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/predictions/predictions_test.csv",
+      "sha256": "c0c19bea494ebbf30c07334ed6064f743bfb461e114b6f94ef54620c4055032f",
+      "size_bytes": 79528
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "predictions_with_text",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/predictions/predictions_validation.csv",
+      "sha256": "6b9d8c3e7a1c7e8299b58c7f63434359d76a074444670545406119fb372672fd",
+      "size_bytes": 83857
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/probs_members/11_MULTI-CHECKPOINT_LOGIT-POOL__member-A_anchor__test.csv",
+      "sha256": "1cc9f0391859df3fc7ace3d1da9399683e9a5267bec258666e60e347a948fb47",
+      "size_bytes": 16862
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/probs_members/11_MULTI-CHECKPOINT_LOGIT-POOL__member-A_anchor__validation.csv",
+      "sha256": "4ff626a27f7e3018533619c60a89106fc88fd16e485cf229ad2199e8a9e77ffb",
+      "size_bytes": 19504
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/probs_members/11_MULTI-CHECKPOINT_LOGIT-POOL__member-B_dynabench__test.csv",
+      "sha256": "297e2c3adb0e25edbb7c8052331afa245392773030574c7a9117da2ec0a0ac33",
+      "size_bytes": 16817
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/probs_members/11_MULTI-CHECKPOINT_LOGIT-POOL__member-B_dynabench__validation.csv",
+      "sha256": "c4954187fd4385fc3b80d75afaef939c85ba0e1d6cb4831a8037aba5bd96e0b3",
+      "size_bytes": 19479
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/probs_members/11_MULTI-CHECKPOINT_LOGIT-POOL__member-C_hatebert__test.csv",
+      "sha256": "6fb33deef8a8a9cbb1a16326c264d6d935f62215563ee200a51b60a3fe07a1aa",
+      "size_bytes": 16531
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/probs_members/11_MULTI-CHECKPOINT_LOGIT-POOL__member-C_hatebert__validation.csv",
+      "sha256": "01d9211f23c8e7de880668f09416c979ec60ee86402af42bf9900f5e74c135ed",
+      "size_bytes": 19244
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/probs_members/11_MULTI-CHECKPOINT_LOGIT-POOL__member-E_twitter_large__test.csv",
+      "sha256": "59ad370fd38dafaed2e9a92a13947dc364663b1918631d5d567157fdea3f5454",
+      "size_bytes": 16599
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/probs_members/11_MULTI-CHECKPOINT_LOGIT-POOL__member-E_twitter_large__validation.csv",
+      "sha256": "b12b1b5d68139d859c2a85a5f360ade4db61ef59ca6759ac068d43a126a3d4d5",
+      "size_bytes": 19271
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/tokenizer/A_anchor/tokenizer.json",
+      "sha256": "560365f2381ba199753066e702e3bd95648eaaa91cbb1db639729dcdca3873ed",
+      "size_bytes": 3558900
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/tokenizer/A_anchor/tokenizer_config.json",
+      "sha256": "6be3ffb7fbec9e19b12f1ac89e5173161e33da9c1c7925130801b86562671db9",
+      "size_bytes": 399
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/tokenizer/B_dynabench/tokenizer.json",
+      "sha256": "560365f2381ba199753066e702e3bd95648eaaa91cbb1db639729dcdca3873ed",
+      "size_bytes": 3558900
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/tokenizer/B_dynabench/tokenizer_config.json",
+      "sha256": "4903bcd294e8ff8b840eb9c21909d2f910b466d250ac6e298a7438a7da63ef0d",
+      "size_bytes": 359
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/tokenizer/C_hatebert/tokenizer.json",
+      "sha256": "1df3266d8f29dd3afdf73a9ee31322104ff93f8575a6bae998be07284b792e89",
+      "size_bytes": 711649
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/tokenizer/C_hatebert/tokenizer_config.json",
+      "sha256": "9343e81d3bcfde02750a2deeeca7ccbf5c5d728ef14d93ffa867c5e679700752",
+      "size_bytes": 340
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/tokenizer/D_deberta/tokenizer.json",
+      "sha256": "92b29b3a1355591739dde8b70f58c3b721e5f2e877a5b73bce849538ce9c3773",
+      "size_bytes": 8339346
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/tokenizer/D_deberta/tokenizer_config.json",
+      "sha256": "7931febe14783fb3e26ca14599a0fee4faac0284b7f94094e559d0bbcd8bfe3d",
+      "size_bytes": 509
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/tokenizer/E_twitter_large/tokenizer.json",
+      "sha256": "560365f2381ba199753066e702e3bd95648eaaa91cbb1db639729dcdca3873ed",
+      "size_bytes": 3558900
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/tokenizer/E_twitter_large/tokenizer_config.json",
+      "sha256": "93fd8a8a721ec67d8e91d2f6d2caea2d8c65da94059d954ea596d614334b7016",
+      "size_bytes": 506
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/tokenizer/F_anchor_fgm/tokenizer.json",
+      "sha256": "560365f2381ba199753066e702e3bd95648eaaa91cbb1db639729dcdca3873ed",
+      "size_bytes": 3558900
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/tokenizer/F_anchor_fgm/tokenizer_config.json",
+      "sha256": "6be3ffb7fbec9e19b12f1ac89e5173161e33da9c1c7925130801b86562671db9",
+      "size_bytes": 399
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "training_log",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/training_logs/run_summary.csv",
+      "sha256": "c1e4a5852505222e96759734341c87eac90c8fa0a107eb04542905d5e035e689",
+      "size_bytes": 2542
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "training_log",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/training_logs/training_history.csv",
+      "sha256": "b3e2c1fd70cb780ac4bafff3b79a3fb49e960b90ca68fc472df875df59c24dc0",
+      "size_bytes": 8231
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-A_anchor-seed17/config.json",
+      "sha256": "43929ca21168949ffe6cfd8a792de1d7f9d96d2e44ec1f6bdb86942cbcf0d316",
+      "size_bytes": 911
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-A_anchor-seed17/model.safetensors",
+      "sha256": "e62c0aa2c5f0bc2a1704d6f8b164fe769c6a307b8028a6e9624cd8022f7550c8",
+      "size_bytes": 249318404
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-A_anchor-seed30/config.json",
+      "sha256": "43929ca21168949ffe6cfd8a792de1d7f9d96d2e44ec1f6bdb86942cbcf0d316",
+      "size_bytes": 911
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-A_anchor-seed30/model.safetensors",
+      "sha256": "c09e8b1d5a5b234a229f97838e5326b5d8ed86b0926ea996ce2416bff9177df2",
+      "size_bytes": 249318404
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-A_anchor-seed73/config.json",
+      "sha256": "43929ca21168949ffe6cfd8a792de1d7f9d96d2e44ec1f6bdb86942cbcf0d316",
+      "size_bytes": 911
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-A_anchor-seed73/model.safetensors",
+      "sha256": "294641accf69a275cefc23a6aa9125d09cde5959204e327e10c3b3c59e77fb5e",
+      "size_bytes": 249318404
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-B_dynabench-seed17/config.json",
+      "sha256": "5fa44cc11dcc840b55e23f6cb7a9b7a89accc3caee40f92bf7402bfb97fe6f11",
+      "size_bytes": 946
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-B_dynabench-seed17/model.safetensors",
+      "sha256": "a3cb7c21319b9290f2ad54a9dccd7ada43ab75679f115faf9b1fcb6fa6a5952e",
+      "size_bytes": 249318404
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-B_dynabench-seed30/config.json",
+      "sha256": "5fa44cc11dcc840b55e23f6cb7a9b7a89accc3caee40f92bf7402bfb97fe6f11",
+      "size_bytes": 946
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-B_dynabench-seed30/model.safetensors",
+      "sha256": "4fef40aff7ac44224aeb3d85e7528dc31022062555341536fced8145fc125772",
+      "size_bytes": 249318404
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-B_dynabench-seed73/config.json",
+      "sha256": "5fa44cc11dcc840b55e23f6cb7a9b7a89accc3caee40f92bf7402bfb97fe6f11",
+      "size_bytes": 946
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-B_dynabench-seed73/model.safetensors",
+      "sha256": "f6a477f6b9c78fe5cf3b963ef545c4254dc683d141d560959d7a3645e4731783",
+      "size_bytes": 249318404
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-C_hatebert-seed17/config.json",
+      "sha256": "285a9c37c286d9ddfb8a7c0ffdee231b5508b3542dd8f52b6dbf2fc3d8ad3a4c",
+      "size_bytes": 1046
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-C_hatebert-seed17/model.safetensors",
+      "sha256": "6e1a212e353e226feb1201653c7843273a37b8b6a6378133ce70926bd109ee36",
+      "size_bytes": 218990948
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-C_hatebert-seed30/config.json",
+      "sha256": "285a9c37c286d9ddfb8a7c0ffdee231b5508b3542dd8f52b6dbf2fc3d8ad3a4c",
+      "size_bytes": 1046
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-C_hatebert-seed30/model.safetensors",
+      "sha256": "ace5df503dbf114928e2f6aa90273a266836631fe51be99a2e6a010bbe2fbcee",
+      "size_bytes": 218990948
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-C_hatebert-seed73/config.json",
+      "sha256": "285a9c37c286d9ddfb8a7c0ffdee231b5508b3542dd8f52b6dbf2fc3d8ad3a4c",
+      "size_bytes": 1046
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-C_hatebert-seed73/model.safetensors",
+      "sha256": "55a84fce0a493583fea58a4401cb104933bb83ec268cf1767273f2d7fa875d4b",
+      "size_bytes": 218990948
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-D_deberta-seed17/config.json",
+      "sha256": "7d4e5af5da6509adf9b186bd2ce6a99448e38f1062f1bf256832769bd351d1ae",
+      "size_bytes": 1054
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-D_deberta-seed17/model.safetensors",
+      "sha256": "081b81e123bdba36aa4c1df6d9c97f5e1987100a6ed953b0e882f2b10e21c6ff",
+      "size_bytes": 368871884
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-D_deberta-seed30/config.json",
+      "sha256": "7d4e5af5da6509adf9b186bd2ce6a99448e38f1062f1bf256832769bd351d1ae",
+      "size_bytes": 1054
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-D_deberta-seed30/model.safetensors",
+      "sha256": "6bb232a50927ac8e060939eaf6cde58db853aef0f775ab6cd868e8ef9ae8475d",
+      "size_bytes": 368871884
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-D_deberta-seed73/config.json",
+      "sha256": "7d4e5af5da6509adf9b186bd2ce6a99448e38f1062f1bf256832769bd351d1ae",
+      "size_bytes": 1054
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-D_deberta-seed73/model.safetensors",
+      "sha256": "7149cb05184d085dfe6bf1da27a32a66e2f1c51c12692fcac0ab56e53ceb9c9b",
+      "size_bytes": 368871884
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-E_twitter_large-seed17/config.json",
+      "sha256": "5436090dd10c0b63aa8eb124b60c14daa96e2380b0a3a42c03cdec2ae931edf9",
+      "size_bytes": 912
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-E_twitter_large-seed17/model.safetensors",
+      "sha256": "bb61850e3dfc79933d9a84822555cb3e2dd923898b7e1ff1bed78ff320a41fe1",
+      "size_bytes": 710771508
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-E_twitter_large-seed30/config.json",
+      "sha256": "5436090dd10c0b63aa8eb124b60c14daa96e2380b0a3a42c03cdec2ae931edf9",
+      "size_bytes": 912
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-E_twitter_large-seed30/model.safetensors",
+      "sha256": "a97938dad10d411c6b7b49636c3c421b0727ffe45409986df83a7c05d89cc07c",
+      "size_bytes": 710771508
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-E_twitter_large-seed73/config.json",
+      "sha256": "5436090dd10c0b63aa8eb124b60c14daa96e2380b0a3a42c03cdec2ae931edf9",
+      "size_bytes": 912
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-E_twitter_large-seed73/model.safetensors",
+      "sha256": "86dd20670a01c45b33b221aa1d64433513977ec650b3bc2653a9bab362a0dcb0",
+      "size_bytes": 710771508
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-F_anchor_fgm-seed17/config.json",
+      "sha256": "43929ca21168949ffe6cfd8a792de1d7f9d96d2e44ec1f6bdb86942cbcf0d316",
+      "size_bytes": 911
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-F_anchor_fgm-seed17/model.safetensors",
+      "sha256": "5f52f32577f25fc5917c572e7cf7c04705273bc5308d231965dcb8b8ca82cd50",
+      "size_bytes": 249318404
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-F_anchor_fgm-seed30/config.json",
+      "sha256": "43929ca21168949ffe6cfd8a792de1d7f9d96d2e44ec1f6bdb86942cbcf0d316",
+      "size_bytes": 911
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-F_anchor_fgm-seed30/model.safetensors",
+      "sha256": "022b3bba736f63927ff088a3e2ec9d4f61c24b8aa1ebaf89417db5c879e546cf",
+      "size_bytes": 249318404
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-F_anchor_fgm-seed73/config.json",
+      "sha256": "43929ca21168949ffe6cfd8a792de1d7f9d96d2e44ec1f6bdb86942cbcf0d316",
+      "size_bytes": 911
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-11-multi-checkpoint-logit-pool-external/v1/weights/member-F_anchor_fgm-seed73/model.safetensors",
+      "sha256": "a7ac0ffe39c960ecbe921bdebf2c9c3101220dae217c70bc72599e3f4d37011b",
+      "size_bytes": 249318404
+    }
+  ],
   "run_id": "11_MULTI-CHECKPOINT_LOGIT-POOL_20261008T093502Z",
   "source": {
     "git_commit": "cabcc15a",
