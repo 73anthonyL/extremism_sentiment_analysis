@@ -25,7 +25,116 @@
   },
   "committed_hashed_utc": "2026-11-05T09:31:19+00:00",
   "created_utc": "2026-10-08T16:37:59+00:00",
-  "external_assets": [],
+  "external_assets": [
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-07-twitter-roberta-fine-tune-external/v1/attributions_local/shap-partition_test_seed30.csv",
+      "sha256": "b9c0ff408d64c970927f6069c316837858b51e40b04e6d61f8989b492c4d537a",
+      "size_bytes": 183166
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-07-twitter-roberta-fine-tune-external/v1/attributions_local/shap-partition_validation_seed30.csv",
+      "sha256": "24ee6c52db5fd34344590ec354dc195dd37aa3f60637ecbc59366b8baca8af03",
+      "size_bytes": 179298
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-07-twitter-roberta-fine-tune-external/v1/auxiliary/gradient_x_embedding_words_test.csv",
+      "sha256": "3e99040d3df7a67a63675b12dc8cc4ead1aada1d4dfea46666d727e7530bf163",
+      "size_bytes": 72040
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-07-twitter-roberta-fine-tune-external/v1/plots/diagnostics_test.png",
+      "sha256": "c5755aeca08f6d4c4d167a1a9b401836390b545e60d22b6238d2d014173f4353",
+      "size_bytes": 177724
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "predictions_with_text",
+      "location": "kaggle://datasets/anthony73/esa-07-twitter-roberta-fine-tune-external/v1/predictions/predictions_test.csv",
+      "sha256": "e73da8c3bfcb4684bad92e0b1f50a201a74de10cbee7977f9195372e2530a575",
+      "size_bytes": 80573
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "predictions_with_text",
+      "location": "kaggle://datasets/anthony73/esa-07-twitter-roberta-fine-tune-external/v1/predictions/predictions_validation.csv",
+      "sha256": "32475649d6cd27e196a54bf3c80e33600a068d884e1ea15dcd76442f7e4146f4",
+      "size_bytes": 84884
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-07-twitter-roberta-fine-tune-external/v1/tokenizer/tokenizer.json",
+      "sha256": "560365f2381ba199753066e702e3bd95648eaaa91cbb1db639729dcdca3873ed",
+      "size_bytes": 3558900
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "tokenizer",
+      "location": "kaggle://datasets/anthony73/esa-07-twitter-roberta-fine-tune-external/v1/tokenizer/tokenizer_config.json",
+      "sha256": "6be3ffb7fbec9e19b12f1ac89e5173161e33da9c1c7925130801b86562671db9",
+      "size_bytes": 399
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "training_log",
+      "location": "kaggle://datasets/anthony73/esa-07-twitter-roberta-fine-tune-external/v1/training_logs/ablation_training_history.csv",
+      "sha256": "3423872ae18e667f9c6326fc972c0e38f12e5cd14c7cf66d0287acc95c29dc38",
+      "size_bytes": 1848
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "training_log",
+      "location": "kaggle://datasets/anthony73/esa-07-twitter-roberta-fine-tune-external/v1/training_logs/final_training_history.csv",
+      "sha256": "b6ae4dd77ff9e06ff8985281d9b3ac04d0585531ebc80e50fecc07a3ba2db0e1",
+      "size_bytes": 378
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-07-twitter-roberta-fine-tune-external/v1/weights/transformer_model/config.json",
+      "sha256": "799c394523f2771f58b6917991fa399cd8fa0cdfda059252125abf3ee7be34c4",
+      "size_bytes": 911
+    },
+    {
+      "added_utc": "2026-11-06T22:40:30+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-07-twitter-roberta-fine-tune-external/v1/weights/transformer_model/model.safetensors",
+      "sha256": "f94703c768db32d895a2231b428001a1d2b58f8f8d9c8a5a9f11965746ed7c39",
+      "size_bytes": 498612800
+    }
+  ],
   "run_id": "07_TWITTER-ROBERTA_FINE-TUNE_20261008T082627Z",
   "source": {
     "git_commit": "fc76ab03",

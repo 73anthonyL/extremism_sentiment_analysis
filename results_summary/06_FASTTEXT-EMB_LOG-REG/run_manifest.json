@@ -27,7 +27,89 @@
   },
   "committed_hashed_utc": "2026-11-05T09:31:19+00:00",
   "created_utc": "2026-10-08T16:37:59+00:00",
-  "external_assets": [],
+  "external_assets": [
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-06-fasttext-emb-log-reg-external/v1/attributions_local/shap-partition_test_seed30.csv",
+      "sha256": "5db24ab35d90e8537302005aa1f9ebfea9f68c65eec16dd60e914946a9cc0b47",
+      "size_bytes": 397009
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-06-fasttext-emb-log-reg-external/v1/attributions_local/shap-partition_validation_seed30.csv",
+      "sha256": "ff59863066fdbfbc6463c6e91ca216411c12e23deb156c8b1652f905742abc07",
+      "size_bytes": 406193
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-06-fasttext-emb-log-reg-external/v1/plots/diagnostics_test.png",
+      "sha256": "9ca820dd03cc286ab1d2edd6cc86cbe05b62e9ee7884cab82b19171b27d39e34",
+      "size_bytes": 170055
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "predictions_with_text",
+      "location": "kaggle://datasets/anthony73/esa-06-fasttext-emb-log-reg-external/v1/predictions/predictions_test.csv",
+      "sha256": "99b2aadb173171b4dfe18418526b8087a05d0ad9be4d69d61160cc0077793cc2",
+      "size_bytes": 79338
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "predictions_with_text",
+      "location": "kaggle://datasets/anthony73/esa-06-fasttext-emb-log-reg-external/v1/predictions/predictions_validation.csv",
+      "sha256": "bfc8328c9935f59f8daa8ab35792edc2c2cd3398072ac73fc96948e7f221e9f4",
+      "size_bytes": 83656
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-06-fasttext-emb-log-reg-external/v1/weights/classifier.joblib",
+      "sha256": "9e50818c81c9f0612780b26fe3cfa05169fa6cfa32e7ed32cd2c7b5797af3d5f",
+      "size_bytes": 4545
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-06-fasttext-emb-log-reg-external/v1/weights/fasttext.model",
+      "sha256": "c2d9277b4122176341b15423708f836e3ca2e98ff9f97560e0968a1b44c7ae60",
+      "size_bytes": 5263859
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-06-fasttext-emb-log-reg-external/v1/weights/fasttext.model.wv.vectors_ngrams.npy",
+      "sha256": "28b23973ec9c87293d9f2b14ab3fc334258fe7c1de928fdc090a70d1cacb33bb",
+      "size_bytes": 800000128
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-06-fasttext-emb-log-reg-external/v1/weights/idf_lookup.joblib",
+      "sha256": "dbe1dd46e077e562c83e77b9d0a6ba3e57c41f8b146592d7f5a679f641780a6e",
+      "size_bytes": 183559
+    }
+  ],
   "run_id": "06_FASTTEXT-EMB_LOG-REG_20261008T074721Z",
   "source": {
     "git_commit": "fd5ef337",
