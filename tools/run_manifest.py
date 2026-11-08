@@ -36,7 +36,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from repo_paths import REPO_ROOT, RESULTS_DIR, RUN_MANIFEST_FILENAME, technique_dirs
+from repo_paths import RESULTS_DIR, RUN_MANIFEST_FILENAME, technique_dirs
 
 ASSET_KINDS = (
     "weights",
