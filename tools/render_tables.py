@@ -99,7 +99,7 @@ def macro_f1(metrics):
     for key in ("macro_f1", "f1_macro"):
         if key in metrics:
             return metrics[key]
-    raise SystemExit(f"error: metrics file has neither macro_f1 nor f1_macro")
+    raise SystemExit("error: metrics file has neither macro_f1 nor f1_macro")
 
 
 def load_techniques():

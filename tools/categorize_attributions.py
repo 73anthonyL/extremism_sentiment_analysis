@@ -35,7 +35,6 @@ from repo_paths import (
     CATEGORY_PRECEDENCE,
     DEFAULT_CATEGORY,
     RQ2_CATEGORY_SHARES_CSV,
-    RQ_DIR,
     technique_dirs,
 )
 

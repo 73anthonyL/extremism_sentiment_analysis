@@ -10,7 +10,7 @@ import pytest
 TOOLS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(TOOLS_DIR))
 
-from conftest import FRAMING_WORDS, IDENTITY_WORDS, TOPICAL_WORDS, synthetic_attributions
+from conftest import FRAMING_WORDS, IDENTITY_WORDS, TOPICAL_WORDS
 from attributions import write_run
 from conftest import base_meta
 
