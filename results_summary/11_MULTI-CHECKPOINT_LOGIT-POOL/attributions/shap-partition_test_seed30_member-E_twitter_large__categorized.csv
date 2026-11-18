@@ -1,6 +1,6 @@
 word,mean_abs_attribution,mean_attribution,support,category,matched_categories,abs_mass,positive_mass,rank
 jew,0.67950077,0.67950077,1,identity_term,identity_term,0.67950077,0.67950077,1
-nigger,0.5753064,0.5753064,2,topical,,1.1506128,1.1506128,2
+nigger,0.5753064,0.5753064,2,slur,slur,1.1506128,1.1506128,2
 commie,0.53541539,0.53541539,1,topical,,0.53541539,0.53541539,3
 burn,0.47463352,0.47463352,2,topical,,0.94926704,0.94926704,4
 degenerates,0.47435268,0.47435268,1,topical,,0.47435268,0.47435268,5

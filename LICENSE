@@ -8,3 +8,11 @@ Unless a separate license is added by the authors, no permission is granted to c
 The models, notebooks, and documentation are not intended for production moderation, surveillance, automated decision-making, or operational use.
 
 For citation, see CITATION.cff.
+
+Third-party material: data/lexicons/slurs.txt is derived from HurtLex
+(Bassignana, Basile and Patti, 2018; https://github.com/valeriobasile/hurtlex),
+which is licensed under Creative Commons Attribution-NonCommercial-ShareAlike
+4.0 International (https://creativecommons.org/licenses/by-nc-sa/4.0/). That
+file is distributed under CC BY-NC-SA 4.0 and is excluded from the
+all-rights-reserved terms above. Its source, version and changes are stated in
+its header and in data/lexicons/README.md.

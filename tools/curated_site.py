@@ -112,6 +112,17 @@ FEATURE_WORDS = {
 }
 
 
+def model_words(config):
+    """The model column: the family in words, plus the base checkpoint when the run records one.
+
+    07 and 12 share a model_family and differ only in the checkpoint, so the
+    family alone cannot tell them apart.
+    """
+    words = MODEL_WORDS.get(config.get("model_family"), str(config.get("model_family")))
+    checkpoint = (config.get("hyperparameters") or {}).get("checkpoint")
+    return f"{words} ({checkpoint})" if checkpoint else words
+
+
 class CuratedSiteError(ValueError):
     """The gallery cannot be turned into a faithful static site."""
 
@@ -215,7 +226,7 @@ def method_facts(out_dir, results_dir=RESULTS_DIR, manifest_path=DATASET_MANIFES
         verification = record.get("verification") or {}
         rows.append({
             "technique": technique,
-            "model": MODEL_WORDS.get(config.get("model_family"), str(config.get("model_family"))),
+            "model": model_words(config),
             "features": FEATURE_WORDS.get(config.get("feature_family"), str(config.get("feature_family"))),
             "pretraining": config.get("external_pretraining") or "none",
             "threshold_metric": config.get("threshold_metric"),

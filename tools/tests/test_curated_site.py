@@ -165,6 +165,15 @@ class TestMethodPage:
             build(world)
 
 
+    def test_two_runs_of_one_family_are_told_apart_by_checkpoint(self):
+        family = {"model_family": "fine_tuned_transformer_roberta"}
+        twitter = cs.model_words({**family, "hyperparameters": {"checkpoint": "cardiffnlp/twitter-roberta-base-hate-latest"}})
+        plain = cs.model_words({**family, "hyperparameters": {"checkpoint": "roberta-base"}})
+        assert twitter != plain
+        assert plain == "Fine-tuned RoBERTa (roberta-base)"
+        assert cs.model_words({"model_family": "logistic_regression"}) == "Logistic regression"
+
+
 class TestDatasetPage:
     def test_the_page_its_images_and_every_menu(self, world):
         site = build(world, dataset_dir=write_dataset(world / "dataset"))

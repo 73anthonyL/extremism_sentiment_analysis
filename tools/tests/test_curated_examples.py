@@ -14,6 +14,7 @@ synthetic two-component pool. The pinning tests parse the notebooks and
 compare the constants the loaders reproduce.
 """
 
+import inspect
 import json
 import re
 import sys
@@ -277,12 +278,31 @@ class TestNotebookPins:
         assert 'html.unescape' in source and 'unicodedata.normalize("NFKC"' in source
         assert 'USER_RE.sub("@user"' in source and 'URL_RE.sub("http"' in source
 
+    def test_single_transformer_inference_matches_notebooks_07_and_12(self):
+        """`_load_transformer` serves both notebooks; pin the serving code it reproduces."""
+        loader = inspect.getsource(ml._transformer_probabilities)
+        for needle in ("truncation=True", "padding=True", "max_length=int(max_length)",
+                       "torch.softmax(logits.float(), dim=-1)[:, 1]"):
+            assert needle in loader, f"the loader no longer has {needle}"
+        for name in ("07_TWITTER-ROBERTA_FINE-TUNE.ipynb", "12_ROBERTA-BASE_FINE-TUNE.ipynb"):
+            source = self.notebook_source(name)
+            for needle in (
+                "truncation=True",
+                "padding=True",
+                "max_length=int(max_length)",
+                "torch.softmax(logits.float(), dim=-1)[:, 1]",
+                'predict_proba_model(model, tokenizer, list(texts), best_hyperparameters["max_length"])',
+                '"max_length": [',
+            ):
+                assert needle in source, f"{name} no longer serves with {needle}"
+
     def test_weight_file_names_match_the_notebooks(self):
         expectations = {
             "01_LOG-REG_TF-IDF.ipynb": ['"pipeline.joblib"'],
             "03_SLP_TF-IDF.ipynb": ['"slp_state_dict.pt"', '"vectorizer.joblib"'],
             "06_FASTTEXT-EMB_LOG-REG.ipynb": ['"fasttext.model"', '"classifier.joblib"', '"idf_lookup.joblib"'],
             "07_TWITTER-ROBERTA_FINE-TUNE.ipynb": ['"transformer_model"', 'ctx.external("tokenizer")'],
+            "12_ROBERTA-BASE_FINE-TUNE.ipynb": ['"transformer_model"', 'ctx.external("tokenizer")'],
             "11_MULTI-CHECKPOINT_LOGIT-POOL.ipynb": ['f"member-{component_name}-seed{seed}"', 'ctx.external("tokenizer") / component_name'],
         }
         for name, needles in expectations.items():

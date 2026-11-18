@@ -1,4 +1,70 @@
 {
+  "faithfulness": {
+    "holm_family_size": 32,
+    "in_comparison": true,
+    "n_posts_explained": 450,
+    "n_posts_shared": 200,
+    "n_posts_shared_set": 200,
+    "n_random_seeds": 5,
+    "population": "shared",
+    "rows": [
+      {
+        "drop_minus_random": 0.0176478,
+        "drop_minus_random_flagged": 0.0162411,
+        "drop_over_attributed_topk": 0.663328,
+        "k": 1,
+        "mean_drop_random": 0.00125217,
+        "mean_drop_topk": 0.0188999,
+        "n_flagged": 60,
+        "n_posts": 198,
+        "share_topk_drop_gt_random": 0.984848,
+        "wilcoxon_p_holm": 1.06961e-32
+      },
+      {
+        "drop_minus_random": 0.0404551,
+        "drop_minus_random_flagged": 0.045931,
+        "drop_over_attributed_topk": 0.720261,
+        "k": 3,
+        "mean_drop_random": 0.00596321,
+        "mean_drop_topk": 0.0464183,
+        "n_flagged": 60,
+        "n_posts": 198,
+        "share_topk_drop_gt_random": 0.989899,
+        "wilcoxon_p_holm": 1.10513e-32
+      },
+      {
+        "drop_minus_random": 0.0528562,
+        "drop_minus_random_flagged": 0.0518398,
+        "drop_over_attributed_topk": 0.720724,
+        "k": 5,
+        "mean_drop_random": 0.00852825,
+        "mean_drop_topk": 0.0613844,
+        "n_flagged": 60,
+        "n_posts": 198,
+        "share_topk_drop_gt_random": 0.989899,
+        "wilcoxon_p_holm": 1.10513e-32
+      },
+      {
+        "drop_minus_random": 0.0681378,
+        "drop_minus_random_flagged": 0.0754634,
+        "drop_over_attributed_topk": 0.804276,
+        "k": 10,
+        "mean_drop_random": 0.0189462,
+        "mean_drop_topk": 0.087084,
+        "n_flagged": 60,
+        "n_posts": 198,
+        "share_topk_drop_gt_random": 0.989899,
+        "wilcoxon_p_holm": 1.10513e-32
+      }
+    ],
+    "sources": [
+      "results_summary/03_SLP_TF-IDF/faithfulness_test.json",
+      "results_summary/rq/rq2_faithfulness.csv"
+    ],
+    "status": "run",
+    "threshold": 0.52,
+    "verification_max_abs_diff": 1.19209e-07
+  },
   "generated_by": "tools/audit.py report",
   "rq1": {
     "holm_family_size": 28,
@@ -120,9 +186,7 @@
         "top_k": 50
       }
     ],
-    "empty_lexicon_categories": [
-      "slur"
-    ],
+    "empty_lexicon_categories": [],
     "least_agreeing_by_jaccard": "07_TWITTER-ROBERTA_FINE-TUNE",
     "least_agreeing_by_spearman": "07_TWITTER-ROBERTA_FINE-TUNE",
     "most_agreeing_by_jaccard": "05_WORD-CHAR-TF-IDF_LIN-SVM",
@@ -222,6 +286,21 @@
     ],
     "threshold": 0.52
   },
+  "rq4_ambiguous_terms_sensitivity": {
+    "fisher_p_value": 0.488552,
+    "fpr_ratio": 1.60755,
+    "fpr_with_identity_terms": 0.0754717,
+    "fpr_without_identity_terms": 0.0469484,
+    "n_negative_excluded": 14,
+    "n_negative_with_identity_terms": 53,
+    "n_negative_without_identity_terms": 213,
+    "n_positive_excluded": 24,
+    "n_positive_with_identity_terms": 59,
+    "sources": [
+      "results_summary/rq/rq4_identity_fpr_sensitivity.csv"
+    ],
+    "variant": "exclude_ambiguous_only"
+  },
   "scope": "post-level labels, text-only features, one dataset, 450-row test split",
   "shap_check": {
     "anchor": "01_LOG-REG_TF-IDF",
@@ -258,6 +337,34 @@
     "sources": [
       "results_summary/rq/rq4_identity_counterfactual.csv"
     ],
-    "status": "run"
+    "status": "run",
+    "unambiguous_population": {
+      "rows": [
+        {
+          "mcnemar_p_holm": 1.0,
+          "mean_delta": 0.00266498,
+          "n_flagged_original": 4,
+          "n_flip_neg_to_pos": 1,
+          "n_flip_pos_to_neg": 0,
+          "n_posts": 53,
+          "population": "non_extremist, unambiguous match",
+          "wilcoxon_p_holm": 0.321136
+        },
+        {
+          "mcnemar_p_holm": 1.0,
+          "mean_delta": 0.00936227,
+          "n_flagged_original": 34,
+          "n_flip_neg_to_pos": 2,
+          "n_flip_pos_to_neg": 3,
+          "n_posts": 59,
+          "population": "extremist, unambiguous match",
+          "wilcoxon_p_holm": 0.000349329
+        }
+      ],
+      "sources": [
+        "results_summary/rq/rq4_identity_counterfactual_sensitivity.csv"
+      ],
+      "status": "run"
+    }
   }
 }

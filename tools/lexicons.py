@@ -2,9 +2,11 @@
 
 Format: one entry per line, '#' starts a comment, blank lines ignored,
 matching is case-insensitive. Entries are normalized to lowercase with
-whitespace collapsed. Multi-word entries are kept for phrase matching against
-post text (RQ4) but cannot match a word-level attribution artifact (RQ2); the
-categorizer reports how many it skipped so the gap is visible.
+whitespace collapsed. Entries the word-level masker would split (a space, a
+hyphen or any other non-word character: 'white genocide', 'anti-muslim') are
+kept for phrase matching against post text (RQ4) but cannot match a
+word-level attribution artifact (RQ2); the categorizer reports how many it
+skipped so the gap is visible.
 """
 
 import re
@@ -16,6 +18,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from repo_paths import CATEGORY_PRECEDENCE, LEXICON_FILES
 
 WHITESPACE_RE = re.compile(r"\s+")
+
+# The word-level text masker's split pattern. It must equal
+# notebook_kit.MASKER_PATTERN (pinned by tools/tests/test_lexicon_coverage.py);
+# it is repeated here because notebook_kit deliberately imports nothing from
+# the repository and this module should not import the kit's dependencies.
+MASKER_PATTERN = r"\W+"
 
 
 def normalize_entry(entry):
@@ -42,10 +50,31 @@ def load_lexicons(files=None):
     return {category: read_lexicon(files[category]) for category in CATEGORY_PRECEDENCE}
 
 
+def masker_tokens(entry):
+    """The word tokens the SHAP text masker would cut `entry` into."""
+    return [piece for piece in re.split(MASKER_PATTERN, entry) if piece]
+
+
+def is_word_level(entry):
+    """True if `entry` survives the masker as exactly one token, itself.
+
+    Only such entries can equal a word of a word-level attribution artifact.
+    A space, a hyphen or any other non-word character splits an entry
+    ('white genocide', 'anti-muslim', '9/11'), and an entry of punctuation
+    only yields no token at all; none of these can match.
+    """
+    return masker_tokens(entry) == [entry]
+
+
 def split_by_arity(entries):
-    """Partition entries into (single_words, multi_word_phrases)."""
-    singles = [e for e in entries if " " not in e]
-    phrases = [e for e in entries if " " in e]
+    """Partition entries into (word_level, unmatchable_at_word_level).
+
+    The second list holds every entry the masker would split or erase, not
+    only entries with a space: they can still match post text (RQ4) but can
+    never match a word-level attribution artifact (RQ2).
+    """
+    singles = [e for e in entries if is_word_level(e)]
+    phrases = [e for e in entries if not is_word_level(e)]
     return singles, phrases
 
 

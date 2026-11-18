@@ -18,6 +18,7 @@ sys.path.insert(0, str(TOOLS_DIR))
 import notebook_kit as nk
 from check_notebook import (
     BOOTSTRAP_SNIPPET,
+    PROBE_KIT_SNIPPET,
     ROLE_SECTIONS,
     check_all,
     check_notebook,
@@ -120,6 +121,52 @@ FOUNDATION_CODE = {
 }
 
 
+PROBE_STEM = "13_TRANSFORMER-LAYER-PROBES"
+
+PROBE_CONFIG = '''CONFIG = {
+    "project_name": "extremism_text_classification_comparison",
+    "technique_name": "%(stem)s",
+    "role": "probe",
+    "dataset_version": "extremism_dataset_clean_v1",
+    "split_version": "split_v1_stratified_70_15_15_seed30",
+    "random_seed": 30,
+    "models": [{"model_id": "ft_a"}],
+    "probe": {"pooling": "mean", "c_grid": [0.1], "cv_folds": 5, "cv_seed": 30, "max_iter": 100},
+    "control_task": {"seed": 30},
+    "bootstrap": {"n_resamples": 100, "seed": 30, "ci_level": 0.95},
+    "identity_direction": {"enabled": False},
+    "error_analysis": {"include_text_preview": False},
+}
+pk.validate_probe_config(CONFIG)
+ctx = nk.bootstrap(CONFIG)
+'''
+
+PROBE_CODE = {
+    "Bootstrap": [BOOTSTRAP_SNIPPET + "\n" + PROBE_KIT_SNIPPET + "\nimport numpy as np\n"],
+    "Configuration": [PROBE_CONFIG],
+    "Load foundation and assert the frozen split": [
+        "frame, foundation = nk.load_foundation(ctx)\n"
+        "train_df, val_df, test_df = nk.split_frames(frame)\n"
+    ],
+    "Probe targets": [
+        "terms, lexicon = pk.load_identity_terms(ctx)\n"
+        "val_identity = pk.identity_term_present(ctx, val_df, terms)\n"
+    ],
+    "Models and representations": ["def represent(frame):\n    return np.zeros((len(frame), 4))\n"],
+    "Representations on train and validation": ["val_states = represent(val_df)\n"],
+    "Probe fit on train": ["probe_weights = np.ones(4)\n"],
+    "Single test evaluation": [
+        "pk.begin_test_evaluation(ctx)\n"
+        "test_states = represent(test_df)\n"
+        "test_identity = pk.identity_term_present(ctx, test_df, terms)\n"
+        "probe_rows, contrast_rows = [], []\n"
+    ],
+    "Probe tables": ["pk.export_probe_tables(ctx, probe_rows, contrast_rows, None, {})\n"],
+    "Interpretation": [],
+    "Package outputs": ["nk.finalize(ctx)\n"],
+}
+
+
 def code_cell(source, outputs=None, execution_count=None):
     return {
         "cell_type": "code",
@@ -136,7 +183,7 @@ def markdown_cell(source):
 
 def make_notebook(directory, stem=STEM, role="classical", mutate=None, metadata=None):
     """Write a conforming notebook; `mutate(cells)` may then break it."""
-    code = FOUNDATION_CODE if role == "foundation" else MODEL_CODE
+    code = {"foundation": FOUNDATION_CODE, "probe": PROBE_CODE}.get(role, MODEL_CODE)
     cells = [markdown_cell(f"# {stem}\n\nRole in the comparison and what this notebook writes.")]
     for number, title in enumerate(ROLE_SECTIONS[role], start=1):
         cells.append(markdown_cell(f"## {number}. {title}\n\nWhat this section does."))
@@ -186,6 +233,78 @@ class TestConformingNotebooks:
 
     def test_template_sections_cover_every_role(self):
         assert set(ROLE_SECTIONS) == set(nk.ROLES)
+
+
+class TestProbeRole:
+    """The probe notebook (WP9) follows its own sections and pipeline rules."""
+
+    def problems(self, tmp_path, primed=True, **kwargs):
+        return problems_for(tmp_path, primed=primed, stem=PROBE_STEM, role="probe", **kwargs)
+
+    def test_probe_template_passes(self, tmp_path):
+        assert self.problems(tmp_path) == []
+
+    def test_probe_kit_must_be_loaded_canonically(self, tmp_path):
+        problems = self.problems(
+            tmp_path, mutate=replace_source('sys.modules["probe_kit"] = pk\n', "")
+        )
+        assert any("load the probe kit" in p for p in problems)
+
+    def test_test_split_in_the_probe_fit_is_refused(self, tmp_path):
+        problems = self.problems(
+            tmp_path,
+            mutate=append_to("probe_weights = np.ones(4)\n", "peek = represent(test_df)\n"),
+        )
+        assert any("Probe fit on train" in p and "test_df" in p for p in problems)
+
+    def test_test_rows_selected_by_string_are_refused(self, tmp_path):
+        problems = self.problems(
+            tmp_path,
+            mutate=append_to(
+                "val_states = represent(val_df)\n",
+                'held_out = represent(frame[frame["split"] == "test"])\n',
+            ),
+        )
+        assert any("the string 'test'" in p for p in problems)
+
+    def test_test_opened_twice_is_refused(self, tmp_path):
+        problems = self.problems(
+            tmp_path,
+            mutate=append_to("probe_rows, contrast_rows = [], []\n", "pk.begin_test_evaluation(ctx)\n"),
+        )
+        assert any("pk.begin_test_evaluation must be called exactly once" in p for p in problems)
+
+    def test_missing_table_export_is_refused(self, tmp_path):
+        problems = self.problems(
+            tmp_path,
+            mutate=replace_source(
+                "pk.export_probe_tables(ctx, probe_rows, contrast_rows, None, {})\n", "done = True\n"
+            ),
+        )
+        assert any("pk.export_probe_tables must be called exactly once" in p for p in problems)
+
+    def test_threshold_selection_is_refused(self, tmp_path):
+        problems = self.problems(
+            tmp_path,
+            mutate=append_to(
+                "probe_weights = np.ones(4)\n",
+                "threshold, sweep = nk.select_threshold(val_df, np.zeros(len(val_df)))\n",
+            ),
+        )
+        assert any("model-notebook step" in p for p in problems)
+
+    def test_unvalidated_probe_config_is_refused(self, tmp_path):
+        problems = self.problems(
+            tmp_path, mutate=replace_source("pk.validate_probe_config(CONFIG)\n", "")
+        )
+        assert any("pk.validate_probe_config must be called exactly once" in p for p in problems)
+
+    def test_printing_probe_texts_is_refused(self, tmp_path):
+        problems = self.problems(
+            tmp_path,
+            mutate=append_to("val_states = represent(val_df)\n", 'print(val_df["text"])\n'),
+        )
+        assert any("print(...) references" in p for p in problems)
 
 
 class TestIdentityIsRefused:
