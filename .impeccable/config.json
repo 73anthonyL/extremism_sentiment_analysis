@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "tools/audit_gui_static/index.html"
+        ],
+        "createdAt": "2026-11-18T22:17:02.254Z",
+        "reason": "Agent: type sizes are set in style.css (title 2rem, section heads 1.18rem, body 1rem); the detector reads index.html alone, and the finish reviewer confirmed a static false read"
+      }
+    ]
+  }
+}

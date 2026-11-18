@@ -120,15 +120,23 @@ code { overflow-wrap: anywhere; }
 
 /* ---- tables, ruled as in print ----------------------------------------- */
 .scroll { overflow-x: auto; }
+/* a table cut by its column shows a soft edge on the side that has more */
+.scroll.cut { background:
+    linear-gradient(to right, var(--page), var(--page)) left center / 1.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--page), var(--page)) right center / 1.5rem 100% no-repeat local,
+    linear-gradient(to right, rgba(17, 17, 17, 0.2), transparent) left center / 0.6rem 100% no-repeat scroll,
+    linear-gradient(to left, rgba(17, 17, 17, 0.2), transparent) right center / 0.6rem 100% no-repeat scroll; }
 table { width: 100%; border-collapse: collapse; font-size: 0.92rem; font-variant-numeric: tabular-nums lining-nums;
   border-top: 2px solid var(--rule); border-bottom: 2px solid var(--rule); }
 th { text-align: left; font-weight: 600; padding: 0.3rem 0.9rem 0.3rem 0; border-bottom: 1px solid var(--rule); vertical-align: bottom;
-  white-space: nowrap; }
+  text-wrap: balance; }
 td { padding: 0.28rem 0.9rem 0.28rem 0; vertical-align: top; }
 th:last-child, td:last-child { padding-right: 0; }
 tbody tr:first-child td { padding-top: 0.4rem; }
 tbody tr:last-child td { padding-bottom: 0.4rem; }
 td.n, th.n { text-align: right; }
+td.n { white-space: nowrap; }
+table code { font-family: inherit; font-size: inherit; overflow-wrap: normal; }
 td small { display: block; font-family: var(--sans); font-size: 0.8rem; color: var(--ink-3); line-height: 1.35; margin-top: 0.1rem;
   overflow-wrap: anywhere; }
 table .cat { display: inline-flex; align-items: center; gap: 0.4rem; }
@@ -142,7 +150,9 @@ table .cat { display: inline-flex; align-items: center; gap: 0.4rem; }
 sup.ref { font-family: var(--sans); font-size: 0.68em; line-height: 0; }
 sup.ref a { text-decoration: none; padding: 0 0.12em; border-radius: 2px; transition: background-color 140ms var(--ease); }
 sup.ref a:hover, sup.ref a:focus-visible { background: var(--cited); }
-.notes { border-top: 1px solid var(--rule); padding-top: 0.5rem; font-size: 0.86rem; max-width: 46rem; }
+.notes { border-top: 1px solid var(--rule); padding-top: 0.4rem; font-size: 0.86rem; max-width: 46rem; }
+.sec > .notes { margin-top: 0.45rem; }
+.notes { width: fit-content; min-width: 11rem; }
 .notes li { display: grid; grid-template-columns: 1.3rem minmax(0, 1fr); padding: 0.12rem 0.25rem; border-radius: 2px;
   transition: background-color 160ms var(--ease); }
 .notes li.cited, .notes li:target { background: var(--cited); }
@@ -155,6 +165,7 @@ sup.ref a:hover, sup.ref a:focus-visible { background: var(--cited); }
 .mark.ok { color: var(--ok); }
 .mark.bad { color: var(--bad); }
 .mark.none, .mark.pending { color: var(--ink-3); font-weight: 400; }
+.mark.run { color: var(--blue); }
 .rail .mark { color: var(--on-blue); }
 .rail .tech[aria-current="true"] .mark.ok { color: var(--ok); }
 .rail .tech[aria-current="true"] .mark.bad { color: var(--bad); }
@@ -171,7 +182,8 @@ sup.ref a:hover, sup.ref a:focus-visible { background: var(--cited); }
 .btn[disabled] { opacity: 0.55; cursor: default; transform: none; }
 details > summary { cursor: pointer; font-family: var(--sans); font-size: 0.86rem; color: var(--blue); width: fit-content; }
 details[open] > summary { margin-bottom: 0.5rem; }
-pre.cmd, pre.log { background: var(--wash); padding: 0.6rem 0.75rem; overflow-x: auto; white-space: pre; line-height: 1.5; border-radius: 2px; }
+pre.cmd, pre.log { background: var(--wash); padding: 0.6rem 0.75rem; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+  line-height: 1.5; border-radius: 2px; }
 pre.log { max-height: 20rem; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
 .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; font-family: var(--sans); font-size: 0.9rem; }
 .pick select { background: var(--page); border: 1px solid var(--blue); border-radius: 4px; padding: 0.3rem 0.45rem; }
@@ -237,8 +249,8 @@ td .row .val { text-align: left; }
 
 /* ---- the report card and the guide, as running text ---------------------- */
 .card > * + * { margin-top: 0.7rem; }
-.card h3 { font-weight: 700; font-size: 1.05rem; margin-top: 1.6rem; }
-.card h4 { font-weight: 700; font-size: 0.95rem; margin-top: 1.1rem; }
+.card h3 { font-weight: 700; font-size: 1.12rem; margin-top: 1.7rem; }
+.card h4 { font-weight: 700; font-size: 1rem; margin-top: 1.1rem; }
 .card p, .bullets { max-width: var(--measure); }
 .bullets { list-style: disc; padding-left: 1.15em; }
 .bullets li + li { margin-top: 0.25em; }
@@ -275,6 +287,7 @@ td .row .val { text-align: left; }
   .stages li { grid-template-columns: 1.7rem minmax(0, 1fr) auto; }
   .stages .stage-msg { grid-column: 2 / -1; }
   .mask-toggle { margin-left: 0; }
+  .scroll table.wide { min-width: 34rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

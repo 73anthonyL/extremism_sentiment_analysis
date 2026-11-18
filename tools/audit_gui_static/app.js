@@ -51,6 +51,8 @@
       svg.append(shape("circle", { class: "out", cx: 8, cy: 8, r: 7 }), shape("path", { class: "in", d: "M4.7 8.3l2.2 2.2 4.5-4.7" }));
     } else if (kind === "bad") {
       svg.append(shape("circle", { class: "out", cx: 8, cy: 8, r: 7 }), shape("path", { class: "in", d: "M5.4 5.4l5.2 5.2M10.6 5.4l-5.2 5.2" }));
+    } else if (kind === "run") {
+      svg.append(shape("circle", { class: "line", cx: 8, cy: 8, r: 6.3 }), shape("circle", { class: "out", cx: 8, cy: 8, r: 3 }));
     } else if (kind === "none") {
       svg.append(shape("circle", { class: "line", cx: 8, cy: 8, r: 6.3 }), shape("path", { class: "line", d: "M5 8h6" }));
     } else {
@@ -72,10 +74,21 @@
   const plural = (n, one, many) => (n === 1 ? one : many);
 
   async function api(path, options) {
-    const response = await fetch(path, options);
+    let response;
+    try {
+      response = await fetch(path, options);
+    } catch (_) {
+      const error = new Error("The server did not answer.");
+      error.kind = "network";
+      throw error;
+    }
     let body = null;
     try { body = await response.json(); } catch (_) { /* a non-JSON answer is reported below */ }
-    if (!response.ok) throw new Error((body && body.error) || `the server answered ${response.status}`);
+    if (!response.ok) {
+      const error = new Error((body && body.error) || `The server answered ${response.status}.`);
+      error.kind = "server";
+      throw error;
+    }
     return body;
   }
 
@@ -92,6 +105,8 @@
   // ---- numbering, captions and footnotes --------------------------------------
   function beginPage() {
     state.notes = [];
+    state.fresh = [];
+    state.jobNumber = null;
     state.counts = { section: 0, table: 0, figure: 0 };
   }
 
@@ -99,8 +114,9 @@
   function ref(paths) {
     const marks = (paths || []).filter(Boolean).map((path) => {
       let index = state.notes.indexOf(path);
-      if (index < 0) { state.notes.push(path); index = state.notes.length - 1; }
-      return h("a", { href: `#note-${index + 1}`, "data-note": String(index + 1), "aria-label": `Source ${index + 1}` }, String(index + 1));
+      if (index < 0) { state.notes.push(path); index = state.notes.length - 1; state.fresh.push(index); }
+      return h("a", { href: `#note-${index + 1}`, "data-note": String(index + 1), "aria-label": `Source ${index + 1}: ${path}`,
+        tip: `Read from ${path}` }, String(index + 1));
     });
     if (!marks.length) return null;
     const sup = h("sup", { class: "ref" });
@@ -111,18 +127,22 @@
   function caption(kind, text, paths) {
     state.counts[kind] += 1;
     const label = `${kind === "table" ? "Table" : "Figure"} ${state.counts[kind]}.`;
-    return h("p", { class: "cap" }, h("b", { text: label }), " ", text, ref(paths));
+    return [h("p", { class: "cap" }, h("b", { text: label }), " ", text, ref(paths)), footNotes()];
+  }
+
+  // The sources first cited in a section are set at its foot, beside their marks.
+  function footNotes() {
+    const fresh = state.fresh;
+    state.fresh = [];
+    if (!fresh.length) return null;
+    return h("ol", { class: "notes", "aria-label": "Sources" }, fresh.map((index) =>
+      h("li", { id: `note-${index + 1}` }, h("sup", { text: String(index + 1) }),
+        h("span", null, "Read from ", code(state.notes[index]), "."))));
   }
 
   function section(title, ...kids) {
     state.counts.section += 1;
-    return h("section", { class: "sec" }, h("h2", null, h("span", { class: "n", text: String(state.counts.section) }), title), kids);
-  }
-
-  function notesBlock() {
-    if (!state.notes.length) return null;
-    return h("ol", { class: "notes", "aria-label": "Sources" }, state.notes.map((path, i) =>
-      h("li", { id: `note-${i + 1}` }, h("sup", { text: String(i + 1) }), h("span", null, "Read from ", code(path), "."))));
+    return h("section", { class: "sec" }, h("h2", null, h("span", { class: "n", text: String(state.counts.section) }), title), kids, footNotes());
   }
 
   // A number and its source are linked: pointing at a mark lights its footnote.
@@ -137,7 +157,7 @@
 
   // ---- tables ---------------------------------------------------------------
   // A column is right-aligned, header included, when every filled cell in it is a number.
-  const NUMERIC = /^[+\-−]?\d[\d.,]*(?:e[+\-]?\d+)?[%×]?(?: \(\d+\))?$/i;
+  const NUMERIC = /^[+\-\u2212]?\d[\d.,]*(?:e[+\-]?\d+)?[%\u00d7]?(?: \(\d+\)| \u00b1 [\d.]+%)?$/i;
   function cellText(cell) {
     if (cell === null || cell === undefined) return "";
     if (Array.isArray(cell)) return cell.map(cellText).join("").trim();
@@ -149,17 +169,39 @@
       const texts = rows.map((row) => cellText(row[i]));
       return texts.some((text) => text !== "") && texts.every((text) => text === "" || NUMERIC.test(text));
     });
+    const classes = [className, head.length >= 4 ? "wide" : null].filter(Boolean).join(" ");
     return h("div", { class: "scroll" },
-      h("table", { class: className || null },
+      h("table", { class: classes || null },
         h("thead", null, h("tr", null, head.map((cell, i) => h("th", { scope: "col", class: numeric[i] ? "n" : null }, cell)))),
         h("tbody", null, rows.map((row) => h("tr", null, row.map((cell, i) =>
           h("td", { class: numeric[i] ? "n" : null }, cell)))))));
   }
 
+  // A table wider than its column scrolls sideways: say so, and let the keyboard reach it.
+  function markScrollers() {
+    for (const box of document.querySelectorAll(".scroll")) {
+      const cut = box.scrollWidth > box.clientWidth + 1;
+      box.classList.toggle("cut", cut);
+      if (cut) {
+        box.setAttribute("tabindex", "0");
+        box.setAttribute("role", "region");
+        box.setAttribute("aria-label", "Table, scrolls sideways");
+      } else {
+        box.removeAttribute("tabindex");
+        box.removeAttribute("role");
+        box.removeAttribute("aria-label");
+      }
+    }
+  }
+  window.addEventListener("resize", markScrollers);
+
   function showError(error) {
+    const recovery = error.kind === "server"
+      ? "The server is running and reported this itself. Fix what it names, then reload the page."
+      : "Check that the server is still running in its terminal, then reload the page.";
     sheet.replaceChildren(h("div", { class: "error" },
       h("p", null, h("strong", { text: "This could not be loaded. " }), String(error.message || error)),
-      h("p", { text: "Check that the server is still running in its terminal, then reload the page." })));
+      h("p", { text: recovery })));
   }
 
   // ---- tooltip ---------------------------------------------------------------
@@ -254,15 +296,17 @@
     const order = [...data.in_comparison, ...data.outside_comparison];
     const rows = [...data.rq1.accuracy].sort((a, b) => order.indexOf(a.technique) - order.indexOf(b.technique));
     const { lo, hi } = accuracyScale(rows.map((row) => row.accuracy));
+    const drawn = rows.some((row) => row.technique === own);
     return {
       lo,
+      drawn,
       node: h("div", { class: "fig" },
-        own ? h("div", { class: "legend" }, h("span", null, h("span", { class: "key this" }), "This classifier"),
+        drawn ? h("div", { class: "legend" }, h("span", null, h("span", { class: "key this" }), "This classifier"),
           h("span", null, h("span", { class: "key dot" }), "The others")) : null,
         chartRows(rows, (row) => h("div", { class: "row" }, who(row, row.technique === own),
           track(lo, hi, 0.05, [{ value: row.accuracy, own: row.technique === own, tip: `${row.technique}: ${num(row.accuracy)}` }]),
           h("span", { class: "val", text: num(row.accuracy) }))),
-        h("div", { class: "row", "aria-hidden": "true" }, h("span"), axis(lo, hi, 0.05, (v) => v.toFixed(2)), h("span"))),
+        h("div", { class: "row", "aria-hidden": "true" }, h("span", { class: "who" }), axis(lo, hi, 0.05, (v) => v.toFixed(2)), h("span"))),
     };
   }
 
@@ -294,9 +338,28 @@
     return out;
   }
 
+  // What each table of a report card cannot show, by the section it sits in.
+  const CARD_CAPTIONS = [
+    [/^RQ1/, ["Accuracy gaps against every other classifier. A gap that does not clear Holm-corrected McNemar significance is not a difference."]],
+    [/^SHAP pipeline check/, ["The explainer against known coefficients. It checks the pipeline on a linear model, not the explanations of any other model."]],
+    [/^RQ2 support/, ["The deletion test. It shows that the listed words move this model, not that the model is right to use them."]],
+    [/^RQ2/, ["The words with the largest positive mean attribution. A word with support 1 comes from a single post.",
+      "Word-level agreement with the other classifiers, over the words they share."]],
+    [/^RQ3/, ["Agreement between this classifier's runs, which explain different posts."]],
+    [/^RQ4/, ["False positives with and without identity terms. A correlation over few posts."]],
+    [/^WP7/, ["The identity counterfactual. A flip shows that one edit crossed the locked threshold, not that the term causes the error."]],
+  ];
+  function cardCaption(heading, index) {
+    const found = CARD_CAPTIONS.find(([pattern]) => pattern.test(heading));
+    const list = found ? found[1] : [];
+    return list[Math.min(index, list.length - 1)] || "From the report card as written.";
+  }
+
   function renderMarkdown(markdown) {
     const lines = markdown.split("\n");
     const nodes = [];
+    let heading = "";
+    let tablesHere = 0;
     const cells = (line) => line.trim().replace(/^\||\|$/g, "").split("|").map((cell) => cell.trim());
     const isRow = (line) => line.trim().startsWith("|");
     const isItem = (line) => /^\s*[*-] /.test(line);
@@ -304,14 +367,15 @@
     while (i < lines.length) {
       const line = lines[i];
       if (!line.trim() || line.startsWith("# ")) { i += 1; continue; } // the page already carries the title
-      if (line.startsWith("## ")) { nodes.push(h("h3", null, inline(line.slice(3)))); i += 1; continue; }
+      if (line.startsWith("## ")) { heading = line.slice(3); tablesHere = 0; nodes.push(h("h3", null, inline(heading))); i += 1; continue; }
       if (line.startsWith("### ")) { nodes.push(h("h4", null, inline(line.slice(4)))); i += 1; continue; }
       if (isRow(line) && i + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
         const head = cells(line).map(inline);
         const body = [];
         i += 2;
         while (i < lines.length && isRow(lines[i])) { body.push(cells(lines[i]).map(inline)); i += 1; }
-        nodes.push(table(head, body));
+        nodes.push(table(head, body), caption("table", cardCaption(heading, tablesHere)));
+        tablesHere += 1;
         continue;
       }
       if (isItem(line)) {
@@ -376,15 +440,17 @@
   function head(t) {
     const facts = [];
     const words = (value) => String(value).replace(/_/g, " ");
-    if (t.config.model_family) facts.push(`Model: ${words(t.config.model_family)}`);
-    if (t.config.feature_family) facts.push(`features: ${words(t.config.feature_family)}`);
-    if (!missing(t.config.selected_threshold)) facts.push(`threshold ${t.config.selected_threshold}, locked on validation`);
-    if (!missing(t.metrics.accuracy)) facts.push(`test accuracy ${num(t.metrics.accuracy)} on ${state.overview.split.test} posts`);
+    const sentence = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+    if (t.config.model_family) {
+      facts.push(sentence(`${words(t.config.model_family)}${t.config.feature_family ? `, on ${words(t.config.feature_family)}` : ""}`));
+    }
+    if (!missing(t.config.selected_threshold)) facts.push(`Threshold ${t.config.selected_threshold}, locked on validation`);
+    if (!missing(t.metrics.accuracy)) facts.push(`Test accuracy ${num(t.metrics.accuracy)} on ${state.overview.split.test} posts`);
     const more = [["balanced accuracy", t.metrics.balanced_accuracy], ["macro F1", t.metrics.f1_macro],
       ["ROC-AUC", t.metrics.roc_auc], ["PR-AUC", t.metrics.pr_auc]].filter(([, v]) => !missing(v)).map(([k, v]) => `${k} ${num(v)}`);
     return h("header", { class: "head" },
       h("h1", { class: "title", text: t.name }),
-      facts.length ? h("p", { class: "byline", text: `${facts.join("; ")}.` }) : null,
+      facts.length ? h("p", { class: "byline", text: `${facts.join(". ")}.` }) : null,
       h("p", { class: "note", text: `${t.in_comparison
         ? "In the paper's comparison."
         : "Outside the paper's comparison: it has its own Holm family, and no table in the paper changes."}${more.length ? ` Also: ${more.join(", ")}.` : ""}` }));
@@ -423,7 +489,8 @@
     const cleared = data.rq1.pairs.filter((pair) => pair.significant).length;
     const kids = [figure.node,
       caption("figure", `Test accuracy; the axis starts at ${figure.lo.toFixed(2)}, not at zero. The order is descriptive: ${
-        data.rq1.pairs.length ? `${cleared} of the ${data.rq1.pairs.length} pairs in the comparison differ after correction.` : "no pair table has been written yet."}`,
+        data.rq1.pairs.length ? `${cleared} of the ${data.rq1.pairs.length} pairs in the comparison differ after correction.` : "no pair table has been written yet."}${
+        figure.drawn ? "" : " This classifier has no test accuracy on file yet, so it is not drawn."}`,
       data.rq1.sources)];
     const pairs = t.card && t.card.rq1 ? t.card.rq1.pairs || [] : [];
     if (pairs.length) {
@@ -437,6 +504,7 @@
   }
 
   function stageMark(status) {
+    if (status === "running") return mark("run", "running");
     if (status === "ok") return mark("ok", "done");
     if (status === "fail") return mark("bad", "failed");
     if (status === "skip") return mark("none", "skipped");
@@ -452,13 +520,17 @@
     if (job.stages.stopped_at === "check-contract") {
       kids.push(h("p", { class: "detail", text: `Stopped at the contract check. ${job.stages.stopped_message || "A required item is missing or invalid."}` }));
     }
-    kids.push(h("ol", { class: "stages" }, job.stages.stages.map((stage) => {
+    const inHand = running ? job.stages.stages.findIndex((stage) => stage.status === "pending") : -1;
+    kids.push(h("ol", { class: "stages" }, job.stages.stages.map((stage, index) => {
       const key = `${job.id}:${stage.name}`;
       const fresh = stage.status !== "pending" && !state.settled.has(key);
       if (stage.status !== "pending") state.settled.add(key);
-      return h("li", { class: fresh ? "just" : null }, h("span", { class: "stage-name", text: stage.name }), stageMark(stage.status),
-        h("span", { class: "stage-msg", text: stage.message }));
+      return h("li", { class: fresh ? "just" : null }, h("span", { class: "stage-name", text: stage.name }),
+        stageMark(index === inHand ? "running" : stage.status), h("span", { class: "stage-msg", text: stage.message }));
     })));
+    if (state.jobNumber === null) { state.counts.table += 1; state.jobNumber = state.counts.table; }
+    kids.push(h("p", { class: "cap" }, h("b", { text: `Table ${state.jobNumber}.` }),
+      " The audit chain, in the order it runs. A skipped stage did not run, and the table it would have written is left as it was."));
     if (!running && Array.isArray(job.changed)) {
       kids.push(h("h3", { text: "Files this run changed" }));
       kids.push(job.changed.length
@@ -491,7 +563,7 @@
             { value: r.fpr_without_identity_terms, ring: true, tip: `Without an identity term: ${pct(r.fpr_without_identity_terms)} flagged` },
             { value: r.fpr_with_identity_terms, tip: `With an identity term: ${pct(r.fpr_with_identity_terms)} flagged` },
           ], [r.fpr_without_identity_terms, r.fpr_with_identity_terms]), h("span")),
-        h("div", { class: "row", "aria-hidden": "true" }, h("span"), axis(scale.lo, scale.hi, scale.step, (v) => pct(v, 0)), h("span")))),
+        h("div", { class: "row", "aria-hidden": "true" }, h("span", { class: "who" }), axis(scale.lo, scale.hi, scale.step, (v) => pct(v, 0)), h("span")))),
       caption("figure", `Non-extremist test posts flagged at the locked threshold ${r.threshold}. ${r.n_negative_with_identity_terms} of the ${r.n_negative} contain an identity term.`, r.sources),
       table(["Without a term", "With a term", "Ratio", "Fisher exact p"], [[
         pct(r.fpr_without_identity_terms), pct(r.fpr_with_identity_terms), num(r.fpr_ratio, 2), pval(r.fisher_p_value)]]),
@@ -509,6 +581,7 @@
       : "";
     return section("Report card",
       h("p", { class: "note" }, "As written by ", code("audit.py report"), ".", ref([t.card_source]), masked),
+      footNotes(),
       h("div", { class: "card" }, renderMarkdown(t.card_markdown)));
   }
 
@@ -519,8 +592,9 @@
     const kids = [head(t), h("div", { class: "cols" }, contractSection(t), standingSection(t)), jobPanel()];
     if (t.shares && t.shares.categories) kids.push(relianceSection(t));
     if (t.card && t.card.rq4) kids.push(fprSection(t));
-    kids.push(cardSection(t), notesBlock());
+    kids.push(cardSection(t));
     sheet.replaceChildren(...kids.filter(Boolean));
+    markScrollers();
   }
 
   // ---- across classifiers -----------------------------------------------------------
@@ -605,7 +679,7 @@
               { value: row.with_identity, tip: `${row.technique}, with an identity term: ${pct(row.with_identity)} flagged` },
             ], [row.without_identity, row.with_identity]),
             h("span", { class: "val", text: missing(row.ratio) ? "" : `${num(row.ratio, 2)}×`, tip: "With a term, over without" }))),
-          h("div", { class: "row", "aria-hidden": "true" }, h("span"), axis(scale.lo, scale.hi, scale.step, (v) => pct(v, 0)), h("span"))),
+          h("div", { class: "row", "aria-hidden": "true" }, h("span", { class: "who" }), axis(scale.lo, scale.hi, scale.step, (v) => pct(v, 0)), h("span"))),
         caption("figure", "Share of non-extremist test posts flagged in error, with and without an identity term, at each classifier's locked threshold. The figure at the right is the ratio.", data.rq4.sources),
         table(["Classifier", "Without a term", "With a term", "Ratio", "Fisher exact p", "Posts with a term"], fpr.map((row) => [
           row.technique, pct(row.without_identity), pct(row.with_identity), num(row.ratio, 2), pval(row.fisher_p),
@@ -617,8 +691,8 @@
       kids.push(h("div", { class: "empty" }, h("p", null, h("strong", { text: "No cross-classifier table yet." })),
         h("p", { text: "They are written when a classifier is audited." })));
     }
-    kids.push(notesBlock());
     sheet.replaceChildren(...kids.filter(Boolean));
+    markScrollers();
   }
 
   // ---- add your classifier ------------------------------------------------------------
@@ -637,12 +711,14 @@
     for (const role of state.overview.notebook_roles) select.append(h("option", { value: role, text: role }));
     select.addEventListener("change", load);
     load();
+    markScrollers();
   }
 
   // ---- runs -------------------------------------------------------------------------
   function replaceJobPanel() {
     const current = document.getElementById("job");
     if (current) current.replaceWith(jobPanel());
+    markScrollers();
   }
 
   async function pollJob() {
@@ -653,7 +729,10 @@
       return; // the server stopped; the next action reports it
     }
     if (state.job && state.job.state === "running") {
-      if (state.view === "technique") replaceJobPanel();
+      if (state.view === "technique") {
+        // The first sight of a run redraws the sheet, so the button and the numbering follow it.
+        if (document.querySelector("#job .stages")) replaceJobPanel(); else renderTechnique();
+      }
       state.timer = setTimeout(pollJob, 800);
     } else if (state.job) {
       await refresh(); // the run may have rewritten the card and the tables
