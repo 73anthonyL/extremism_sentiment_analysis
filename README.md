@@ -476,6 +476,36 @@ python -m pip install --upgrade pip
 pip install -r requirements-lock.txt
 ```
 
+### Installing the audit toolkit as a package
+
+The audit chain, the contract checker and the local page also install as a
+Python package, `esa-audit` (the import name is `esa_audit`). It is not
+published to any index; install it from a checkout:
+
+```bash
+pip install -e .                  # the audit core: numpy, pandas, scipy, scikit-learn
+pip install -e ".[perturbation]"  # adds shap, torch, transformers, gensim
+pip install -e ".[kaggle]"        # adds the Kaggle client for `run_manifest.py fetch`
+```
+
+Two commands result: `esa-audit` (the same subcommands as `tools/audit.py`) and
+`esa-audit-gui` (the same page as `tools/audit_gui.py`). Both work on a *study
+folder*, the one holding `data/`, `splits/`, `results_summary/` and
+`research_loop/`. The folder is, in order, the one named by the `ESA_STUDY_ROOT`
+environment variable, the source checkout if you run from one, or the current
+directory:
+
+```bash
+ESA_STUDY_ROOT=/path/to/study esa-audit check-contract --technique <TECHNIQUE>
+```
+
+Limits of this first package: the frozen split sizes and protocol constants in
+`tools/repo_paths.py` are those of this paper's dataset, and the lexicons in
+`data/lexicons/` are not shipped with the package (the slur list derives from a
+source whose licence does not allow redistribution under ours), so a study
+folder brings its own. No licence is declared yet and the package is marked
+not-for-upload.
+
 Optional Jupyter kernel setup:
 
 ```bash
