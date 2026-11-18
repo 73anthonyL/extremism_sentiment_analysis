@@ -135,7 +135,9 @@ th:last-child, td:last-child { padding-right: 0; }
 tbody tr:first-child td { padding-top: 0.4rem; }
 tbody tr:last-child td { padding-bottom: 0.4rem; }
 td.n, th.n { text-align: right; }
-td.n { white-space: nowrap; }
+td.n, td.tight { white-space: nowrap; }
+table.wide td.long, table.wide th.long { min-width: 15rem; }
+td.long .detail, td.long small { overflow-wrap: anywhere; }
 table code { font-family: inherit; font-size: inherit; overflow-wrap: normal; }
 td small { display: block; font-family: var(--sans); font-size: 0.8rem; color: var(--ink-3); line-height: 1.35; margin-top: 0.1rem;
   overflow-wrap: anywhere; }
@@ -184,6 +186,7 @@ details > summary { cursor: pointer; font-family: var(--sans); font-size: 0.86re
 details[open] > summary { margin-bottom: 0.5rem; }
 pre.cmd, pre.log { background: var(--wash); padding: 0.6rem 0.75rem; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere;
   line-height: 1.5; border-radius: 2px; }
+.tok { display: inline-block; max-width: 100%; white-space: normal; overflow-wrap: anywhere; vertical-align: top; }
 pre.log { max-height: 20rem; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
 .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; font-family: var(--sans); font-size: 0.9rem; }
 .pick select { background: var(--page); border: 1px solid var(--blue); border-radius: 4px; padding: 0.3rem 0.45rem; }
@@ -287,7 +290,10 @@ td .row .val { text-align: left; }
   .stages li { grid-template-columns: 1.7rem minmax(0, 1fr) auto; }
   .stages .stage-msg { grid-column: 2 / -1; }
   .mask-toggle { margin-left: 0; }
+  /* a wide table scrolls sideways here, so its rows keep one line; only a long reading wraps, in a column wide enough for two */
   .scroll table.wide { min-width: 34rem; }
+  .scroll table.wide td { white-space: nowrap; }
+  .scroll table.wide td.long { white-space: normal; min-width: 30rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

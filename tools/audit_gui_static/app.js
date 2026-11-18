@@ -169,12 +169,30 @@
       const texts = rows.map((row) => cellText(row[i]));
       return texts.some((text) => text !== "") && texts.every((text) => text === "" || NUMERIC.test(text));
     });
+    const longest = head.map((_, i) => Math.max(0, ...rows.map((row) => cellText(row[i]).length)));
+    const fit = (i) => (numeric[i] ? "n" : longest[i] >= 36 ? "long" : longest[i] <= 24 ? "tight" : null);
     const classes = [className, head.length >= 4 ? "wide" : null].filter(Boolean).join(" ");
     return h("div", { class: "scroll" },
       h("table", { class: classes || null },
-        h("thead", null, h("tr", null, head.map((cell, i) => h("th", { scope: "col", class: numeric[i] ? "n" : null }, cell)))),
+        h("thead", null, h("tr", null, head.map((cell, i) => h("th", { scope: "col", class: fit(i) }, cell)))),
         h("tbody", null, rows.map((row) => h("tr", null, row.map((cell, i) =>
-          h("td", { class: numeric[i] ? "n" : null }, cell)))))));
+          h("td", { class: fit(i) }, cell)))))));
+  }
+
+  // Commands wrap at spaces only: a flag is never split from its dashes.
+  function keepTokensWhole(root) {
+    for (const pre of root.querySelectorAll("pre.cmd:not([data-tokens])")) {
+      const parts = pre.textContent.split(/(\s+)/).filter((part) => part !== "");
+      pre.replaceChildren(...parts.map((part) => (/^\s+$/.test(part) ? part : h("span", { class: "tok", text: part }))));
+      pre.setAttribute("data-tokens", "");
+    }
+  }
+
+  // After every redraw: no tooltip left over from the last view, commands tokenised, cut tables marked.
+  function afterRender() {
+    tip.hidden = true;
+    keepTokensWhole(sheet);
+    markScrollers();
   }
 
   // A table wider than its column scrolls sideways: say so, and let the keyboard reach it.
@@ -292,9 +310,12 @@
     return { lo: Math.floor((Math.min(...values) - 0.005) * 20) / 20, hi: Math.ceil((Math.max(...values) + 0.005) * 20) / 20 };
   }
 
-  function accuracyFigure(data, own) {
+  function accuracyFigure(data, own, ownAccuracy, ownInComparison) {
     const order = [...data.in_comparison, ...data.outside_comparison];
     const rows = [...data.rq1.accuracy].sort((a, b) => order.indexOf(a.technique) - order.indexOf(b.technique));
+    if (own && !missing(ownAccuracy) && !rows.some((row) => row.technique === own)) {
+      rows.push({ technique: own, accuracy: ownAccuracy, in_comparison: ownInComparison });
+    }
     const { lo, hi } = accuracyScale(rows.map((row) => row.accuracy));
     const drawn = rows.some((row) => row.technique === own);
     return {
@@ -344,8 +365,8 @@
     [/^SHAP pipeline check/, ["The explainer against known coefficients. It checks the pipeline on a linear model, not the explanations of any other model."]],
     [/^RQ2 support/, ["The deletion test. It shows that the listed words move this model, not that the model is right to use them."]],
     [/^RQ2/, ["The words with the largest positive mean attribution. A word with support 1 comes from a single post.",
-      "Word-level agreement with the other classifiers, over the words they share."]],
-    [/^RQ3/, ["Agreement between this classifier's runs, which explain different posts."]],
+      "Word-level agreement with the other classifiers. It covers only the words two models share, and says nothing of the words one of them alone relies on."]],
+    [/^RQ3/, ["Agreement between this classifier's runs, which explain different posts. Two runs give a spread over posts, not over seeds or splits."]],
     [/^RQ4/, ["False positives with and without identity terms. A correlation over few posts."]],
     [/^WP7/, ["The identity counterfactual. A flip shows that one edit crossed the locked threshold, not that the term causes the error."]],
   ];
@@ -461,6 +482,7 @@
     const failed = required.filter((item) => item.status !== "OK");
     const noRuns = failed.some((item) => item.name.startsWith("whole-model attribution"));
     const running = state.job && state.job.state === "running";
+    const mine = state.job && state.job.technique === t.name;
     const verdict = t.contract_met
       ? "Every required item is in place, so the audit can run."
       : `${failed.length} required ${plural(failed.length, "item is", "items are")} missing or invalid, so the audit cannot run yet.${noRuns
@@ -469,13 +491,16 @@
       h("p", null, verdict, t.contract_met ? null : [" ", h("a", { href: "#add", text: "How to export the missing files" }), "."]),
       h("div", { class: "actions" },
         h("button", { class: "btn primary", type: "button", disabled: !t.contract_met || running, onclick: () => startRun(t.name) },
-          running ? "Audit running" : "Run the audit"),
+          running ? (mine ? "Audit running" : "Another audit is running") : "Run the audit"),
         h("button", { class: "btn", type: "button", onclick: () => refresh() }, "Check the contract again")),
+      running && !mine ? h("p", { class: "note" }, "An audit of ",
+        h("a", { href: `#technique=${encodeURIComponent(state.job.technique)}`, text: state.job.technique }),
+        " is running. One audit runs at a time.") : null,
       table(["Item", "Required", "Status"], t.contract.map((item) => [
         h("span", null, itemName(item.name), h("small", { text: item.detail })),
         item.required ? "yes" : "no",
         itemMark(item)])),
-      caption("table", `The contract, checked now. ${required.length - failed.length} of ${required.length} required items are met.`),
+      caption("table", `The contract, checked now: ${required.length - failed.length} of ${required.length} required items are met. It shows the files are present and well formed, not that the classifier is accurate.`),
       h("details", null, h("summary", { text: "The same on the command line" }),
         h("pre", { class: "cmd", text: `${t.commands.check}\n${t.commands.run}` }),
         h("p", { class: "note" }, "The identity counterfactual and the deletion faithfulness test load the model's weights, so this page does not start them: ",
@@ -484,8 +509,8 @@
 
   function standingSection(t) {
     const data = state.compare;
-    if (!data || !data.rq1.accuracy.length) return null;
-    const figure = accuracyFigure(data, t.name);
+    if (!data || (!data.rq1.accuracy.length && missing(t.metrics.accuracy))) return null;
+    const figure = accuracyFigure(data, t.name, t.metrics.accuracy, t.in_comparison);
     const cleared = data.rq1.pairs.filter((pair) => pair.significant).length;
     const kids = [figure.node,
       caption("figure", `Test accuracy; the axis starts at ${figure.lo.toFixed(2)}, not at zero. The order is descriptive: ${
@@ -513,7 +538,7 @@
 
   function jobPanel() {
     const job = state.job;
-    if (!job) return h("div", { id: "job", hidden: true });
+    if (!job || !state.technique || job.technique !== state.technique.name) return h("div", { id: "job", hidden: true });
     const running = job.state === "running";
     const kids = [h("h2", null, running ? `Auditing ${job.technique}` : `The audit of ${job.technique}`),
       h("p", { role: "status", text: running ? "Running. Each stage is set down as it finishes." : job.outcome })];
@@ -594,7 +619,7 @@
     if (t.card && t.card.rq4) kids.push(fprSection(t));
     kids.push(cardSection(t));
     sheet.replaceChildren(...kids.filter(Boolean));
-    markScrollers();
+    afterRender();
   }
 
   // ---- across classifiers -----------------------------------------------------------
@@ -692,7 +717,7 @@
         h("p", { text: "They are written when a classifier is audited." })));
     }
     sheet.replaceChildren(...kids.filter(Boolean));
-    markScrollers();
+    afterRender();
   }
 
   // ---- add your classifier ------------------------------------------------------------
@@ -707,18 +732,20 @@
       } catch (error) {
         outline.textContent = `The outline could not be loaded: ${error.message}`;
       }
+      outline.removeAttribute("data-tokens");
+      afterRender();
     };
     for (const role of state.overview.notebook_roles) select.append(h("option", { value: role, text: role }));
     select.addEventListener("change", load);
     load();
-    markScrollers();
+    afterRender();
   }
 
   // ---- runs -------------------------------------------------------------------------
   function replaceJobPanel() {
     const current = document.getElementById("job");
     if (current) current.replaceWith(jobPanel());
-    markScrollers();
+    afterRender();
   }
 
   async function pollJob() {
@@ -728,13 +755,17 @@
     } catch (_) {
       return; // the server stopped; the next action reports it
     }
+    const stamp = state.job ? `${state.job.id}:${state.job.state}` : "";
+    const changed = stamp !== state.jobStamp;
+    state.jobStamp = stamp;
     if (state.job && state.job.state === "running") {
-      if (state.view === "technique") {
+      if (state.view === "technique" && state.technique) {
         // The first sight of a run redraws the sheet, so the button and the numbering follow it.
-        if (document.querySelector("#job .stages")) replaceJobPanel(); else renderTechnique();
+        if (state.job.technique === state.technique.name && document.querySelector("#job .stages")) replaceJobPanel();
+        else if (changed) renderTechnique();
       }
       state.timer = setTimeout(pollJob, 800);
-    } else if (state.job) {
+    } else if (state.job && changed) {
       await refresh(); // the run may have rewritten the card and the tables
     }
   }
