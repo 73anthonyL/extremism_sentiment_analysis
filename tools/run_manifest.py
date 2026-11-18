@@ -16,8 +16,11 @@ everything the run produced now lives:
 external/<TECHNIQUE>/, the folder tools/model_loaders.py and the per-post tools
 read. A file is kept only if its bytes have the recorded sha256, a local file
 with another hash is never overwritten, and the destination is external/ or a
-folder outside the repository. Only kaggle://datasets/ locations can be
-fetched; it needs the kaggle package and a Kaggle sign-in with access to them.
+folder outside the repository. `--predictor` selects what the loaders read:
+weights, tokenizers and training logs, and for a pooled ensemble only the
+components its best_config.json admits. Only kaggle://datasets/ locations can
+be fetched; it needs the kaggle package and one Kaggle sign-in per run, with
+access to them.
 
 USAGE
 -----
@@ -40,12 +43,13 @@ USAGE
 import argparse
 import contextlib
 import hashlib
+import inspect
 import io
 import json
-import os
 import re
 import shutil
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -271,17 +275,25 @@ def check(technique, results_dir=None):
 PREDICTOR_KINDS = ("weights", "tokenizer", "training_log")
 
 KAGGLE_DATASET_LOCATION_RE = re.compile(r"^kaggle://datasets/([^/]+)/([^/]+)/v(\d+)/(.+)$")
-# Downloads land here, inside the technique folder, until their hash is checked.
-STAGING_DIRNAME = ".fetch_staging"
+# A pooled ensemble keeps one weights folder per component and seed, and one
+# tokenizer folder per component (tools/model_loaders.py::_member_folders).
+ENSEMBLE_COMPONENT_RE = re.compile(r"/(?:weights/member-(.+)-seed\d+|tokenizer/([^/]+))/[^/]+$")
+# Each download lands in its own folder with this prefix, inside the technique
+# folder, until its hash is checked.
+STAGING_PREFIX = ".fetch_staging_"
 
 PRESENT = "present"          # on disk with the recorded sha256
 FETCHED = "fetched"          # downloaded, hash checked, moved into place
 TO_FETCH = "to fetch"        # dry run: absent locally
 DIFFERS = "differs"          # on disk with another sha256; never overwritten
-REFUSED = "refused"          # unsafe path, or downloaded bytes with another sha256
+REFUSED = "refused"          # unsafe or ambiguous path, or downloaded bytes with another sha256
 UNSUPPORTED = "unsupported"  # a location fetch cannot download
-FAILED = "failed"            # the download itself failed
+FAILED = "failed"            # the download, or the local file work around it, failed
 FETCH_OK = (PRESENT, FETCHED, TO_FETCH)
+
+
+class FetchAborted(ManifestError):
+    """A problem every download would hit (no client, no sign-in): stop instead of repeating it."""
 
 
 def parse_kaggle_location(location):
@@ -302,26 +314,36 @@ def safe_relative_path(relative):
     parts = text.split("/")
     if text.startswith("/") or "\\" in text or any(part in ("", ".", "..") for part in parts):
         raise ManifestError(f"asset path '{relative}' is not a plain relative path")
+    if parts[0].startswith(STAGING_PREFIX):
+        raise ManifestError(f"asset path '{relative}' is inside a folder name fetch keeps for its downloads")
     return Path(*parts)
+
+
+def check_technique_name(technique):
+    """A technique is one folder name (NN_NAME), never a path: it is joined onto the destination."""
+    from repo_paths import TECHNIQUE_DIR_RE
+
+    name = str(technique)
+    if not TECHNIQUE_DIR_RE.match(name) or Path(name).name != name or "\\" in name:
+        raise ManifestError(
+            f"'{technique}' is not a technique folder name such as 07_TWITTER-ROBERTA_FINE-TUNE"
+        )
+    return name
 
 
 def check_destination(dest):
     """Refuse a destination inside the repository unless it is under external/.
 
     Assets can carry dataset text, and the gitignored external/ is the only
-    place for them in the working tree (the rule of
-    local_foundation.check_out_dir).
+    place for them in the working tree.
     """
-    from repo_paths import EXTERNAL_DIR, REPO_ROOT  # fetch is the only command that needs them
+    from repo_paths import EXTERNAL_DIR, outside_repo_or_under_external
 
     dest = Path(dest).resolve()
-    external = EXTERNAL_DIR.resolve()
-    inside_repo = dest == REPO_ROOT or REPO_ROOT in dest.parents
-    under_external = dest == external or external in dest.parents
-    if inside_repo and not under_external:
+    if not outside_repo_or_under_external(dest):
         raise ManifestError(
             f"{dest} is inside the repository; external assets may only be written outside it "
-            f"or under {EXTERNAL_DIR.relative_to(REPO_ROOT)}/"
+            f"or under {EXTERNAL_DIR.name}/"
         )
     return dest
 
@@ -337,58 +359,151 @@ def select_assets(manifest, kinds=None):
     return [asset for asset in assets if asset.get("kind") in kinds]
 
 
-def kaggle_download(owner, slug, version, relative_path, staging_dir):
-    """Download one file of one Kaggle Dataset version into `staging_dir`; return its path."""
+def _admitted_components(technique, results_dir=None):
+    """The components a pooled ensemble's committed best_config.json admits, or None."""
+    base = RESULTS_DIR if results_dir is None else Path(results_dir)
+    try:
+        with open(base / technique / "best_config.json") as handle:
+            components = json.load(handle).get("hyperparameters", {}).get("components")
+    except (OSError, ValueError, AttributeError):
+        return None
+    return [str(c) for c in components] if isinstance(components, list) else None
+
+
+def predictor_assets(technique, manifest, results_dir=None):
+    """(assets tools/model_loaders.py reads, ensemble components left out).
+
+    Weights, tokenizers and training logs. For a pooled ensemble, only the
+    components its committed best_config.json admits: the loader reads no
+    other member, and the excluded ones are a third of notebook 11's upload.
+    """
+    assets = select_assets(manifest, PREDICTOR_KINDS)
+    admitted = _admitted_components(technique, results_dir)
+    if admitted is None:
+        return assets, []
+    kept, left_out = [], set()
+    for asset in assets:
+        match = ENSEMBLE_COMPONENT_RE.search(str(asset.get("location", "")))
+        component = (match.group(1) or match.group(2)) if match else None
+        if component is not None and component not in admitted:
+            left_out.add(component)
+        else:
+            kept.append(asset)
+    return kept, sorted(left_out)
+
+
+def kaggle_downloader():
+    """A download function bound to one Kaggle client, signed in once, here."""
     try:
         # Imported here: the package signs in when it is imported.
         from kaggle.api.kaggle_api_extended import KaggleApi
     except ImportError as error:
-        raise ManifestError("fetch needs the kaggle package (requirements.txt)") from error
+        raise FetchAborted("fetch needs the kaggle package (requirements.txt)") from error
     api = KaggleApi()
     try:
-        api.authenticate()
+        with contextlib.redirect_stdout(io.StringIO()):
+            api.authenticate()
     except (Exception, SystemExit) as error:
-        raise ManifestError("Kaggle sign-in failed; run `kaggle auth login --force` and retry") from error
-    # The client prints the dataset URL on every call; the caller reports each file itself.
-    with contextlib.redirect_stdout(io.StringIO()):
-        api.dataset_download_file(
-            f"{owner}/{slug}/{version}", relative_path, path=str(staging_dir),
-            force=True, quiet=True, unzip=True,
+        raise FetchAborted(
+            f"Kaggle sign-in failed ({type(error).__name__}: {error}); if the login has expired, "
+            "run `kaggle auth login --force` and retry"
+        ) from error
+    if "unzip" not in inspect.signature(api.dataset_download_file).parameters:
+        raise FetchAborted(
+            "the installed kaggle client cannot unwrap the archive the server puts around large files "
+            "(dataset_download_file has no `unzip` option); upgrade it with `pip install -U kaggle`"
         )
-    expected = Path(staging_dir) / relative_path
-    if expected.is_file():
-        return expected
-    produced = [
-        path for path in Path(staging_dir).rglob("*")
-        if path.is_file() and not path.name.endswith(".kaggle-partial")
-    ]
-    if len(produced) != 1:
-        raise ManifestError(f"the download of {relative_path} left {len(produced)} files, expected one")
-    return produced[0]
+
+    def download(owner, slug, version, relative_path, staging_dir):
+        """Download one file of one dataset version into `staging_dir`; return its path."""
+        # The client prints the dataset URL on every call; the caller reports each file itself.
+        with contextlib.redirect_stdout(io.StringIO()):
+            api.dataset_download_file(
+                f"{owner}/{slug}/{version}", relative_path, path=str(staging_dir),
+                force=True, quiet=True, unzip=True,
+            )
+        expected = Path(staging_dir) / relative_path
+        if expected.is_file():
+            return expected
+        produced = [
+            path for path in Path(staging_dir).rglob("*")
+            if path.is_file() and not path.name.endswith(".kaggle-partial")
+        ]
+        if len(produced) != 1:
+            raise ManifestError(f"the download of {relative_path} left {len(produced)} files, expected one")
+        return produced[0]
+
+    return download
 
 
-def fetch_assets(technique, dest=None, kinds=None, dry_run=False, download=None,
+class LazyKaggleDownload:
+    """Signs in on the first download, not before, and keeps the client for the rest of the run."""
+
+    def __init__(self):
+        self._download = None
+
+    def __call__(self, owner, slug, version, relative_path, staging_dir):
+        if self._download is None:
+            self._download = kaggle_downloader()
+        return self._download(owner, slug, version, relative_path, staging_dir)
+
+
+def _restore_one(folder, target, recorded, source, download):
+    """Download one asset beside its target and move it into place if its hash matches."""
+    folder.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix=STAGING_PREFIX, dir=folder))
+    try:
+        staged = Path(download(*source, staging))
+        actual = sha256_file(staged)
+        if actual != recorded:
+            return REFUSED, (f"the downloaded bytes have sha256 {actual[:12]}..., the manifest records "
+                             f"{recorded[:12]}...; nothing was kept")
+        if target.exists():
+            return DIFFERS, "the local path appeared during the download and was not overwritten"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        # A move, not a rename: a subfolder may sit on another volume.
+        shutil.move(str(staged), str(target))
+        return FETCHED, ""
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+
+
+def fetch_assets(technique, dest=None, kinds=None, predictor=False, dry_run=False, download=None,
                  results_dir=None, progress=None):
     """Restore a technique's recorded external assets under <dest>/<technique>/.
 
     Returns one outcome per selected asset: its kind, location, relative path,
     size, text flag, a status and a detail. A file reaches its final path only
     after its bytes match the recorded sha256. A local file with another hash
-    is reported and left alone. One failed asset does not stop the others.
-    With `dry_run` nothing is downloaded or written. `download` is the function
-    that fetches one file (default: the Kaggle client); `progress` is called
-    with one line before each download.
+    is reported and left alone. One failed asset does not stop the others; a
+    problem every download would hit (no sign-in) raises FetchAborted. With
+    `dry_run` nothing is downloaded or written. `predictor` selects what
+    model_loaders.py reads (see predictor_assets) instead of `kinds`.
+    `download` is the function that fetches one file (default: the Kaggle
+    client); `progress` is called with one line before each download.
     """
     if dest is None:
         from repo_paths import EXTERNAL_DIR
 
         dest = EXTERNAL_DIR
-    folder = check_destination(dest) / technique
+    folder = check_destination(dest) / check_technique_name(technique)
     manifest = read_manifest(technique, results_dir)
-    download = kaggle_download if download is None else download
-    staging = folder / STAGING_DIRNAME
+    selected = predictor_assets(technique, manifest, results_dir)[0] if predictor else select_assets(manifest, kinds)
+    download = LazyKaggleDownload() if download is None else download
+
+    parsed = []
+    for asset in selected:
+        try:
+            parsed.append(parse_kaggle_location(asset.get("location")))
+        except ManifestError as error:
+            parsed.append(error)
+    shared = {}
+    for source in parsed:
+        if not isinstance(source, ManifestError):
+            shared[source[3]] = shared.get(source[3], 0) + 1
+
     outcomes = []
-    for asset in select_assets(manifest, kinds):
+    for asset, source in zip(selected, parsed):
         outcome = {
             "kind": asset.get("kind"),
             "location": asset.get("location"),
@@ -399,81 +514,78 @@ def fetch_assets(technique, dest=None, kinds=None, dry_run=False, download=None,
             "detail": "",
         }
         outcomes.append(outcome)
-        try:
-            owner, slug, version, relative = parse_kaggle_location(asset.get("location"))
-        except ManifestError as error:
-            outcome.update(status=UNSUPPORTED, detail=str(error))
+        if isinstance(source, ManifestError):
+            outcome.update(status=UNSUPPORTED, detail=str(source))
             continue
+        relative = source[3]
         outcome["relative_path"] = relative
         try:
             target = folder / safe_relative_path(relative)
         except ManifestError as error:
             outcome.update(status=REFUSED, detail=str(error))
             continue
+        if shared[relative] > 1:
+            outcome.update(
+                status=REFUSED,
+                detail=f"{shared[relative]} recorded assets have this local path (other datasets or "
+                       "versions); fetch cannot tell which one the folder should hold",
+            )
+            continue
         recorded = str(asset.get("sha256", "")).lower()
-        if target.is_file():
-            if sha256_file(target) == recorded:
-                outcome["status"] = PRESENT
-            else:
-                outcome.update(
-                    status=DIFFERS,
-                    detail="the local file has another sha256 and was not overwritten; "
-                           "move it aside to fetch the recorded one",
-                )
-            continue
-        if target.exists():
-            outcome.update(status=DIFFERS, detail="the local path exists and is not a file")
-            continue
-        if dry_run:
-            outcome["status"] = TO_FETCH
-            continue
-        if progress is not None:
-            progress(f"  fetching     {relative}  ({_human_bytes(outcome['size_bytes'])})")
-        shutil.rmtree(staging, ignore_errors=True)
-        staging.mkdir(parents=True)
         try:
-            staged = Path(download(owner, slug, version, relative, staging))
-            actual = sha256_file(staged)
-            if actual != recorded:
-                outcome.update(
-                    status=REFUSED,
-                    detail=f"the downloaded bytes have sha256 {actual[:12]}..., the manifest records "
-                           f"{recorded[:12]}...; nothing was kept",
-                )
+            if target.is_file():
+                if sha256_file(target) == recorded:
+                    outcome["status"] = PRESENT
+                else:
+                    outcome.update(
+                        status=DIFFERS,
+                        detail="the local file has another sha256 and was not overwritten; "
+                               "move it aside to fetch the recorded one",
+                    )
+            elif target.exists():
+                outcome.update(status=DIFFERS, detail="the local path exists and is not a file")
+            elif dry_run:
+                outcome["status"] = TO_FETCH
             else:
-                target.parent.mkdir(parents=True, exist_ok=True)
-                os.replace(staged, target)
-                outcome["status"] = FETCHED
+                if progress is not None:
+                    progress(f"  fetching     {relative}  ({_human_bytes(outcome['size_bytes'])})")
+                status, detail = _restore_one(folder, target, recorded, source, download)
+                outcome.update(status=status, detail=detail)
+        except FetchAborted:
+            raise
         except (Exception, SystemExit) as error:
             outcome.update(status=FAILED, detail=f"{type(error).__name__}: {error}")
-        finally:
-            shutil.rmtree(staging, ignore_errors=True)
     return outcomes
 
 
 def _human_bytes(size):
     size = float(size)
-    for unit in ("B", "kB", "MB"):
-        if size < 1000:
-            return f"{size:.0f} {unit}" if unit == "B" else f"{size:.1f} {unit}"
+    if size < 1000:
+        return f"{size:.0f} B"
+    for unit in ("kB", "MB"):
         size /= 1000
-    return f"{size:.2f} GB"
+        if round(size, 1) < 1000:
+            return f"{size:.1f} {unit}"
+    return f"{size / 1000:.2f} GB"
 
 
-def fetch_command(techniques, dest=None, kinds=None, dry_run=False, download=None, results_dir=None,
-                  skip_without_manifest=False):
+def fetch_command(techniques, dest=None, kinds=None, predictor=False, dry_run=False, download=None,
+                  results_dir=None, all_techniques=False):
     """Run `fetch` for each technique, print the report, and return the exit code.
 
-    `skip_without_manifest` is for `--all`: a technique folder with no manifest
-    is listed and passed over. A technique named explicitly must have one.
+    `all_techniques` is for `--all`: a technique folder with no manifest is
+    listed and passed over, and a technique with nothing of the selected kinds
+    is not a failure. A technique named explicitly must have a manifest and at
+    least one selected asset.
     """
+    download = LazyKaggleDownload() if download is None else download  # one sign-in for the whole run
     failed = 0
     for technique in techniques:
-        if skip_without_manifest and not manifest_path(technique, results_dir).exists():
+        if all_techniques and not manifest_path(technique, results_dir).exists():
             print(f"----  {technique}: no manifest")
             continue
         print(technique)
-        outcomes = fetch_assets(technique, dest=dest, kinds=kinds, dry_run=dry_run,
+        outcomes = fetch_assets(technique, dest=dest, kinds=kinds, predictor=predictor, dry_run=dry_run,
                                 download=download, results_dir=results_dir, progress=print)
         for outcome in outcomes:
             if outcome["status"] == PRESENT:
@@ -481,6 +593,10 @@ def fetch_command(techniques, dest=None, kinds=None, dry_run=False, download=Non
             name = outcome["relative_path"] or outcome["location"]
             line = f"  {outcome['status']:<12} {name}  ({_human_bytes(outcome['size_bytes'])})"
             print(line + (f": {outcome['detail']}" if outcome["detail"] else ""))
+        if predictor:
+            left_out = predictor_assets(technique, read_manifest(technique, results_dir), results_dir)[1]
+            if left_out:
+                print(f"  left out, not in best_config.json components: {', '.join(left_out)}")
         counts = {}
         for outcome in outcomes:
             counts[outcome["status"]] = counts.get(outcome["status"], 0) + 1
@@ -494,6 +610,9 @@ def fetch_command(techniques, dest=None, kinds=None, dry_run=False, download=Non
             )
         print(f"  {len(outcomes)} asset(s): {summary}")
         failed += sum(outcome["status"] not in FETCH_OK for outcome in outcomes)
+        if not outcomes and not all_techniques:
+            print("  the manifest records no asset of the selected kinds")
+            failed += 1
     return EXIT_OK if failed == 0 else EXIT_FAILED
 
 
@@ -542,7 +661,8 @@ def main():
     g.add_argument("--kind", action="append", choices=ASSET_KINDS,
                    help="repeatable; default: every recorded asset")
     g.add_argument("--predictor", action="store_true",
-                   help="weights, tokenizers and training logs: what model_loaders.py reads")
+                   help="weights, tokenizers and training logs: what model_loaders.py reads "
+                        "(for an ensemble, only the components in best_config.json)")
     p.add_argument("--dest", default=None,
                    help="default: external/; any other path inside the repository is refused")
     p.add_argument("--dry-run", action="store_true",
@@ -563,9 +683,8 @@ def main():
             print(json.dumps(read_manifest(args.technique), indent=2, sort_keys=True))
         elif args.command == "fetch":
             techniques = [args.technique] if args.technique else [d.name for d in technique_dirs()]
-            kinds = PREDICTOR_KINDS if args.predictor else args.kind
-            return fetch_command(techniques, dest=args.dest, kinds=kinds, dry_run=args.dry_run,
-                                 skip_without_manifest=args.all)
+            return fetch_command(techniques, dest=args.dest, kinds=args.kind, predictor=args.predictor,
+                                 dry_run=args.dry_run, all_techniques=args.all)
         elif args.command == "check":
             techniques = [args.technique] if args.technique else [d.name for d in technique_dirs()]
             total = 0
