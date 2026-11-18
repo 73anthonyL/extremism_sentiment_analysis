@@ -1038,9 +1038,11 @@ match, and a number in this text that differs from its claim.
 
 **TODO(author):** the report cards print the top words verbatim, including
 a racial slur in 01's card. Any figure of a card in the paper must redact
-it. **TODO(author):** external assets (weights, per-post files) are not yet
-uploaded to a Kaggle Dataset or recorded with `run_manifest.py add-asset`.
-The perturbation stages cannot be reproduced by a reader until they are.
+it. External assets (weights, per-post files) are in Kaggle Datasets,
+recorded with their hashes in each technique's `run_manifest.json`, and
+`run_manifest.py fetch` restores them. **TODO(author):** those datasets are
+private. The perturbation stages cannot be reproduced by a reader until they
+are made available.
 
 ---
 
@@ -1087,7 +1089,8 @@ and cite it before submission.
 6. A qualitative read of the shared errors, outside the repository; evidence
    or hypothesis status for C3 item 6.
 7. Redact slurs in any report-card figure.
-8. Upload and record external assets before submission.
+8. Make the Kaggle Datasets that hold the external assets available to
+   readers before submission (they are uploaded and recorded, but private).
 9. Citations: 56 entries of `docs/RELATED_WORK.md` are now cited
     author-year and listed under References. Gaps, with no entry in
     `docs/RELATED_WORK.md` yet: TF-IDF, logistic regression, linear SVMs, the

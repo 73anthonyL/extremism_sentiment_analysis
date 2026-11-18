@@ -353,7 +353,8 @@ untracked `external/`; the gallery is its own repository. To rebuild it from
 downloaded `external/<TECHNIQUE>/` folders:
 
 ```bash
-python3 tools/run_manifest.py fetch --all     # weights and per-post files recorded in the run manifests
+python3 tools/run_manifest.py fetch --all --predictor                 # weights and tokenizers the loaders read
+python3 tools/run_manifest.py fetch --all --kind local_attributions   # per-post attributions (dataset text)
 python3 tools/curated_examples.py explain --texts curated.txt --labels labels.txt --all \
     --out external/curated_examples_34        # add --sequential-checkpoints on an 8 GB machine
 python3 tools/curated_plots.py --out external/curated_examples_34

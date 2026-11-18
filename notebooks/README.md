@@ -193,7 +193,9 @@ python3 tools/run_manifest.py fetch --technique <TECHNIQUE>          # every rec
 
 `fetch` downloads from the locations in `run_manifest.json`, keeps a file
 only if its sha256 equals the recorded one, and never overwrites a local file
-that differs. It needs a Kaggle sign-in with access to the datasets.
+that differs. `--predictor` takes what `tools/model_loaders.py` reads: for
+notebook 11 that is the four components in its `best_config.json`, not the
+excluded ones. It needs a Kaggle sign-in with access to the datasets.
 
 Before committing a notebook with its outputs:
 
