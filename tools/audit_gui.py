@@ -75,7 +75,14 @@ LOOPBACK = "127.0.0.1"
 DEFAULT_PORT = 8765
 STATIC_DIR = TOOLS_DIR / "audit_gui_static"
 # The only files the page is made of. Nothing else under tools/ is served.
-STATIC_FILES = {"app.js": "text/javascript; charset=utf-8", "style.css": "text/css; charset=utf-8"}
+STATIC_FILES = {
+    "app.js": "text/javascript; charset=utf-8",
+    "style.css": "text/css; charset=utf-8",
+    # The two typefaces, served from here so the page needs no network (SIL OFL 1.1; licences beside them).
+    "fonts/stix-two-text-roman.woff2": "font/woff2",
+    "fonts/stix-two-text-italic.woff2": "font/woff2",
+    "fonts/source-sans-3-roman.woff2": "font/woff2",
+}
 TOKEN_PLACEHOLDER = "{{AUDIT_TOKEN}}"
 TOKEN_HEADER = "X-Audit-Token"
 
@@ -93,7 +100,7 @@ NOTEBOOK_ROLES = ("classical", "transformer", "ensemble")
 MAX_LOG_LINES = 2000
 STAGE_LINE_RE = re.compile(r"^(OK|SKIP|FAIL)\s+([a-z0-9_]+)(?::\s*(.*))?$")
 STOPPED_RE = re.compile(r"^STOPPED at stage ([a-z0-9_-]+)(?::\s*(.*))?$")
-CSP = "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; " \
+CSP = "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; img-src 'self' data:; " \
       "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 
 
