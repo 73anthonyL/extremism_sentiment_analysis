@@ -138,19 +138,23 @@ command line:
 python3 tools/audit_gui.py            # opens http://127.0.0.1:8765
 ```
 
-* **One technique.** Every folder under `results_summary/` is listed. Its
+* **One classifier.** Every folder under `results_summary/` is listed. Its
   page shows the seven contract items with the validator's message for each,
   a button that runs `audit.py run --technique <TECHNIQUE>` and shows each
   stage as it finishes, the files the run changed (none, on the committed
   state), and the committed report card.
-* **Across techniques.** The committed tables, one view per research
+* **Across classifiers.** The committed tables, one section per research
   question, with a technique outside the comparison marked as such.
 * **Add your classifier.** The steps of this guide, with the notebook
   template's sections for the role you choose.
 
-The page adds no analysis and writes no artifact of its own: every number on
-it is read from a committed file. It needs nothing beyond the repository's
-requirements and works offline. Three things it does not do, on purpose. It
+The page is set like a proceedings page: sections, tables and figures are
+numbered, each caption says what the item cannot show, and every source file
+is a footnote that lights up when its mark is pointed at. It adds no analysis
+and writes no artifact of its own: every number on it is read from a committed
+file. It needs nothing beyond the repository's requirements and works
+offline; its two typefaces are bundled under `tools/audit_gui_static/fonts/`
+with their licences. Three things it does not do, on purpose. It
 does not classify text, because the framework audits classifiers and is not a
 moderation tool. It does not start the perturbation stages, which load model
 weights; each technique's page gives the command. And it shows no post text,
