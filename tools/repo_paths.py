@@ -5,10 +5,34 @@ toolkit, and so that the frozen protocol values (split counts, seed, version
 strings) exist in exactly one place rather than being retyped per script.
 """
 
+import os
 import re
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+TOOLS_DIR = Path(__file__).resolve().parent
+
+
+def find_study_root():
+    """The folder holding data/, splits/, results_summary/ and research_loop/.
+
+    In order: the ESA_STUDY_ROOT environment variable; the source checkout this
+    file sits in (its parent holds tools/repo_paths.py); otherwise the current
+    directory. An installed copy of the toolkit therefore works on whichever
+    study folder it is run from, and a checkout behaves as it always has.
+    """
+    named = os.environ.get("ESA_STUDY_ROOT")
+    if named:
+        root = Path(named).expanduser().resolve()
+        if not root.is_dir():
+            raise SystemExit(f"ESA_STUDY_ROOT is not a folder: {root}")
+        return root
+    checkout = TOOLS_DIR.parent
+    if (checkout / "tools" / "repo_paths.py").is_file():
+        return checkout
+    return Path.cwd().resolve()
+
+
+REPO_ROOT = find_study_root()
 
 # Data and split artifacts.
 DATA_DIR = REPO_ROOT / "data"
@@ -90,7 +114,6 @@ FAITHFULNESS_FILENAME = "faithfulness_{split}.json"
 LOOP_DIR = REPO_ROOT / "research_loop"
 PROBS_DIR = LOOP_DIR / "probs"
 
-TOOLS_DIR = REPO_ROOT / "tools"
 
 # Untracked downloads: weights, tokenizers and per-post files, one folder per
 # technique. Never committed.
