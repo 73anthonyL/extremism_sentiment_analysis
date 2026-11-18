@@ -182,7 +182,18 @@ python3 tools/render_tables.py --write
 ```
 
 `external/<TECHNIQUE>/` (weights, per-post predictions, per-post
-attributions) is uploaded to a Kaggle Dataset. It is never committed.
+attributions) is uploaded to a Kaggle Dataset. It is never committed. To get
+a recorded folder back:
+
+```bash
+python3 tools/run_manifest.py fetch --all --dry-run                  # on disk, missing, different
+python3 tools/run_manifest.py fetch --technique <TECHNIQUE> --predictor   # weights and tokenizers
+python3 tools/run_manifest.py fetch --technique <TECHNIQUE>          # every recorded file
+```
+
+`fetch` downloads from the locations in `run_manifest.json`, keeps a file
+only if its sha256 equals the recorded one, and never overwrites a local file
+that differs. It needs a Kaggle sign-in with access to the datasets.
 
 Before committing a notebook with its outputs:
 
