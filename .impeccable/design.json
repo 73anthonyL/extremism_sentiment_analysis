@@ -1,0 +1,585 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-18T23:00:00Z",
+  "title": "Design System: Audit workbench",
+  "extensions": {
+    "colorMeta": {
+      "desk": {
+        "role": "neutral",
+        "displayName": "Desk",
+        "canonical": "#dfe5ee",
+        "tonalRamp": [
+          "#090b0e",
+          "#24272b",
+          "#41454b",
+          "#62666e",
+          "#858991",
+          "#aaaeb5",
+          "#ced1d7",
+          "#eceff3"
+        ]
+      },
+      "page": {
+        "role": "neutral",
+        "displayName": "Page",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#aeaeae",
+          "#d1d1d1",
+          "#eeeeee"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#111111",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#aeaeae",
+          "#d1d1d1",
+          "#eeeeee"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "canonical": "#333a45",
+        "tonalRamp": [
+          "#090b10",
+          "#22272d",
+          "#40454e",
+          "#5f6772",
+          "#828a95",
+          "#a8aeb8",
+          "#ccd1da",
+          "#eaeff6"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "canonical": "#5a6372",
+        "tonalRamp": [
+          "#080b11",
+          "#22272f",
+          "#3f4551",
+          "#5e6775",
+          "#818a98",
+          "#a7aebb",
+          "#cbd1dc",
+          "#eaeff7"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#111111",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#aeaeae",
+          "#d1d1d1",
+          "#eeeeee"
+        ]
+      },
+      "hair": {
+        "role": "neutral",
+        "displayName": "Hair",
+        "canonical": "#c6ccd6",
+        "tonalRamp": [
+          "#090b0e",
+          "#24272b",
+          "#41454c",
+          "#61666f",
+          "#848992",
+          "#aaaeb5",
+          "#cdd1d7",
+          "#eceff4"
+        ]
+      },
+      "wash": {
+        "role": "neutral",
+        "displayName": "Wash",
+        "canonical": "#eef2f8",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#252729",
+          "#434549",
+          "#63666b",
+          "#86898e",
+          "#abaeb2",
+          "#cfd1d5",
+          "#edeff1"
+        ]
+      },
+      "blue": {
+        "role": "primary",
+        "displayName": "Citation Blue",
+        "canonical": "#1f4e9e",
+        "tonalRamp": [
+          "#000827",
+          "#092451",
+          "#1f4280",
+          "#3664b1",
+          "#5b88d5",
+          "#87aff0",
+          "#b9d2fd",
+          "#e6efff"
+        ]
+      },
+      "blue-deep": {
+        "role": "primary",
+        "displayName": "Citation Blue, deep",
+        "canonical": "#173d7d",
+        "tonalRamp": [
+          "#010923",
+          "#0f254b",
+          "#264476",
+          "#3f65a5",
+          "#6389c9",
+          "#8eafe6",
+          "#b8d2fe",
+          "#e6effe"
+        ]
+      },
+      "on-blue": {
+        "role": "primary",
+        "displayName": "On Blue",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#aeaeae",
+          "#d1d1d1",
+          "#eeeeee"
+        ]
+      },
+      "on-blue-2": {
+        "role": "primary",
+        "displayName": "On Blue, quiet",
+        "canonical": "#d6e2f6",
+        "tonalRamp": [
+          "#080b11",
+          "#212730",
+          "#3e4552",
+          "#5d6777",
+          "#808a9a",
+          "#a6aebd",
+          "#cad1dd",
+          "#e9eff9"
+        ]
+      },
+      "rail-rule": {
+        "role": "primary",
+        "displayName": "Rail Rule",
+        "canonical": "#3a66b0",
+        "tonalRamp": [
+          "#000925",
+          "#0c244e",
+          "#23437a",
+          "#3b65aa",
+          "#6089ce",
+          "#8bafea",
+          "#b8d2fd",
+          "#e6efff"
+        ]
+      },
+      "cited": {
+        "role": "secondary",
+        "displayName": "Cited Yellow",
+        "canonical": "#fff1a8",
+        "tonalRamp": [
+          "#0f0b00",
+          "#2e2600",
+          "#4f450c",
+          "#736623",
+          "#968a4c",
+          "#b9af7c",
+          "#dad2a8",
+          "#f6f0cd"
+        ]
+      },
+      "cat-slur": {
+        "role": "tertiary",
+        "displayName": "Category: slur",
+        "canonical": "#2a78d6",
+        "tonalRamp": [
+          "#000a23",
+          "#002551",
+          "#024388",
+          "#1965bc",
+          "#478adf",
+          "#79b1f9",
+          "#b4d4fe",
+          "#e4f0fe"
+        ]
+      },
+      "cat-extremist_framing": {
+        "role": "tertiary",
+        "displayName": "Category: extremist framing",
+        "canonical": "#eb6834",
+        "tonalRamp": [
+          "#1d0200",
+          "#461400",
+          "#772701",
+          "#ac3c00",
+          "#d56235",
+          "#f3906c",
+          "#fec1aa",
+          "#fee9e2"
+        ]
+      },
+      "cat-identity_term": {
+        "role": "tertiary",
+        "displayName": "Category: identity term",
+        "canonical": "#1baf7a",
+        "tonalRamp": [
+          "#001007",
+          "#002f1d",
+          "#065237",
+          "#0a7953",
+          "#26a071",
+          "#6bc39a",
+          "#9de3c0",
+          "#c6fee1"
+        ]
+      },
+      "cat-topical": {
+        "role": "tertiary",
+        "displayName": "Category: topical",
+        "canonical": "#b3bac6",
+        "tonalRamp": [
+          "#090b0f",
+          "#23272c",
+          "#41454d",
+          "#606671",
+          "#848994",
+          "#a9aeb7",
+          "#cdd1d9",
+          "#ebeff5"
+        ]
+      },
+      "ok": {
+        "role": "tertiary",
+        "displayName": "Met Green",
+        "canonical": "#17803d",
+        "tonalRamp": [
+          "#001002",
+          "#003010",
+          "#075424",
+          "#197a3b",
+          "#4b9e60",
+          "#7ec08b",
+          "#abe1b5",
+          "#d0fcd7"
+        ]
+      },
+      "bad": {
+        "role": "tertiary",
+        "displayName": "Failed Red",
+        "canonical": "#b3261e",
+        "tonalRamp": [
+          "#210000",
+          "#4f0101",
+          "#801510",
+          "#b33026",
+          "#d95c4e",
+          "#f78b7d",
+          "#ffbfb5",
+          "#ffe9e5"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "title": {
+        "displayName": "Title",
+        "purpose": "The classifier's name or the view's name, once per sheet. 1.55rem at 900px and below."
+      },
+      "brand": {
+        "displayName": "Brand",
+        "purpose": "The page name at the top of the rail."
+      },
+      "section-heading": {
+        "displayName": "Section heading",
+        "purpose": "Numbered section heads on the sheet."
+      },
+      "card-heading": {
+        "displayName": "Card heading",
+        "purpose": "Headings inside a report card."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "The opening paragraph of a reading view, max 68ch."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text, max 68ch; the byline is its italic."
+      },
+      "table": {
+        "displayName": "Table",
+        "purpose": "Table text and the stage list, tabular lining figures; headers at 600."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Numbered caption under every table and figure; the label is 700."
+      },
+      "footnote": {
+        "displayName": "Footnote",
+        "purpose": "The source list under a caption."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Buttons and view tabs."
+      },
+      "note": {
+        "displayName": "Note",
+        "purpose": "Side notes, disclosure summaries and detail lines."
+      },
+      "mark": {
+        "displayName": "Status mark",
+        "purpose": "The word beside a status shape."
+      },
+      "chart-label": {
+        "displayName": "Chart label",
+        "purpose": "Legends, chart rows, the pairwise matrix and stage messages."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "File paths and commands, in the platform monospace."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sheet-on-desk",
+        "value": "0 1px 0 #b8c2d2, 0 5px 16px rgba(0, 0, 0, 0.10)",
+        "purpose": "The sheet only. Removed in print."
+      },
+      {
+        "name": "point-halo",
+        "value": "0 0 0 2px var(--page)",
+        "purpose": "Separates a data point from its track and from a neighbouring point."
+      },
+      {
+        "name": "point-ring",
+        "value": "inset 0 0 0 2px var(--ink), 0 0 0 2px var(--page)",
+        "purpose": "The ring point for the comparison condition in a paired dot plot."
+      },
+      {
+        "name": "scroll-edge-cue",
+        "value": "linear-gradient(to right, rgba(17, 17, 17, 0.2), transparent) 0.6rem wide",
+        "purpose": "A background gradient, not a box shadow: the soft edge on the side of a table box that has more to scroll to."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "The one easing curve, for every transition and the settle."
+      },
+      {
+        "name": "press",
+        "value": "120ms",
+        "purpose": "Button press and data-point growth."
+      },
+      {
+        "name": "tint",
+        "value": "140ms",
+        "purpose": "Hover background and colour on buttons, rail items and footnote marks."
+      },
+      {
+        "name": "cite",
+        "value": "160ms",
+        "purpose": "A footnote lighting when its mark is pointed at or focused."
+      },
+      {
+        "name": "settle",
+        "value": "200ms",
+        "purpose": "A finished audit stage fading from cited yellow to clear, once."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "transition: none; animation: none",
+        "purpose": "Applied to every element under prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "900px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Starts the audit. At most one per view; when disabled, its label says why.",
+      "html": "<button class=\"ds-btn ds-btn-primary\" type=\"button\">Run the audit</button>",
+      "css": ".ds-btn { border: 1px solid var(--blue); background: var(--page); color: var(--blue); padding: 0.5rem 0.95rem; border-radius: 4px; cursor: pointer; font-family: var(--sans); font-size: 0.92rem; font-weight: 600; transition: background-color 140ms var(--ease), color 140ms var(--ease), transform 120ms var(--ease); } .ds-btn:hover { background: var(--wash); } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } .ds-btn[disabled] { opacity: 0.55; cursor: default; transform: none; } .ds-btn-primary { background: var(--blue); color: var(--on-blue); } .ds-btn-primary:hover { background: var(--blue-deep); }"
+    },
+    {
+      "name": "Outline button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Every other action on the sheet.",
+      "html": "<button class=\"ds-btn\" type=\"button\">Check the contract again</button>",
+      "css": ".ds-btn { border: 1px solid var(--blue); background: var(--page); color: var(--blue); padding: 0.5rem 0.95rem; border-radius: 4px; cursor: pointer; font-family: var(--sans); font-size: 0.92rem; font-weight: 600; transition: background-color 140ms var(--ease), color 140ms var(--ease), transform 120ms var(--ease); } .ds-btn:hover { background: var(--wash); } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } .ds-btn[disabled] { opacity: 0.55; cursor: default; transform: none; }"
+    },
+    {
+      "name": "View tabs",
+      "kind": "nav",
+      "refersTo": "view-tab",
+      "description": "The three views of the page; the current one carries a 3px blue underline.",
+      "html": "<nav class=\"ds-views\" aria-label=\"Views\"><button type=\"button\" aria-current=\"page\">One classifier</button><button type=\"button\">Across classifiers</button><button type=\"button\">Add your classifier</button></nav>",
+      "css": ".ds-views { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 1.5rem; font-family: var(--sans); font-size: 0.92rem; font-weight: 600; } .ds-views button { border: 0; background: none; cursor: pointer; padding: 0.35rem 0; color: var(--ink-2); border-bottom: 3px solid transparent; font: inherit; } .ds-views button:hover { color: var(--blue); } .ds-views button[aria-current=\"page\"] { color: var(--ink); border-bottom-color: var(--blue); } .ds-views button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 2px; }"
+    },
+    {
+      "name": "Rail item",
+      "kind": "nav",
+      "refersTo": "rail-item",
+      "description": "One classifier on the blue rail: number, name, contract mark. The current item is a white slip.",
+      "html": "<div class=\"ds-rail\"><button class=\"ds-tech\" type=\"button\"><span class=\"ds-num\">01</span><span>CLASSIFIER-A</span><span class=\"ds-mark\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle class=\"ds-out\" cx=\"8\" cy=\"8\" r=\"7\"/><path class=\"ds-in\" d=\"M4.7 8.3l2.2 2.2 4.5-4.7\"/></svg></span></button><button class=\"ds-tech\" type=\"button\" aria-current=\"true\"><span class=\"ds-num\">02</span><span>CLASSIFIER-B</span><span class=\"ds-mark\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle class=\"ds-out\" cx=\"8\" cy=\"8\" r=\"7\"/><path class=\"ds-in\" d=\"M4.7 8.3l2.2 2.2 4.5-4.7\"/></svg></span></button><button class=\"ds-tech\" type=\"button\"><span class=\"ds-num\">03</span><span>CLASSIFIER-C</span><span class=\"ds-mark\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle class=\"ds-out\" cx=\"8\" cy=\"8\" r=\"7\"/><path class=\"ds-in\" d=\"M5.4 5.4l5.2 5.2M10.6 5.4l-5.2 5.2\"/></svg></span></button></div>",
+      "css": ".ds-rail { background: var(--blue); padding: 0.8rem; width: 16rem; font-family: var(--sans); } .ds-tech { display: grid; grid-template-columns: 1.55rem minmax(0, 1fr) auto; gap: 0.3rem; align-items: baseline; width: 100%; text-align: left; border: 0; background: none; color: var(--on-blue); cursor: pointer; padding: 0.45rem 0.55rem; border-radius: 4px; font: inherit; font-size: 0.88rem; line-height: 1.25; transition: background-color 140ms var(--ease); } .ds-tech + .ds-tech { margin-top: 1px; } .ds-tech:hover { background: var(--blue-deep); } .ds-tech:focus-visible { outline: 2px solid var(--on-blue); outline-offset: 2px; } .ds-tech[aria-current=\"true\"] { background: var(--page); color: var(--ink); font-weight: 600; } .ds-tech .ds-num { color: var(--on-blue-2); font-variant-numeric: tabular-nums; } .ds-tech[aria-current=\"true\"] .ds-num { color: var(--ink-3); } .ds-tech .ds-mark { align-self: center; display: inline-flex; color: var(--on-blue); } .ds-tech .ds-mark svg { width: 1rem; height: 1rem; } .ds-tech .ds-out { fill: currentColor; } .ds-tech .ds-in { fill: none; stroke: var(--blue); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; } .ds-tech[aria-current=\"true\"] .ds-mark { color: var(--ok); } .ds-tech[aria-current=\"true\"] .ds-in { stroke: #fff; }"
+    },
+    {
+      "name": "Status marks",
+      "kind": "chip",
+      "description": "Every status is a drawn shape and a word, never colour alone.",
+      "html": "<span class=\"ds-mark ds-ok\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle class=\"ds-out\" cx=\"8\" cy=\"8\" r=\"7\"/><path class=\"ds-in\" d=\"M4.7 8.3l2.2 2.2 4.5-4.7\"/></svg><span>met</span></span><span class=\"ds-mark ds-bad\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle class=\"ds-out\" cx=\"8\" cy=\"8\" r=\"7\"/><path class=\"ds-in\" d=\"M5.4 5.4l5.2 5.2M10.6 5.4l-5.2 5.2\"/></svg><span>missing</span></span><span class=\"ds-mark ds-run\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle class=\"ds-line\" cx=\"8\" cy=\"8\" r=\"6.3\"/><circle class=\"ds-out\" cx=\"8\" cy=\"8\" r=\"3\"/></svg><span>running</span></span><span class=\"ds-mark ds-none\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle class=\"ds-line\" cx=\"8\" cy=\"8\" r=\"6.3\"/><path class=\"ds-line\" d=\"M5 8h6\"/></svg><span>not provided</span></span><span class=\"ds-mark ds-pending\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle class=\"ds-line ds-dashed\" cx=\"8\" cy=\"8\" r=\"6.3\"/></svg><span>not reached</span></span>",
+      "css": ".ds-mark { display: inline-flex; align-items: center; gap: 0.35rem; margin-right: 1rem; font-family: var(--sans); font-size: 0.86rem; font-weight: 600; white-space: nowrap; } .ds-mark svg { width: 1rem; height: 1rem; flex: none; } .ds-mark.ds-ok { color: var(--ok); } .ds-mark.ds-bad { color: var(--bad); } .ds-mark.ds-run { color: var(--blue); } .ds-mark.ds-none, .ds-mark.ds-pending { color: var(--ink-3); font-weight: 400; } .ds-mark .ds-out { fill: currentColor; } .ds-mark .ds-in { fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; } .ds-mark .ds-line { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; } .ds-mark .ds-dashed { stroke-dasharray: 2.4 2.4; }"
+    },
+    {
+      "name": "Ruled table with caption and footnote",
+      "kind": "custom",
+      "refersTo": "footnote-cited",
+      "description": "A table ruled as in print, its numbered caption stating a limit, and the source set as a footnote that lights when its mark is pointed at or focused.",
+      "html": "<div class=\"ds-tbl\"><table><thead><tr><th>Item</th><th class=\"ds-n\">Rows</th><th>Status</th></tr></thead><tbody><tr><td>Test probabilities</td><td class=\"ds-n\">450</td><td><span class=\"ds-mark ds-ok\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle class=\"ds-out\" cx=\"8\" cy=\"8\" r=\"7\"/><path class=\"ds-in\" d=\"M4.7 8.3l2.2 2.2 4.5-4.7\"/></svg><span>met</span></span></td></tr><tr><td>Validation probabilities</td><td class=\"ds-n\">450</td><td><span class=\"ds-mark ds-ok\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle class=\"ds-out\" cx=\"8\" cy=\"8\" r=\"7\"/><path class=\"ds-in\" d=\"M4.7 8.3l2.2 2.2 4.5-4.7\"/></svg><span>met</span></span></td></tr></tbody></table><p class=\"ds-cap\"><b>Table 1.</b> The contract. It shows the files are present and well formed, not that the classifier is accurate.<sup class=\"ds-ref\"><a href=\"#ds-note-1\">1</a></sup></p><ol class=\"ds-notes\"><li id=\"ds-note-1\"><sup>1</sup><span>Read from <code>results_summary/&lt;TECHNIQUE&gt;/metrics_test.json</code>.</span></li></ol></div>",
+      "css": ".ds-tbl { font-family: var(--serif); color: var(--ink); line-height: 1.45; max-width: 34rem; } .ds-tbl table { width: 100%; border-collapse: collapse; font-size: 0.92rem; font-variant-numeric: tabular-nums lining-nums; border-top: 2px solid var(--rule); border-bottom: 2px solid var(--rule); } .ds-tbl th { text-align: left; font-weight: 600; padding: 0.3rem 0.9rem 0.3rem 0; border-bottom: 1px solid var(--rule); vertical-align: bottom; } .ds-tbl td { padding: 0.28rem 0.9rem 0.28rem 0; vertical-align: top; } .ds-tbl .ds-n { text-align: right; white-space: nowrap; } .ds-tbl th:last-child, .ds-tbl td:last-child { padding-right: 0; } .ds-cap { font-size: 0.9rem; margin: 0.75rem 0 0; } .ds-cap b { font-weight: 700; } .ds-ref { font-family: var(--sans); font-size: 0.68em; line-height: 0; } .ds-ref a { color: var(--blue); text-decoration: none; padding: 0 0.12em; border-radius: 2px; transition: background-color 140ms var(--ease); } .ds-ref a:hover, .ds-ref a:focus-visible { background: var(--cited); } .ds-notes { list-style: none; margin: 0.45rem 0 0; padding: 0.4rem 0 0; border-top: 1px solid var(--rule); font-size: 0.86rem; width: fit-content; min-width: 11rem; } .ds-notes li { display: grid; grid-template-columns: 1.3rem minmax(0, 1fr); padding: 0.12rem 0.25rem; border-radius: 2px; transition: background-color 160ms var(--ease); } .ds-notes li:target, .ds-tbl:has(.ds-ref a:hover) .ds-notes li, .ds-tbl:has(.ds-ref a:focus-visible) .ds-notes li { background: var(--cited); } .ds-notes sup { font-family: var(--sans); font-size: 0.75em; line-height: 1.9; } .ds-notes code { font-family: var(--mono); font-size: 0.82em; } .ds-mark { display: inline-flex; align-items: center; gap: 0.35rem; margin-right: 1rem; font-family: var(--sans); font-size: 0.86rem; font-weight: 600; white-space: nowrap; } .ds-mark svg { width: 1rem; height: 1rem; flex: none; } .ds-mark.ds-ok { color: var(--ok); } .ds-mark.ds-bad { color: var(--bad); } .ds-mark.ds-run { color: var(--blue); } .ds-mark.ds-none, .ds-mark.ds-pending { color: var(--ink-3); font-weight: 400; } .ds-mark .ds-out { fill: currentColor; } .ds-mark .ds-in { fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; } .ds-mark .ds-line { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; } .ds-mark .ds-dashed { stroke-dasharray: 2.4 2.4; }"
+    },
+    {
+      "name": "Category share bar",
+      "kind": "custom",
+      "refersTo": "figure-frame",
+      "description": "The four attribution categories, in their four fixed colours, with a legend that names each. Illustrative shares. A share of 15% or more is written under its segment in ink, never on the category colour.",
+      "html": "<div class=\"ds-fig\"><div class=\"ds-legend\"><span><span class=\"ds-key ds-c-slur\"></span>Slur</span><span><span class=\"ds-key ds-c-ef\"></span>Extremist framing</span><span><span class=\"ds-key ds-c-it\"></span>Identity term</span><span><span class=\"ds-key ds-c-top\"></span>Topical</span></div><div class=\"ds-seg\" role=\"img\" aria-label=\"Illustrative shares by category\"><span class=\"ds-c-slur\" style=\"flex: 5 1 0\"></span><span class=\"ds-c-ef\" style=\"flex: 10 1 0\"></span><span class=\"ds-c-it\" style=\"flex: 20 1 0\"></span><span class=\"ds-c-top\" style=\"flex: 65 1 0\"></span></div><div class=\"ds-seg-labels\" aria-hidden=\"true\"><span style=\"flex: 5 1 0\"></span><span style=\"flex: 10 1 0\"></span><span style=\"flex: 20 1 0\">20%</span><span style=\"flex: 65 1 0\">65%</span></div></div>",
+      "css": ".ds-fig { border: 1px solid var(--hair); padding: 0.85rem 0.95rem 0.6rem; background: var(--page); max-width: 30rem; } .ds-legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1.1rem; font-family: var(--sans); font-size: 0.84rem; color: var(--ink-2); } .ds-legend > span { display: inline-flex; align-items: center; gap: 0.4rem; } .ds-key { width: 0.7rem; height: 0.7rem; flex: none; } .ds-seg { display: flex; gap: 2px; height: 1.55rem; margin-top: 0.6rem; } .ds-seg > span { min-width: 0; } .ds-seg > span:hover { filter: brightness(1.1); } .ds-c-slur { background: var(--cat-slur); } .ds-c-ef { background: var(--cat-extremist_framing); } .ds-c-it { background: var(--cat-identity_term); } .ds-c-top { background: var(--cat-topical); } .ds-seg-labels { display: flex; gap: 2px; margin-top: 0.2rem; font-family: var(--sans); font-size: 0.84rem; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; } .ds-seg-labels > span { min-width: 0; white-space: nowrap; }"
+    },
+    {
+      "name": "Dot plot row",
+      "kind": "custom",
+      "description": "One classifier on a hairline track: ink dots for the others, one larger blue dot for the selected classifier. Illustrative positions.",
+      "html": "<div class=\"ds-rows\"><div class=\"ds-row\"><span>01 CLASSIFIER-A</span><span class=\"ds-track\"><span class=\"ds-pt\" style=\"left: 40%\"></span></span><span class=\"ds-val\">0.850</span></div><div class=\"ds-row\"><span class=\"ds-this\">02 CLASSIFIER-B</span><span class=\"ds-track\"><span class=\"ds-pt ds-own\" style=\"left: 60%\"></span></span><span class=\"ds-val\">0.880</span></div></div>",
+      "css": ".ds-rows { display: grid; gap: 0.32rem; font-family: var(--sans); font-size: 0.84rem; color: var(--ink); max-width: 30rem; } .ds-row { display: grid; grid-template-columns: minmax(7rem, 13rem) minmax(0, 1fr) 3.2rem; gap: 0.7rem; align-items: center; } .ds-this { font-weight: 700; } .ds-val { font-variant-numeric: tabular-nums; text-align: right; } .ds-track { position: relative; height: 1.15rem; display: block; } .ds-track::before { content: \"\"; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--hair); } .ds-pt { position: absolute; top: 50%; width: 0.66rem; height: 0.66rem; margin: -0.33rem 0 0 -0.33rem; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 2px var(--page); transition: transform 120ms var(--ease); } .ds-pt.ds-own { background: var(--blue); width: 0.86rem; height: 0.86rem; margin: -0.43rem 0 0 -0.43rem; } .ds-pt:hover { transform: scale(1.25); }"
+    },
+    {
+      "name": "Command block",
+      "kind": "custom",
+      "refersTo": "command-block",
+      "description": "A command on wash. Each token is kept whole, so the line wraps at spaces only.",
+      "html": "<pre class=\"ds-cmd\"><span class=\"ds-tok\">python3</span> <span class=\"ds-tok\">tools/local_foundation.py</span> <span class=\"ds-tok\">--out</span> <span class=\"ds-tok\">/tmp/kit_inputs</span></pre>",
+      "css": ".ds-cmd { background: var(--wash); color: var(--ink); padding: 0.6rem 0.75rem; margin: 0; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; border-radius: 2px; font-family: var(--mono); font-size: 0.82em; max-width: 22rem; } .ds-tok { display: inline-block; max-width: 100%; white-space: normal; overflow-wrap: anywhere; vertical-align: top; }"
+    },
+    {
+      "name": "Empty state and error",
+      "kind": "card",
+      "description": "A dashed box says what is missing and what produces it; a red-bordered box carries an error and the next step.",
+      "html": "<div class=\"ds-empty\"><p><strong>No report card yet.</strong></p><p>Run the audit above to write it.</p></div><div class=\"ds-error\"><p><strong>This could not be loaded.</strong> The server did not answer.</p></div>",
+      "css": ".ds-empty { border: 1px dashed var(--ink-3); padding: 1rem 1.1rem; max-width: 30rem; font-family: var(--serif); color: var(--ink); } .ds-empty p, .ds-error p { margin: 0; } .ds-empty p + p { margin-top: 0.5rem; } .ds-error { border: 1px solid var(--bad); padding: 0.7rem 0.9rem; max-width: 30rem; margin-top: 1rem; font-family: var(--sans); font-size: 0.92rem; color: var(--ink); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Proceedings Page",
+    "overview": "The audit interface is set as a page from conference proceedings: one white sheet on a pale blue-grey desk, with a citation-blue rail of classifiers beside it. The sheet reads like the results section the researcher is about to write. Sections are numbered, tables and figures are numbered as they are laid out, every caption says what the item cannot show, and every number names the file it was read from in a footnote set directly under the caption that first cites it.\n\nThe page is dense in the way a paper is dense. Type does the structural work: a bold serif title, an italic byline of model facts, numbered section heads, tables ruled heavy at top and bottom and light under the head. Controls are few and sit in a sans face so they never read as part of the typeset record. The page is light only (the stylesheet declares `color-scheme: light`), loads nothing from outside its own folder, and carries a print stylesheet that drops the rail, the view tabs, the actions and the disclosures and leaves the sheet.\n\nThe page refuses the experiment dashboard: there are no metric tiles, no dark rail of runs, no ranked bars. Classifiers are listed in their file order in every chart and table, never sorted by a value.",
+    "keyCharacteristics": [
+      "One white sheet (max width 62.5rem) on a pale desk, beside a fixed blue rail (18rem).",
+      "Serif for everything a paper would typeset; sans for controls, status words, chart labels and notes.",
+      "Tables ruled as in print: 2px rule above and below, 1px under the head, no vertical rules, no fills.",
+      "Numbered sections, tables and figures; each caption states a limit.",
+      "Sources as footnotes under the caption that first cites them, lit when their mark is pointed at or focused.",
+      "Colour does four jobs only: the rail and actions, a status, an attribution category, a cited source.",
+      "State changes happen in place in 120 to 200 ms; nothing animates on entry."
+    ],
+    "rules": [
+      {
+        "name": "The Four Jobs Rule",
+        "body": "Colour does four jobs only: the citation-blue rail and actions, a status, an attribution category, and the mark of a cited source. A new element that needs colour for a fifth reason is set in ink instead.",
+        "section": "colors"
+      },
+      {
+        "name": "The Four Categories Rule",
+        "body": "There are exactly four attribution categories: slur, extremist framing, identity term, topical. Each has one fixed colour. There is no fifth colour and no generic series slot; a chart of anything other than categories uses ink, a ring and the one blue dot.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mark And Word Rule",
+        "body": "A status is never colour alone. Each status has its own drawn shape (a filled circle with a tick, a filled circle with a cross, a ring with a centre dot, a ring with a bar, a dashed ring) and a word. On the rail, where every mark is white on blue, the shape carries the difference and the word is kept for screen readers.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Voices Rule",
+        "body": "Serif is for what a paper would typeset: titles, text, tables, captions, footnotes. Sans is for what the reader operates or what annotates a chart: buttons, tabs, status words, legends, axis figures, notes. Nothing else chooses the face.",
+        "section": "typography"
+      },
+      {
+        "name": "The Caption States A Limit Rule",
+        "body": "Every table and figure has a numbered caption directly beneath it, and the caption says what the item cannot show. Numbers run in the order the items are laid out on the sheet, per view.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Line Rule",
+        "body": "A numeric table cell is right-aligned, header included, and never wraps. A column is numeric when every filled cell in it is a number. Short text cells (24 characters or fewer) are also kept on one line; cells of 36 characters or more wrap.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Sheet Rule",
+        "body": "Only the sheet casts a shadow. Buttons, figures, tables and messages are flat at rest and flat on hover.",
+        "section": "elevation"
+      },
+      {
+        "name": "The In Place Rule",
+        "body": "State changes happen where they are: a hover tint in 140 ms, a footnote lighting in 160 ms, a data point growing to 1.25 in 120 ms, a button sinking 1px when pressed, and one 200 ms settle from cited yellow to clear when an audit stage finishes. All use one ease-out curve, `cubic-bezier(.16, 1, .3, 1)`. Nothing animates on entry, and under reduced motion every transition and animation is off.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do mask slurs by default on every screen that shows words, and keep the one visible toggle that asks for them verbatim. A new screen that lists words inherits the mask.",
+      "Do show counts, metrics, file paths and word-level tables only. Every number cites its file with a footnote mark.",
+      "Do give every table and figure a numbered caption directly beneath it that states what the item cannot show.",
+      "Do pair every status with its drawn shape and a word; where the word is hidden to save room, keep it for screen readers and let the shape, not the colour, carry the difference.",
+      "Do use the four category colours for the four categories only, with the category's name in a legend and the values in a table nearby.",
+      "Do right-align numeric columns with their headers and keep them on one line; let a table of four or more columns scroll sideways at 900px and below with the soft edge cue and keyboard focus.",
+      "Do keep classifiers in file order in every chart and table, and say in the caption when an axis does not start at zero.",
+      "Do set typeset content in the serif and controls and chart labels in the sans.",
+      "Do keep state changes in place and under 300 ms, on the one ease-out curve, and off under reduced motion.",
+      "Do keep every asset inside the page's own folder; the page works offline."
+    ],
+    "donts": [
+      "Don't show post text, a row id or a text hash on any screen, in any example, tooltip or caption.",
+      "Don't add a fifth attribution category, a fifth category colour, or a generic series colour.",
+      "Don't signal a status, a category or a significant cell by colour alone.",
+      "Don't rank classifiers: no sorting by a metric, no leaderboard, no \"best\" label, no metric tiles.",
+      "Don't raise anything above the sheet: no shadows on buttons, figures or messages.",
+      "Don't add vertical rules, row fills or zebra striping to tables.",
+      "Don't split a command inside a token, or part a flag from its dashes.",
+      "Don't animate anything on entry, and don't add a dark theme; the page is light only by decision.",
+      "Don't load a font, script, image or stylesheet from outside the page's folder.",
+      "Don't add a free-text input. The page audits classifiers; it does not classify text."
+    ]
+  }
+}
