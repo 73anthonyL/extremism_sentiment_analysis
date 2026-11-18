@@ -104,10 +104,10 @@ code { overflow-wrap: anywhere; }
 .tech {
   display: grid; grid-template-columns: 1.7rem minmax(0, 1fr) auto; align-items: baseline; gap: 0.35rem;
   width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
-  padding: 0.5rem 0.6rem; border-radius: 0.4rem; border-left: 3px solid transparent;
+  padding: 0.5rem 0.6rem; border-radius: 0.4rem;
 }
 .tech:hover { background: var(--wash); }
-.tech[aria-current="true"] { background: var(--surface); border-left-color: var(--ink); box-shadow: 0 0 0 1px var(--rule); }
+.tech[aria-current="true"] { background: var(--surface); box-shadow: 0 0 0 1px var(--rule-strong); }
 .tech .num { color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .tech .nm { overflow-wrap: anywhere; font-size: 0.93rem; }
 .tech[aria-current="true"] .nm { font-weight: 600; }
@@ -118,9 +118,9 @@ code { overflow-wrap: anywhere; }
 .sheet:focus { outline: none; }
 
 /* ---- type -------------------------------------------------------------- */
-.title { font-family: var(--serif); font-size: 1.87rem; line-height: 1.15; letter-spacing: -0.015em; overflow-wrap: anywhere; }
-.sheet h2 { font-family: var(--serif); font-size: 1.4rem; line-height: 1.2; letter-spacing: -0.01em; }
-.sheet h3 { font-size: 1rem; font-weight: 600; }
+.title { font-family: var(--serif); font-size: 2.13rem; line-height: 1.12; letter-spacing: -0.015em; overflow-wrap: anywhere; }
+.sheet h2 { font-family: var(--serif); font-size: 1.53rem; line-height: 1.2; letter-spacing: -0.01em; }
+.sheet h3 { font-size: 1.07rem; font-weight: 600; }
 .lede { font-family: var(--serif); font-size: 1.13rem; line-height: 1.5; max-width: var(--measure); color: var(--ink-2); }
 .prose { font-family: var(--serif); font-size: 1.07rem; line-height: 1.58; max-width: var(--measure); }
 .prose > * + * { margin-top: 0.85em; }
@@ -251,14 +251,14 @@ table .cat { display: inline-flex; align-items: center; gap: 0.4rem; }
 .matrix td.self { background: var(--wash); color: var(--ink-3); }
 
 /* ---- the report card, rendered ----------------------------------------- */
-.card h3 { font-family: var(--serif); font-size: 1.2rem; margin-top: 1.9rem; }
+.card h3 { font-family: var(--serif); font-size: 1.27rem; margin-top: 1.9rem; }
 .card p { max-width: var(--measure); }
 .card > * + * { margin-top: 0.75rem; }
 
 /* ---- states ------------------------------------------------------------ */
 .empty { background: var(--surface); border: 1px dashed var(--rule-strong); border-radius: 0.6rem; padding: 1.25rem; max-width: var(--measure); }
 .empty > * + * { margin-top: 0.6rem; }
-.error { background: var(--surface); border-left: 3px solid var(--bad); padding: 0.8rem 1rem; border-radius: 0.3rem; max-width: var(--measure); }
+.error { background: var(--surface); border: 1px solid var(--bad); padding: 0.8rem 1rem; border-radius: 0.45rem; max-width: var(--measure); }
 
 .tip {
   position: fixed; z-index: 20; pointer-events: none; max-width: 20rem;
