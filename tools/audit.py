@@ -239,7 +239,9 @@ def _check_external(technique, external_dir):
 
     folder = Path(external_dir) / technique
     name = "restorable predictor under external/"
-    needed = "needed only for --with-perturbation (counterfactuals, faithfulness) and curated examples"
+    needed = ("needed only for --with-perturbation (counterfactuals, faithfulness) and curated examples; "
+              f"if the run manifest records the weights, `python3 tools/run_manifest.py fetch --technique "
+              f"{technique} --predictor` restores them")
     if not folder.is_dir():
         return ContractItem(name, MISSING, f"{_rel(folder)} not found; {needed}", required=False)
     try:
@@ -459,6 +461,10 @@ def _missing_phrase(missing):
     return f"{len(missing)} per-post attribution file(s) absent ({shown})"
 
 
+# How to get the per-post attribution files back when a stage skips for want of them.
+FETCH_PER_POST = "`python3 tools/run_manifest.py fetch --all --kind local_attributions`"
+
+
 def same_post_inputs(results_dir, external_dir):
     """The per-post file of every whole-model run of every comparison technique."""
     from same_post_stability import local_path
@@ -483,8 +489,8 @@ def stage_same_post_stability(ctx):
                     "post set over the comparison and has no outside family, so its tables are left as is")
     missing = _missing(same_post_inputs(ctx.results_dir, ctx.external_dir))
     if missing:
-        return Skip(f"{_missing_phrase(missing)}; download them to external/ to rebuild the same-post tables, "
-                    "which are left as is")
+        return Skip(f"{_missing_phrase(missing)}; download them to external/ ({FETCH_PER_POST}) to rebuild "
+                    "the same-post tables, which are left as is")
     return _tool("same_post_stability.py")
 
 
@@ -540,7 +546,7 @@ def stage_faithfulness(ctx):
     missing = _missing(per_post)
     if missing:
         return Skip(f"{_missing_phrase(missing)}; the shared population needs every comparison technique's "
-                    f"test file, so {RQ2_FAITHFULNESS_CSV.name} is left as is")
+                    f"test file ({FETCH_PER_POST}), so {RQ2_FAITHFULNESS_CSV.name} is left as is")
     return _tool("faithfulness.py", *_perturbation_args(ctx))
 
 
