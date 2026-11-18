@@ -1,6 +1,8 @@
-/* Audit workbench: the page's behaviour. Everything shown is read from the
-   server's JSON, which reads committed files only. Text from those files is
-   always placed with textContent, never as markup. */
+/* The audit interface: behaviour. Everything shown is read from the server's
+   JSON, which reads committed files only. Text from those files is always
+   placed as text, never as markup. The page is set like a proceedings page:
+   sections, tables and figures are numbered as they are laid out, every
+   caption says what the item cannot show, and sources are footnotes. */
 (() => {
   "use strict";
 
@@ -10,10 +12,12 @@
   const layout = document.getElementById("layout");
   const tip = document.getElementById("tip");
   const verbatimBox = document.getElementById("verbatim");
+  const SVG = "http://www.w3.org/2000/svg";
+  const wide = window.matchMedia("(min-width: 901px)");
 
   const state = {
-    view: "technique", name: null, overview: null, technique: null, job: null,
-    openItem: null, timer: null, request: 0,
+    view: "technique", name: null, overview: null, technique: null, compare: null, job: null,
+    timer: null, request: 0, notes: [], counts: { section: 0, table: 0, figure: 0 }, settled: new Set(),
   };
 
   // ---- helpers -------------------------------------------------------------
@@ -34,12 +38,38 @@
     return el;
   }
 
+  function shape(tag, attrs) {
+    const el = document.createElementNS(SVG, tag);
+    for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, value);
+    return el;
+  }
+
+  // Status marks, drawn in one weight. A mark never stands without its word.
+  function icon(kind) {
+    const svg = shape("svg", { viewBox: "0 0 16 16", "aria-hidden": "true", focusable: "false" });
+    if (kind === "ok") {
+      svg.append(shape("circle", { class: "out", cx: 8, cy: 8, r: 7 }), shape("path", { class: "in", d: "M4.7 8.3l2.2 2.2 4.5-4.7" }));
+    } else if (kind === "bad") {
+      svg.append(shape("circle", { class: "out", cx: 8, cy: 8, r: 7 }), shape("path", { class: "in", d: "M5.4 5.4l5.2 5.2M10.6 5.4l-5.2 5.2" }));
+    } else if (kind === "none") {
+      svg.append(shape("circle", { class: "line", cx: 8, cy: 8, r: 6.3 }), shape("path", { class: "line", d: "M5 8h6" }));
+    } else {
+      svg.append(shape("circle", { class: "line dashed", cx: 8, cy: 8, r: 6.3 }));
+    }
+    return svg;
+  }
+
+  function mark(kind, word, quiet) {
+    return h("span", { class: `mark ${kind}` }, icon(kind), h("span", { class: quiet ? "sr" : null, text: word }));
+  }
+
   const missing = (v) => v === null || v === undefined || Number.isNaN(v);
   const num = (v, digits = 3) => (missing(v) ? "not given" : Number(v).toFixed(digits));
   const pct = (v, digits = 1) => (missing(v) ? "not given" : `${(Number(v) * 100).toFixed(digits)}%`);
   const pval = (v) => (missing(v) ? "not given" : v < 0.001 ? Number(v).toExponential(1) : Number(v).toFixed(3));
-  const signed = (v) => (missing(v) ? "not given" : `${v > 0 ? "+" : ""}${v}`);
+  const signed = (v) => (missing(v) ? "not given" : `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}`);
   const code = (text) => h("code", { text });
+  const plural = (n, one, many) => (n === 1 ? one : many);
 
   async function api(path, options) {
     const response = await fetch(path, options);
@@ -59,16 +89,59 @@
     return found ? found.label : key;
   }
 
-  function mark(kind, symbol, word) {
-    return h("span", { class: `mark ${kind}` }, h("span", { "aria-hidden": "true", text: symbol }), h("span", { class: "sr", text: word }));
+  // ---- numbering, captions and footnotes --------------------------------------
+  function beginPage() {
+    state.notes = [];
+    state.counts = { section: 0, table: 0, figure: 0 };
   }
 
+  // A superscript for each source path, numbered by first use on the page.
+  function ref(paths) {
+    const marks = (paths || []).filter(Boolean).map((path) => {
+      let index = state.notes.indexOf(path);
+      if (index < 0) { state.notes.push(path); index = state.notes.length - 1; }
+      return h("a", { href: `#note-${index + 1}`, "data-note": String(index + 1), "aria-label": `Source ${index + 1}` }, String(index + 1));
+    });
+    if (!marks.length) return null;
+    const sup = h("sup", { class: "ref" });
+    marks.forEach((m, i) => { if (i) sup.append(","); sup.append(m); });
+    return sup;
+  }
+
+  function caption(kind, text, paths) {
+    state.counts[kind] += 1;
+    const label = `${kind === "table" ? "Table" : "Figure"} ${state.counts[kind]}.`;
+    return h("p", { class: "cap" }, h("b", { text: label }), " ", text, ref(paths));
+  }
+
+  function section(title, ...kids) {
+    state.counts.section += 1;
+    return h("section", { class: "sec" }, h("h2", null, h("span", { class: "n", text: String(state.counts.section) }), title), kids);
+  }
+
+  function notesBlock() {
+    if (!state.notes.length) return null;
+    return h("ol", { class: "notes", "aria-label": "Sources" }, state.notes.map((path, i) =>
+      h("li", { id: `note-${i + 1}` }, h("sup", { text: String(i + 1) }), h("span", null, "Read from ", code(path), "."))));
+  }
+
+  // A number and its source are linked: pointing at a mark lights its footnote.
+  function noteFor(event) {
+    const link = event.target.closest ? event.target.closest("sup.ref a") : null;
+    return link ? document.getElementById(`note-${link.dataset.note}`) : null;
+  }
+  document.addEventListener("mouseover", (event) => { const li = noteFor(event); if (li) li.classList.add("cited"); });
+  document.addEventListener("mouseout", (event) => { const li = noteFor(event); if (li) li.classList.remove("cited"); });
+  document.addEventListener("focusin", (event) => { const li = noteFor(event); if (li) li.classList.add("cited"); });
+  document.addEventListener("focusout", (event) => { const li = noteFor(event); if (li) li.classList.remove("cited"); });
+
+  // ---- tables ---------------------------------------------------------------
   // A column is right-aligned, header included, when every filled cell in it is a number.
-  const NUMERIC = /^[+\-]?\d[\d.,]*(?:e[+\-]?\d+)?[%×]?(?: \(\d+\))?$/i;
+  const NUMERIC = /^[+\-−]?\d[\d.,]*(?:e[+\-]?\d+)?[%×]?(?: \(\d+\))?$/i;
   function cellText(cell) {
     if (cell === null || cell === undefined) return "";
     if (Array.isArray(cell)) return cell.map(cellText).join("").trim();
-    if (cell.nodeType) return cell.classList && cell.classList.contains("row") ? "bar" : cell.textContent.trim();
+    if (cell.nodeType) return cell.classList && (cell.classList.contains("row") || cell.classList.contains("mark")) ? "mark" : cell.textContent.trim();
     return String(cell).trim();
   }
   function table(head, rows, className) {
@@ -83,18 +156,10 @@
           h("td", { class: numeric[i] ? "n" : null }, cell)))))));
   }
 
-  function sources(list) {
-    if (!list || !list.length) return null;
-    const kids = ["Read from "];
-    list.forEach((path, i) => { if (i) kids.push(i === list.length - 1 ? " and " : ", "); kids.push(code(path)); });
-    kids.push(".");
-    return h("p", { class: "source" }, kids);
-  }
-
   function showError(error) {
     sheet.replaceChildren(h("div", { class: "error" },
       h("p", null, h("strong", { text: "This could not be loaded. " }), String(error.message || error)),
-      h("p", { class: "note", text: "Check that the server is still running in its terminal, then reload the page." })));
+      h("p", { text: "Check that the server is still running in its terminal, then reload the page." })));
   }
 
   // ---- tooltip ---------------------------------------------------------------
@@ -159,26 +224,58 @@
     }
     for (const point of points) {
       if (missing(point.value)) continue;
-      const dot = h("span", { class: `pt${point.ring ? " ring" : ""}`, tabindex: "0", tip: point.tip });
+      const dot = h("span", { class: `pt${point.ring ? " ring" : ""}${point.own ? " this" : ""}`, tabindex: "0", tip: point.tip });
       dot.style.left = at(point.value);
       el.append(dot);
     }
     return el;
   }
 
-  function who(row) {
+  function who(row, own) {
     const parts = splitName(row.technique);
-    return h("span", { class: "who" }, `${parts.number} ${parts.rest}`.trim(),
+    return h("span", { class: own ? "who this" : "who" }, `${parts.number} ${parts.rest}`.trim(),
       row.in_comparison === false ? h("small", { text: "outside the comparison" }) : null);
   }
 
   function chartRows(rows, build) {
-    let dividerDone = false;
+    let divided = false;
     return h("div", { class: "rows" }, rows.map((row) => {
       const el = build(row);
-      if (row.in_comparison === false && !dividerDone) { el.classList.add("divide"); dividerDone = true; }
+      if (row.in_comparison === false && !divided) { el.classList.add("divide"); divided = true; }
       return el;
     }));
+  }
+
+  function accuracyScale(values) {
+    return { lo: Math.floor((Math.min(...values) - 0.005) * 20) / 20, hi: Math.ceil((Math.max(...values) + 0.005) * 20) / 20 };
+  }
+
+  function accuracyFigure(data, own) {
+    const order = [...data.in_comparison, ...data.outside_comparison];
+    const rows = [...data.rq1.accuracy].sort((a, b) => order.indexOf(a.technique) - order.indexOf(b.technique));
+    const { lo, hi } = accuracyScale(rows.map((row) => row.accuracy));
+    return {
+      lo,
+      node: h("div", { class: "fig" },
+        own ? h("div", { class: "legend" }, h("span", null, h("span", { class: "key this" }), "This classifier"),
+          h("span", null, h("span", { class: "key dot" }), "The others")) : null,
+        chartRows(rows, (row) => h("div", { class: "row" }, who(row, row.technique === own),
+          track(lo, hi, 0.05, [{ value: row.accuracy, own: row.technique === own, tip: `${row.technique}: ${num(row.accuracy)}` }]),
+          h("span", { class: "val", text: num(row.accuracy) }))),
+        h("div", { class: "row", "aria-hidden": "true" }, h("span"), axis(lo, hi, 0.05, (v) => v.toFixed(2)), h("span"))),
+    };
+  }
+
+  function fprScale(values) {
+    const top = Math.max(0.05, ...values.filter((v) => !missing(v)));
+    const hi = Math.ceil(top * 20) / 20;
+    return { lo: 0, hi, step: hi > 0.3 ? 0.1 : 0.05 };
+  }
+
+  function fprLegend() {
+    return h("div", { class: "legend" },
+      h("span", null, h("span", { class: "key ring" }), "Posts without an identity term"),
+      h("span", null, h("span", { class: "key dot" }), "Posts with an identity term"));
   }
 
   // ---- markdown, as much of it as a report card uses ---------------------------
@@ -206,7 +303,7 @@
     let i = 0;
     while (i < lines.length) {
       const line = lines[i];
-      if (!line.trim() || line.startsWith("# ")) { i += 1; continue; } // the sheet already carries the title
+      if (!line.trim() || line.startsWith("# ")) { i += 1; continue; } // the page already carries the title
       if (line.startsWith("## ")) { nodes.push(h("h3", null, inline(line.slice(3)))); i += 1; continue; }
       if (line.startsWith("### ")) { nodes.push(h("h4", null, inline(line.slice(4)))); i += 1; continue; }
       if (isRow(line) && i + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
@@ -239,24 +336,26 @@
     const item = (t) => {
       const parts = splitName(t.name);
       return h("li", null, h("button", {
-        class: "tech", type: "button", "aria-current": t.name === state.name ? "true" : null,
+        class: "tech", type: "button", "aria-current": t.name === state.name && state.view === "technique" ? "true" : null,
         onclick: () => selectTechnique(t.name),
       },
       h("span", { class: "num", text: parts.number }),
       h("span", { class: "nm", text: parts.rest }),
-      t.contract_met ? mark("ok", "✓", "contract met") : mark("bad", "✕", "contract not met")));
+      h("span", { class: "flag" }, t.contract_met ? mark("ok", "contract met", true) : mark("bad", "contract not met", true))));
     };
     const inside = techniques.filter((t) => t.in_comparison);
     const outside = techniques.filter((t) => !t.in_comparison);
     const kids = [];
-    if (inside.length) kids.push(h("div", null, h("h2", { text: "In the paper's comparison" }), h("ul", null, inside.map(item))));
-    if (outside.length) kids.push(h("div", { class: "group" }, h("h2", { text: "Outside the comparison" }), h("ul", null, outside.map(item))));
-    kids.push(h("p", { class: "hint" }, "A technique is listed once its folder exists under ", code(`${state.overview.results_dir}/`),
+    if (inside.length) kids.push(h("h2", { text: "In the paper's comparison" }), h("ul", null, inside.map(item)));
+    if (outside.length) kids.push(h("h2", { text: "Outside the comparison" }), h("ul", null, outside.map(item)));
+    kids.push(h("p", { class: "hint" }, "A classifier is listed once its folder exists under ", code(`${state.overview.results_dir}/`),
       ". ", h("a", { href: "#add", text: "How to add yours" }), "."));
-    rail.replaceChildren(...kids);
+    const current = state.view === "technique" && state.name ? state.name : `${techniques.length} on file`;
+    rail.replaceChildren(h("details", { class: "rail-list", open: wide.matches },
+      h("summary", null, "Classifiers: ", h("b", { text: current })), kids));
   }
 
-  // ---- one technique -------------------------------------------------------------
+  // ---- one classifier --------------------------------------------------------------
   const ITEM_NAMES = [
     ["probability artifact (test)", "Test probabilities"],
     ["probability artifact (validation)", "Validation probabilities"],
@@ -268,192 +367,174 @@
   ];
   const itemName = (name) => (ITEM_NAMES.find(([prefix]) => name.startsWith(prefix)) || [null, name])[1];
 
-  function itemState(item) {
-    if (item.status === "OK") return { kind: "ok", symbol: "✓", word: "met" };
-    if (item.required) return { kind: "bad", symbol: "✕", word: item.status === "MISSING" ? "missing" : "invalid" };
-    return { kind: "none", symbol: "–", word: item.status === "MISSING" ? "not provided, optional" : "not available, optional" };
+  function itemMark(item) {
+    if (item.status === "OK") return mark("ok", "met");
+    if (item.required) return mark("bad", item.status === "MISSING" ? "missing" : "invalid");
+    return mark("none", item.status === "MISSING" ? "not provided" : "not available");
+  }
+
+  function head(t) {
+    const facts = [];
+    const words = (value) => String(value).replace(/_/g, " ");
+    if (t.config.model_family) facts.push(`Model: ${words(t.config.model_family)}`);
+    if (t.config.feature_family) facts.push(`features: ${words(t.config.feature_family)}`);
+    if (!missing(t.config.selected_threshold)) facts.push(`threshold ${t.config.selected_threshold}, locked on validation`);
+    if (!missing(t.metrics.accuracy)) facts.push(`test accuracy ${num(t.metrics.accuracy)} on ${state.overview.split.test} posts`);
+    const more = [["balanced accuracy", t.metrics.balanced_accuracy], ["macro F1", t.metrics.f1_macro],
+      ["ROC-AUC", t.metrics.roc_auc], ["PR-AUC", t.metrics.pr_auc]].filter(([, v]) => !missing(v)).map(([k, v]) => `${k} ${num(v)}`);
+    return h("header", { class: "head" },
+      h("h1", { class: "title", text: t.name }),
+      facts.length ? h("p", { class: "byline", text: `${facts.join("; ")}.` }) : null,
+      h("p", { class: "note", text: `${t.in_comparison
+        ? "In the paper's comparison."
+        : "Outside the paper's comparison: it has its own Holm family, and no table in the paper changes."}${more.length ? ` Also: ${more.join(", ")}.` : ""}` }));
   }
 
   function contractSection(t) {
-    const failed = t.contract.filter((item) => item.required && item.status !== "OK");
+    const required = t.contract.filter((item) => item.required);
+    const failed = required.filter((item) => item.status !== "OK");
     const noRuns = failed.some((item) => item.name.startsWith("whole-model attribution"));
-    const verdict = t.contract_met
-      ? "Every required item is in place, so this technique can be audited."
-      : `${failed.length} required item${failed.length === 1 ? " is" : "s are"} missing or invalid.${noRuns
-        ? " Without word-level attribution runs for test and validation it cannot take part in RQ2 to RQ4, whatever its accuracy." : ""}`;
-    const open = state.openItem === null ? null : t.contract[state.openItem];
-    return h("section", { class: "contract", "aria-label": "Contract" },
-      h("div", { class: "verdict" },
-        h("strong", { text: t.contract_met ? "Contract met" : "Contract not met" }),
-        h("span", { class: "note", text: verdict })),
-      h("div", { class: "stamps" }, t.contract.map((item, index) => {
-        const s = itemState(item);
-        return h("button", {
-          class: "stamp", type: "button", "aria-expanded": state.openItem === index ? "true" : "false",
-          onclick: () => { state.openItem = state.openItem === index ? null : index; renderTechnique(); },
-        }, mark(s.kind, s.symbol, s.word),
-        h("span", null, h("span", { class: "what", text: itemName(item.name) }), h("br"), h("span", { class: "state", text: s.word })));
-      })),
-      open ? h("p", { class: "detail" }, h("b", { text: `${open.name}${open.required ? "" : " (optional)"}. ` }), open.detail)
-        : h("p", { class: "note", text: "Select an item to read what the validator found." }));
-  }
-
-  function facts(t) {
-    const rows = [];
-    const add = (label, value) => { if (value !== null && value !== undefined && value !== "") rows.push(h("div", null, h("dt", { text: label }), h("dd", { text: value }))); };
-    add("Model", t.config.model_family);
-    add("Features", t.config.feature_family);
-    if (!missing(t.config.selected_threshold)) add("Threshold, locked on validation", String(t.config.selected_threshold));
-    if (!missing(t.metrics.accuracy)) add("Test accuracy", `${num(t.metrics.accuracy)} on ${state.overview.split.test} rows`);
-    if (!missing(t.metrics.balanced_accuracy)) add("Balanced accuracy", num(t.metrics.balanced_accuracy));
-    if (!missing(t.metrics.f1_macro)) add("Macro F1", num(t.metrics.f1_macro));
-    if (!missing(t.metrics.roc_auc)) add("ROC-AUC", num(t.metrics.roc_auc));
-    if (!missing(t.metrics.pr_auc)) add("PR-AUC", num(t.metrics.pr_auc));
-    return rows.length ? h("dl", { class: "facts" }, rows) : null;
-  }
-
-  function stageState(status) {
-    if (status === "ok") return { kind: "ok", symbol: "✓", word: "done" };
-    if (status === "fail") return { kind: "bad", symbol: "✕", word: "failed" };
-    if (status === "skip") return { kind: "none", symbol: "–", word: "skipped" };
-    return { kind: "pending", symbol: "", word: "not reached" };
-  }
-
-  function jobPanel() {
-    const job = state.job;
-    if (!job) return h("div", { id: "job" });
-    const running = job.state === "running";
-    const kids = [h("h3", { text: running ? `Auditing ${job.technique}` : `Audit of ${job.technique}` }),
-      h("p", { class: "note", role: "status", text: running ? "Running. Each stage appears as it finishes." : job.outcome })];
-    if (job.stages.stopped_at === "check-contract") {
-      kids.push(h("p", { class: "detail", text: `Stopped at the contract check. ${job.stages.stopped_message || "A required item is missing or invalid."}` }));
-    }
-    kids.push(h("ul", { class: "stages" }, job.stages.stages.map((stage) => {
-      const s = stageState(stage.status);
-      return h("li", null, mark(s.kind, s.symbol, s.word), h("span", { class: "stage-name", text: stage.name }),
-        h("span", { class: "stage-msg", text: stage.message || (stage.status === "pending" ? "" : s.word) }));
-    })));
-    if (!running && Array.isArray(job.changed)) {
-      kids.push(h("h3", { text: "Files this run changed" }));
-      kids.push(job.changed.length
-        ? h("ul", { class: "changed" }, job.changed.map((file) => h("li", null, code(file.state), " ", file.path)))
-        : h("p", { class: "note", text: "None. The chain reproduced every table and card byte for byte." }));
-    }
-    kids.push(h("details", null, h("summary", { text: "Full output" }),
-      h("pre", { class: "log", text: job.lines.join("\n") + (job.truncated ? "\n(the output was cut here)" : "") })));
-    return h("div", { class: "run", id: "job" }, kids);
-  }
-
-  function runSection(t) {
     const running = state.job && state.job.state === "running";
-    return h("section", null,
-      h("h2", { text: "Audit" }),
-      h("p", { class: "note", text: t.contract_met
-        ? "Runs the documented tool chain for this technique, then rewrites its tables and report card. On the committed state the result is byte-identical."
-        : "The audit runs once the contract is met." }),
+    const verdict = t.contract_met
+      ? "Every required item is in place, so the audit can run."
+      : `${failed.length} required ${plural(failed.length, "item is", "items are")} missing or invalid, so the audit cannot run yet.${noRuns
+        ? " Without word-level attribution runs for test and validation a classifier cannot take part in RQ2 to RQ4, whatever its accuracy." : ""}`;
+    return section("Contract",
+      h("p", null, verdict, t.contract_met ? null : [" ", h("a", { href: "#add", text: "How to export the missing files" }), "."]),
       h("div", { class: "actions" },
         h("button", { class: "btn primary", type: "button", disabled: !t.contract_met || running, onclick: () => startRun(t.name) },
           running ? "Audit running" : "Run the audit"),
         h("button", { class: "btn", type: "button", onclick: () => refresh() }, "Check the contract again")),
+      table(["Item", "Required", "Status"], t.contract.map((item) => [
+        h("span", null, itemName(item.name), h("small", { text: item.detail })),
+        item.required ? "yes" : "no",
+        itemMark(item)])),
+      caption("table", `The contract, checked now. ${required.length - failed.length} of ${required.length} required items are met.`),
       h("details", null, h("summary", { text: "The same on the command line" }),
         h("pre", { class: "cmd", text: `${t.commands.check}\n${t.commands.run}` }),
         h("p", { class: "note" }, "The identity counterfactual and the deletion faithfulness test load the model's weights, so this page does not start them: ",
-          code(t.commands.perturbation))),
-      jobPanel());
+          code(t.commands.perturbation))));
   }
 
-  function relianceFigure(t) {
+  function standingSection(t) {
+    const data = state.compare;
+    if (!data || !data.rq1.accuracy.length) return null;
+    const figure = accuracyFigure(data, t.name);
+    const cleared = data.rq1.pairs.filter((pair) => pair.significant).length;
+    const kids = [figure.node,
+      caption("figure", `Test accuracy; the axis starts at ${figure.lo.toFixed(2)}, not at zero. The order is descriptive: ${
+        data.rq1.pairs.length ? `${cleared} of the ${data.rq1.pairs.length} pairs in the comparison differ after correction.` : "no pair table has been written yet."}`,
+      data.rq1.sources)];
+    const pairs = t.card && t.card.rq1 ? t.card.rq1.pairs || [] : [];
+    if (pairs.length) {
+      kids.push(table(["Against", "Row gap", "Holm p", "Reading"], pairs.map((pair) => [
+        pair.other_technique, signed(pair.row_gap), pval(pair.holm_p),
+        pair.significant_holm ? "a measured difference" : "not distinguishable"])),
+      caption("table", `Gaps in correct test rows, this classifier minus the other, with Holm-corrected McNemar p over ${t.card.rq1.holm_family_size} pairs. A gap that does not clear the correction is not a difference.`,
+        t.card.rq1.sources));
+    }
+    return section("Where it stands", kids);
+  }
+
+  function stageMark(status) {
+    if (status === "ok") return mark("ok", "done");
+    if (status === "fail") return mark("bad", "failed");
+    if (status === "skip") return mark("none", "skipped");
+    return mark("pending", "not reached");
+  }
+
+  function jobPanel() {
+    const job = state.job;
+    if (!job) return h("div", { id: "job", hidden: true });
+    const running = job.state === "running";
+    const kids = [h("h2", null, running ? `Auditing ${job.technique}` : `The audit of ${job.technique}`),
+      h("p", { role: "status", text: running ? "Running. Each stage is set down as it finishes." : job.outcome })];
+    if (job.stages.stopped_at === "check-contract") {
+      kids.push(h("p", { class: "detail", text: `Stopped at the contract check. ${job.stages.stopped_message || "A required item is missing or invalid."}` }));
+    }
+    kids.push(h("ol", { class: "stages" }, job.stages.stages.map((stage) => {
+      const key = `${job.id}:${stage.name}`;
+      const fresh = stage.status !== "pending" && !state.settled.has(key);
+      if (stage.status !== "pending") state.settled.add(key);
+      return h("li", { class: fresh ? "just" : null }, h("span", { class: "stage-name", text: stage.name }), stageMark(stage.status),
+        h("span", { class: "stage-msg", text: stage.message }));
+    })));
+    if (!running && Array.isArray(job.changed)) {
+      kids.push(h("h3", { text: "Files this run changed" }));
+      kids.push(job.changed.length
+        ? h("ul", { class: "changed" }, job.changed.map((file) => h("li", null, `${file.state}: `, code(file.path))))
+        : h("p", { text: "None. The chain reproduced every table and card byte for byte." }));
+    }
+    kids.push(h("details", null, h("summary", { text: "Full output" }),
+      h("pre", { class: "log", text: job.lines.join("\n") + (job.truncated ? "\n(the output was cut here)" : "") })));
+    return h("section", { class: "sec", id: "job" }, kids);
+  }
+
+  function relianceSection(t) {
     const s = t.shares;
-    return h("section", { class: "figure" },
-      h("h2", { text: "What it relies on" }),
-      h("p", { class: "note", text: `Share of positive attribution toward EXTREMIST among the top ${s.top_k} words of the whole-model ${s.split} run, by lexicon category.` }),
-      categoryLegend(),
-      segments(s.categories, true),
+    return section("What it relies on",
+      h("div", { class: "fig" }, categoryLegend(), segments(s.categories, true)),
+      caption("figure", `Share of positive attribution toward EXTREMIST among the top ${s.top_k} words of the whole-model ${s.split} run, by lexicon category. Topical is every word no lexicon lists.`, state.compare ? state.compare.rq2.sources : null),
       table(["Category", "Share", "SD across runs", `Words in the top ${s.top_k}`], s.categories.map((c) => [
         h("span", { class: "cat" }, h("span", { class: `key c-${c.key}` }), categoryLabel(c.key)),
         pct(c.share), missing(c.std) ? "one run" : pct(c.std, 2), missing(c.n_words) ? "not given" : String(c.n_words)])),
-      h("p", { class: "note", text: "A difference in share between two techniques counts as a difference only when it exceeds the pooled across-run standard deviation of the two." }));
+      caption("table", "The same shares with their standard deviation across runs. A difference between two classifiers counts only when it exceeds the pooled standard deviation of the two."));
   }
 
-  function fprScale(values) {
-    const top = Math.max(0.05, ...values.filter((v) => !missing(v)));
-    const hi = Math.ceil(top * 20) / 20;
-    return { lo: 0, hi, step: hi > 0.3 ? 0.1 : 0.05 };
-  }
-
-  function fprLegend() {
-    return h("div", { class: "legend" },
-      h("span", null, h("span", { class: "key ring" }), "Posts without an identity term"),
-      h("span", null, h("span", { class: "key dot" }), "Posts with an identity term"));
-  }
-
-  function fprFigure(t) {
+  function fprSection(t) {
     const r = t.card.rq4;
     const scale = fprScale([r.fpr_with_identity_terms, r.fpr_without_identity_terms]);
-    return h("section", { class: "figure" },
-      h("h2", { text: "False positives on posts that mention a community" }),
-      h("p", { class: "note", text: `Non-extremist test posts flagged at the locked threshold ${r.threshold}. ${r.n_negative_with_identity_terms} of the ${r.n_negative} contain an identity term.` }),
-      fprLegend(),
-      track(scale.lo, scale.hi, scale.step, [
-        { value: r.fpr_without_identity_terms, ring: true, tip: `Without an identity term: ${pct(r.fpr_without_identity_terms)} flagged` },
-        { value: r.fpr_with_identity_terms, tip: `With an identity term: ${pct(r.fpr_with_identity_terms)} flagged` },
-      ], [r.fpr_without_identity_terms, r.fpr_with_identity_terms]),
-      axis(scale.lo, scale.hi, scale.step, (v) => pct(v, 0)),
+    return section("False positives on posts that mention a community",
+      h("div", { class: "fig" }, fprLegend(),
+        h("div", { class: "rows" }, h("div", { class: "row" }, h("span", { class: "who", text: "Flagged in error" }),
+          track(scale.lo, scale.hi, scale.step, [
+            { value: r.fpr_without_identity_terms, ring: true, tip: `Without an identity term: ${pct(r.fpr_without_identity_terms)} flagged` },
+            { value: r.fpr_with_identity_terms, tip: `With an identity term: ${pct(r.fpr_with_identity_terms)} flagged` },
+          ], [r.fpr_without_identity_terms, r.fpr_with_identity_terms]), h("span")),
+        h("div", { class: "row", "aria-hidden": "true" }, h("span"), axis(scale.lo, scale.hi, scale.step, (v) => pct(v, 0)), h("span")))),
+      caption("figure", `Non-extremist test posts flagged at the locked threshold ${r.threshold}. ${r.n_negative_with_identity_terms} of the ${r.n_negative} contain an identity term.`, r.sources),
       table(["Without a term", "With a term", "Ratio", "Fisher exact p"], [[
         pct(r.fpr_without_identity_terms), pct(r.fpr_with_identity_terms), num(r.fpr_ratio, 2), pval(r.fisher_p_value)]]),
-      h("p", { class: "note", text: "A correlation over few posts. A result that is not significant is not evidence that the effect is absent." }));
+      caption("table", "A correlation over few posts. A result that is not significant is not evidence that the effect is absent."));
   }
 
   function cardSection(t) {
     if (!t.card_markdown) {
-      return h("section", { class: "section-rule" }, h("h2", { text: "Report card" }),
-        h("div", { class: "empty" },
-          h("p", null, h("strong", { text: "No report card yet." })),
-          h("p", { text: t.contract_met ? "Run the audit above to write it." : "It is written by the audit, which runs once the contract is met." })));
+      return section("Report card", h("div", { class: "empty" },
+        h("p", null, h("strong", { text: "No report card yet." })),
+        h("p", { text: t.contract_met ? "Run the audit above to write it." : "It is written by the audit, which runs once the contract is met." })));
     }
-    const maskNote = t.slurs_masked
-      ? ` ${t.slurs_masked} word${t.slurs_masked === 1 ? "" : "s"} the lexicon marks as a slur ${t.slurs_masked === 1 ? "is" : "are"} masked here; the file keeps ${t.slurs_masked === 1 ? "it" : "them"}.`
+    const masked = t.slurs_masked
+      ? ` ${t.slurs_masked} ${plural(t.slurs_masked, "word the lexicon marks as a slur is", "words the lexicon marks as slurs are")} masked here; the file keeps ${plural(t.slurs_masked, "it", "them")}.`
       : "";
-    return h("section", { class: "section-rule" },
-      h("h2", { text: "Report card" }),
-      h("p", { class: "source" }, "Read from ", code(t.card_source), ", written by ", code("audit.py report"), ".", maskNote),
+    return section("Report card",
+      h("p", { class: "note" }, "As written by ", code("audit.py report"), ".", ref([t.card_source]), masked),
       h("div", { class: "card" }, renderMarkdown(t.card_markdown)));
   }
 
   function renderTechnique() {
     const t = state.technique;
     if (!t) return;
-    const kids = [
-      h("header", { class: "head" },
-        h("h1", { class: "title", text: t.name }),
-        h("p", { class: `standing${t.in_comparison ? " inside" : ""}`, text: t.in_comparison
-          ? "In the paper's comparison"
-          : "Outside the paper's comparison: it has its own Holm family, and no table in the paper changes" }),
-        facts(t)),
-      contractSection(t),
-      runSection(t),
-    ];
-    if (t.shares && t.shares.categories) kids.push(relianceFigure(t));
-    if (t.card && t.card.rq4) kids.push(fprFigure(t));
-    kids.push(cardSection(t));
-    sheet.replaceChildren(...kids);
+    beginPage();
+    const kids = [head(t), h("div", { class: "cols" }, contractSection(t), standingSection(t)), jobPanel()];
+    if (t.shares && t.shares.categories) kids.push(relianceSection(t));
+    if (t.card && t.card.rq4) kids.push(fprSection(t));
+    kids.push(cardSection(t), notesBlock());
+    sheet.replaceChildren(...kids.filter(Boolean));
   }
 
-  // ---- across techniques -----------------------------------------------------------
+  // ---- across classifiers -----------------------------------------------------------
   function renderCompare(data) {
+    beginPage();
     const order = [...data.in_comparison, ...data.outside_comparison];
     const byOrder = (rows) => [...rows].sort((a, b) => order.indexOf(a.technique) - order.indexOf(b.technique));
     const short = (name) => splitName(name).number || name;
     const kids = [h("header", { class: "head" },
-      h("h1", { class: "title", text: "Across techniques" }),
-      h("p", { class: "lede", text: "The committed tables, one view per research question. Nothing here ranks the techniques: a gap that the tests below do not support is a description of this split, not a difference." }))];
+      h("h1", { class: "title", text: "Across classifiers" }),
+      h("p", { class: "lede", text: "The committed tables, one section per research question. Nothing here ranks the classifiers: a gap the tests below do not support is a description of this split, not a difference." }))];
 
-    // RQ1
-    const accuracy = byOrder(data.rq1.accuracy);
-    if (accuracy.length) {
-      const values = accuracy.map((row) => row.accuracy);
-      const lo = Math.floor((Math.min(...values) - 0.005) * 20) / 20;
-      const hi = Math.ceil((Math.max(...values) + 0.005) * 20) / 20;
+    if (data.rq1.accuracy.length) {
+      const figure = accuracyFigure(data, null);
       const cleared = data.rq1.pairs.filter((pair) => pair.significant).length;
       const inside = data.in_comparison;
       const gap = {};
@@ -461,61 +542,44 @@
         gap[`${pair.a}|${pair.b}`] = { value: pair.row_gap, pair };
         gap[`${pair.b}|${pair.a}`] = { value: missing(pair.row_gap) ? null : -pair.row_gap, pair };
       }
-      const matrix = h("div", { class: "scroll" }, h("table", { class: "matrix" },
-        h("thead", null, h("tr", null, h("th", null, ""), inside.map((name) => h("th", { scope: "col", tip: name }, short(name))))),
-        h("tbody", null, inside.map((row) => h("tr", null,
-          h("th", { class: "side", scope: "row" }, `${short(row)} ${splitName(row).rest}`),
-          inside.map((column) => {
-            if (row === column) return h("td", { class: "self" }, "");
-            const cell = gap[`${row}|${column}`];
-            if (!cell) return h("td", null, "");
-            return h("td", {
-              class: cell.pair.significant ? "clear" : null, tabindex: "0",
-              tip: `${short(row)} minus ${short(column)}: ${signed(cell.value)} rows, ${cell.pair.n_discordant} discordant, Holm p ${pval(cell.pair.holm_p)}`,
-            }, signed(cell.value));
-          }))))));
-      const section = h("section", { class: "section-rule" },
-        h("h2", { text: "RQ1. Accuracy, and which gaps are real" }),
-        h("p", { class: "note", text: data.rq1.pairs.length
-          ? `${cleared} of the ${data.rq1.pairs.length} pairs in the comparison clear Holm-corrected McNemar significance on the ${data.n_test_rows} test rows. Every other gap is not distinguishable at this sample size.`
-          : "No pair table has been written yet, so no gap can be read as a difference." }),
-        h("div", { class: "figure" },
-          h("h3", { text: "Test accuracy" }),
-          chartRows(accuracy, (row) => h("div", { class: "row" }, who(row),
-            track(lo, hi, 0.05, [{ value: row.accuracy, tip: `${row.technique}: ${num(row.accuracy)}` }]),
-            h("span", { class: "val", text: num(row.accuracy) }))),
-          h("div", { class: "row", "aria-hidden": "true" }, h("span"), axis(lo, hi, 0.05, (v) => v.toFixed(2)), h("span", { class: "val" })),
-          h("p", { class: "note", text: `The axis starts at ${lo.toFixed(2)}, not at zero.` })),
-        data.rq1.pairs.length ? h("div", { class: "figure" },
-          h("h3", { text: "Row gaps between pairs" }),
-          matrix,
-          h("p", { class: "note", text: "Each cell is the row technique's correct test rows minus the column's. A filled cell clears Holm-corrected significance; an unfilled one does not." })) : null,
-        data.rq1.pairs_outside.length ? h("div", { class: "figure" },
-          h("h3", { text: "Pairs with techniques outside the comparison" }),
-          table(["Technique", "Against", "Row gap", "McNemar p", "Holm p", "Clears Holm"], data.rq1.pairs_outside.map((pair) => [
-            pair.a, pair.b, signed(pair.row_gap), pval(pair.mcnemar_p), pval(pair.holm_p), pair.significant ? "yes" : "no"])),
-          h("p", { class: "note", text: "Holm-corrected over these pairs only, a family of their own." })) : null,
-        sources(data.rq1.sources));
-      kids.push(section);
+      const parts = [figure.node,
+        caption("figure", `Test accuracy on ${data.n_test_rows} posts; the axis starts at ${figure.lo.toFixed(2)}, not at zero.`, data.rq1.sources.slice(0, 1))];
+      if (data.rq1.pairs.length) {
+        parts.push(h("div", { class: "scroll" }, h("table", { class: "matrix" },
+          h("thead", null, h("tr", null, h("th", null, ""), inside.map((name) => h("th", { scope: "col", tip: name }, short(name))))),
+          h("tbody", null, inside.map((row) => h("tr", null,
+            h("th", { class: "side", scope: "row" }, `${short(row)} ${splitName(row).rest}`),
+            inside.map((column) => {
+              if (row === column) return h("td", { class: "self" }, "·");
+              const cell = gap[`${row}|${column}`];
+              if (!cell) return h("td", null, "");
+              return h("td", {
+                class: cell.pair.significant ? "clear" : null, tabindex: "0",
+                tip: `${short(row)} minus ${short(column)}: ${signed(cell.value)} rows, ${cell.pair.n_discordant} discordant, Holm p ${pval(cell.pair.holm_p)}`,
+              }, signed(cell.value));
+            })))))),
+        caption("table", `Gaps in correct test rows, row minus column. A filled cell clears Holm-corrected McNemar significance: ${cleared} of ${data.rq1.pairs.length} pairs do. Every other gap is not distinguishable at this sample size.`, data.rq1.sources.slice(1)));
+      }
+      if (data.rq1.pairs_outside.length) {
+        parts.push(table(["Classifier", "Against", "Row gap", "McNemar p", "Holm p", "Clears Holm"], data.rq1.pairs_outside.map((pair) => [
+          pair.a, pair.b, signed(pair.row_gap), pval(pair.mcnemar_p), pval(pair.holm_p), pair.significant ? "yes" : "no"])),
+        caption("table", "Pairs with classifiers outside the comparison, Holm-corrected over these pairs only."));
+      }
+      kids.push(section("Accuracy, and which gaps are real", parts));
     }
 
-    // RQ2
     const shares = byOrder(data.rq2.shares).filter((row) => row.categories);
     if (shares.length) {
       const withSd = (c) => (missing(c.share) ? "not given" : `${pct(c.share)}${missing(c.std) ? "" : ` ± ${pct(c.std, 2)}`}`);
-      kids.push(h("section", { class: "section-rule" },
-        h("h2", { text: "RQ2. What each model relies on" }),
-        h("p", { class: "note", text: `Share of positive attribution toward EXTREMIST among each technique's top ${shares[0].top_k} words, whole-model test run, by lexicon category.` }),
-        h("div", { class: "figure" },
-          categoryLegend(),
-          chartRows(shares, (row) => h("div", { class: "row" }, who(row), segments(row.categories, false), h("span", { class: "val" }))),
-          table(["Technique", ...state.overview.categories.map((c) => c.label)], shares.map((row) => [
-            row.technique, ...state.overview.categories.map((c) => withSd(row.categories.find((x) => x.key === c.key) || {}))])),
-          h("p", { class: "note", text: "Each share is given with its standard deviation across the technique's whole-model runs. A difference between two techniques counts only when it exceeds the pooled standard deviation of the two." })),
-        sources(data.rq2.sources)));
+      kids.push(section("What each model relies on",
+        h("div", { class: "fig" }, categoryLegend(),
+          chartRows(shares, (row) => h("div", { class: "row" }, who(row), segments(row.categories, false), h("span")))),
+        caption("figure", `Share of positive attribution toward EXTREMIST among each classifier's top ${shares[0].top_k} words, whole-model test run, by lexicon category.`, data.rq2.sources.slice(0, 1)),
+        table(["Classifier", ...state.overview.categories.map((c) => c.label)], shares.map((row) => [
+          row.technique, ...state.overview.categories.map((c) => withSd(row.categories.find((x) => x.key === c.key) || {}))])),
+        caption("table", "Each share with its standard deviation across the classifier's whole-model runs. A difference counts only when it exceeds the pooled standard deviation of the two.", data.rq2.sources.slice(1))));
     }
 
-    // RQ3
     const stability = byOrder(data.rq3.stability);
     if (stability.length) {
       const bar = (value) => {
@@ -523,44 +587,38 @@
         el.style.width = `${Math.max(0, Math.min(1, value || 0)) * 100}%`;
         return h("div", { class: "row" }, h("span", { class: "val", text: num(value) }), el, h("span"));
       };
-      kids.push(h("section", { class: "section-rule" },
-        h("h2", { text: "RQ3. How stable that reliance is across posts" }),
-        h("p", { class: "note", text: "Agreement between each technique's whole-model runs, which explain different posts. Low agreement means claims about single words of that model are fragile." }),
-        h("div", { class: "figure" },
-          table(["Technique", "Runs", "Spearman of absolute attribution", "Top-50 Jaccard"], stability.map((row) => [
-            row.technique + (row.in_comparison === false ? " (outside the comparison)" : ""),
-            missing(row.n_runs) ? "not given" : String(row.n_runs), bar(row.spearman), bar(row.jaccard)]))),
-        sources(data.rq3.sources)));
+      kids.push(section("How stable that reliance is across posts",
+        table(["Classifier", "Runs", "Spearman of absolute attribution", "Top-50 Jaccard"], stability.map((row) => [
+          row.technique + (row.in_comparison === false ? " (outside the comparison)" : ""),
+          missing(row.n_runs) ? "not given" : String(row.n_runs), bar(row.spearman), bar(row.jaccard)])),
+        caption("table", "Agreement between each classifier's whole-model runs, which explain different posts. Low agreement means claims about single words of that model are fragile.", data.rq3.sources)));
     }
 
-    // RQ4
     const fpr = byOrder(data.rq4.fpr);
     if (fpr.length) {
       const scale = fprScale(fpr.flatMap((row) => [row.with_identity, row.without_identity]));
-      kids.push(h("section", { class: "section-rule" },
-        h("h2", { text: "RQ4. False positives on posts that mention a community" }),
-        h("p", { class: "note", text: "False-positive rate on non-extremist test posts, with and without an identity term, at each technique's locked threshold." }),
-        h("div", { class: "figure" },
-          fprLegend(),
+      kids.push(section("False positives on posts that mention a community",
+        h("div", { class: "fig" }, fprLegend(),
           chartRows(fpr, (row) => h("div", { class: "row" }, who(row),
             track(scale.lo, scale.hi, scale.step, [
               { value: row.without_identity, ring: true, tip: `${row.technique}, without an identity term: ${pct(row.without_identity)} flagged` },
               { value: row.with_identity, tip: `${row.technique}, with an identity term: ${pct(row.with_identity)} flagged` },
             ], [row.without_identity, row.with_identity]),
             h("span", { class: "val", text: missing(row.ratio) ? "" : `${num(row.ratio, 2)}×`, tip: "With a term, over without" }))),
-          h("div", { class: "row", "aria-hidden": "true" }, h("span"), axis(scale.lo, scale.hi, scale.step, (v) => pct(v, 0)), h("span", { class: "val" })),
-          table(["Technique", "Without a term", "With a term", "Ratio", "Fisher exact p", "Posts with a term"], fpr.map((row) => [
-            row.technique, pct(row.without_identity), pct(row.with_identity), num(row.ratio, 2), pval(row.fisher_p),
-            missing(row.n_with) ? "not given" : `${row.n_with} of ${row.n_negative}`])),
-          h("p", { class: "note", text: "The p values are unadjusted. With this few posts only large ratios are detectable, and a result that is not significant is not evidence that the effect is absent." })),
-        sources(data.rq4.sources)));
+          h("div", { class: "row", "aria-hidden": "true" }, h("span"), axis(scale.lo, scale.hi, scale.step, (v) => pct(v, 0)), h("span"))),
+        caption("figure", "Share of non-extremist test posts flagged in error, with and without an identity term, at each classifier's locked threshold. The figure at the right is the ratio.", data.rq4.sources),
+        table(["Classifier", "Without a term", "With a term", "Ratio", "Fisher exact p", "Posts with a term"], fpr.map((row) => [
+          row.technique, pct(row.without_identity), pct(row.with_identity), num(row.ratio, 2), pval(row.fisher_p),
+          missing(row.n_with) ? "not given" : `${row.n_with} of ${row.n_negative}`])),
+        caption("table", "The p values are unadjusted. With this few posts only large ratios are detectable, and a result that is not significant is not evidence that the effect is absent.")));
     }
 
     if (kids.length === 1) {
-      kids.push(h("div", { class: "empty" }, h("p", null, h("strong", { text: "No cross-technique table yet." })),
-        h("p", { text: "They are written when a technique is audited." })));
+      kids.push(h("div", { class: "empty" }, h("p", null, h("strong", { text: "No cross-classifier table yet." })),
+        h("p", { text: "They are written when a classifier is audited." })));
     }
-    sheet.replaceChildren(...kids);
+    kids.push(notesBlock());
+    sheet.replaceChildren(...kids.filter(Boolean));
   }
 
   // ---- add your classifier ------------------------------------------------------------
@@ -610,6 +668,8 @@
         body: JSON.stringify({ technique: name }),
       })).job;
       renderTechnique();
+      const panel = document.getElementById("job");
+      if (panel) panel.scrollIntoView({ block: "nearest" });
       state.timer = setTimeout(pollJob, 500);
     } catch (error) {
       const current = document.getElementById("job");
@@ -622,14 +682,14 @@
   async function loadTechnique() {
     const request = ++state.request;
     const query = `/api/technique?name=${encodeURIComponent(state.name)}${verbatimBox.checked ? "&verbatim=1" : ""}`;
-    const data = await api(query);
+    const [data, compare] = await Promise.all([api(query), api("/api/compare")]);
     if (request !== state.request) return; // a newer selection overtook this one
     state.technique = data;
+    state.compare = compare;
     renderTechnique();
   }
 
   function selectTechnique(name) {
-    state.openItem = null;
     location.hash = `technique=${encodeURIComponent(name)}`;
   }
 
@@ -642,13 +702,12 @@
         if (button.dataset.view === state.view) button.setAttribute("aria-current", "page");
         else button.removeAttribute("aria-current");
       }
-      layout.classList.toggle("wide", state.view !== "technique");
+      renderRail();
       if (state.view === "compare") { renderCompare(await api("/api/compare")); return; }
       if (state.view === "add") { renderAdd(); return; }
-      renderRail();
       if (!state.name) {
         sheet.replaceChildren(h("div", { class: "empty" },
-          h("p", null, h("strong", { text: "No technique folder yet." })),
+          h("p", null, h("strong", { text: "No classifier on file yet." })),
           h("p", null, "Nothing is under ", code(`${state.overview.results_dir}/`), ". ", h("a", { href: "#add", text: "Add your classifier" }), ".")));
         return;
       }
@@ -660,21 +719,31 @@
 
   function readHash() {
     const hash = decodeURIComponent(location.hash.replace(/^#/, ""));
-    if (hash === "compare" || hash === "add") { state.view = hash; return; }
+    if (hash.startsWith("note-")) return false; // a footnote link, not a view
+    if (hash === "compare" || hash === "add") { state.view = hash; return true; }
     state.view = "technique";
     if (hash.startsWith("technique=")) state.name = hash.slice("technique=".length);
+    return true;
   }
 
   for (const button of document.querySelectorAll(".views button")) {
     button.addEventListener("click", () => {
       const view = button.dataset.view;
-      location.hash = view === "technique" ? (state.name ? `technique=${encodeURIComponent(state.name)}` : "") : view;
-      if (view === "technique" && !state.name) { state.view = "technique"; refresh(); }
+      const target = view === "technique" ? (state.name ? `technique=${encodeURIComponent(state.name)}` : "") : view;
+      if (decodeURIComponent(location.hash.replace(/^#/, "")) === decodeURIComponent(target)) { state.view = view; refresh(); }
+      else location.hash = target;
     });
   }
   verbatimBox.addEventListener("change", () => { if (state.view === "technique" && state.name) loadTechnique().catch(showError); });
-  window.addEventListener("hashchange", async () => { readHash(); await refresh(); sheet.focus({ preventScroll: true }); window.scrollTo(0, 0); });
+  window.addEventListener("hashchange", async () => {
+    if (!readHash()) return;
+    await refresh();
+    sheet.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  });
 
+  void layout;
+  wide.addEventListener("change", () => { if (state.overview) renderRail(); });
   readHash();
   refresh().then(pollJob);
 })();

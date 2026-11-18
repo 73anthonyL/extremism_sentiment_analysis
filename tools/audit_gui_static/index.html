@@ -10,27 +10,29 @@
 <body>
 <a class="skip" href="#sheet">Skip to the content</a>
 
-<header class="top">
-  <p class="brand">Audit workbench</p>
-  <nav class="views" aria-label="Views">
-    <button type="button" data-view="technique">One technique</button>
-    <button type="button" data-view="compare">Across techniques</button>
-    <button type="button" data-view="add">Add your classifier</button>
-  </nav>
-  <label class="mask-toggle" title="Words the lexicon marks as slurs are masked on this page. The committed report cards keep them verbatim.">
-    <input type="checkbox" id="verbatim"> Show slurs verbatim
-  </label>
-</header>
-
 <div class="layout" id="layout">
-  <aside class="rail" id="rail" aria-label="Techniques"></aside>
-  <main class="sheet" id="sheet" tabindex="-1"></main>
+  <aside class="rail" aria-label="Classifiers">
+    <p class="brand">Audit workbench</p>
+    <p class="brand-note">What a classifier of extremist content relies on, checked against one contract.</p>
+    <div id="rail"></div>
+  </aside>
+  <div class="desk">
+    <nav class="views" aria-label="Views">
+      <button type="button" data-view="technique">One classifier</button>
+      <button type="button" data-view="compare">Across classifiers</button>
+      <button type="button" data-view="add">Add your classifier</button>
+      <label class="mask-toggle" title="Words the lexicon marks as slurs are masked on this page. The committed report cards keep them verbatim.">
+        <input type="checkbox" id="verbatim"> Show slurs verbatim
+      </label>
+    </nav>
+    <main class="page" id="sheet" tabindex="-1"></main>
+  </div>
 </div>
 
 <div class="tip" id="tip" role="tooltip" hidden></div>
 
 <template id="tpl-add">
-  <header>
+  <header class="head">
     <h1 class="title">Add your classifier</h1>
   </header>
   <p class="lede">The framework audits any text classifier for this task that meets one contract. Your classifier
@@ -80,7 +82,7 @@
         Unzip it at the repository root; that is the one sanctioned way into <code>research_loop/</code>.
         <pre class="cmd">unzip &lt;TECHNIQUE&gt;_repo_files.zip -d .</pre></li>
       <li><strong>Check and audit it here.</strong> Reload this page. Your technique appears in the list under
-        “One technique”, with its contract check. When the contract is met, run the audit.</li>
+        “One classifier”, with its contract check. When the contract is met, run the audit.</li>
       <li><strong>Before committing,</strong> run the checks in <code>docs/FRAMEWORK.md</code>, “Before committing”.
         <code>scan_text_leakage.py</code> must pass: no post text, row id or text hash in any committed file.</li>
     </ol>

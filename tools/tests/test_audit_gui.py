@@ -277,11 +277,12 @@ def test_only_the_pages_own_files_are_served(bench, target):
     assert get(bench, target)[0] == 404
 
 
-def test_the_page_is_served_with_its_token_and_its_two_assets(bench):
+def test_the_page_is_served_with_its_token_and_its_assets(bench):
     status, page = get(bench, "/")
     assert status == 200 and bench.token in page and audit_gui.TOKEN_PLACEHOLDER not in page
-    for name in audit_gui.STATIC_FILES:
-        assert get(bench, f"/static/{name}")[0] == 200
+    for name, content_type in audit_gui.STATIC_FILES.items():
+        status, served_as, _ = bench.handle("GET", f"/static/{name}", HOST)
+        assert status == 200 and served_as == content_type
 
 
 def test_other_methods_are_refused(bench):
@@ -501,3 +502,33 @@ def test_the_page_names_exactly_the_four_categories():
     styles = page_sources()["style.css"]
     assert set(re.findall(r"--cat-([a-z_]+):", styles)) == set(CATEGORIES)
     assert set(re.findall(r"^\.c-([a-z_]+) \{", styles, re.MULTILINE)) == set(CATEGORIES)
+
+
+# --- the page works offline -----------------------------------------------------------------
+
+
+def test_the_page_asks_no_other_host_for_anything():
+    """Fonts, styles and scripts all come from this server: the page must work with no network."""
+    allowed = {"http://www.w3.org/2000/svg"}  # the SVG namespace, a name and not a request
+    for name, source in page_sources().items():
+        found = set(re.findall(r"https?://[^\s\"')]+", source)) - allowed
+        assert not found, (name, found)
+        assert "@import" not in source, name
+
+
+def test_every_typeface_the_page_names_is_served_from_here(bench):
+    styles = page_sources()["style.css"]
+    faces = re.findall(r'url\("/static/(fonts/[^"]+)"\)', styles)
+    assert len(faces) == 3 and set(faces) <= set(audit_gui.STATIC_FILES)
+    for face in faces:
+        status, content_type, body = bench.handle("GET", f"/static/{face}", HOST)
+        assert status == 200 and content_type == "font/woff2" and body[:4] == b"wOF2"
+    # Each face ships with its licence, which is kept beside it and is not part of the page.
+    licences = sorted(path.name for path in (audit_gui.STATIC_DIR / "fonts").glob("OFL-*.txt"))
+    assert licences == ["OFL-STIX-Two-Text.txt", "OFL-Source-Sans-3.txt"]
+    assert get(bench, "/static/fonts/OFL-STIX-Two-Text.txt")[0] == 404
+    assert get(bench, "/static/fonts/../../audit.py")[0] == 404
+
+
+def test_the_policy_allows_fonts_from_this_server_only():
+    assert "font-src 'self'" in audit_gui.CSP and "unsafe" not in audit_gui.CSP and "https:" not in audit_gui.CSP
