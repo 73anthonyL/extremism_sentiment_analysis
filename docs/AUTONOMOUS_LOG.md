@@ -11,8 +11,8 @@ external API is listed under "Blocked" and not attempted.
 
 All twelve open decisions were settled on 2026-11-04 (`docs/DECISIONS_NEEDED.md`).
 Remaining author actions: run notebook 12, the WP9 probe notebook and the
-WP10 open-weight LLM notebook on Kaggle; upload external assets before
-submission.
+WP10 open-weight LLM notebook on Kaggle. External assets were uploaded and
+recorded on 2026-11-06; `tools/run_manifest.py fetch` restores them.
 
 ## 2026-11-05 — WP7b folded into the Results draft; loop paused
 

@@ -322,6 +322,9 @@ external/<TECHNIQUE>/
 The folder is uploaded to external storage, and
 `tools/run_manifest.py add-assets-from --file external_assets.json` records
 every file in `run_manifest.json`, text-bearing ones with `contains_text: true`.
+`tools/run_manifest.py fetch` is the way back: it downloads the recorded files
+into `external/<TECHNIQUE>/` and keeps one only if its sha256 equals the
+recorded one.
 
 ### Curated examples (local, untracked)
 

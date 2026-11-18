@@ -367,10 +367,17 @@ Other facts that shape the order of work:
   Spearman 0.745 and sign agreement 1.00, below the 0.80 bar as expected
   for coefficients over embedding dimensions; it is recorded as the
   calibration point, not a failure.
-* **External assets are not yet recorded.** The `external/<TECHNIQUE>/`
-  folders (weights, per-post predictions and attributions; 6.2 GB for 11)
-  are still in the Kaggle outputs and have not been uploaded to a Kaggle
-  Dataset, so no manifest lists them.
+* **External assets are recorded** (2026-11-06). Each technique's
+  `external/<TECHNIQUE>/` folder (weights, tokenizers, logs, per-post
+  predictions and attributions; 6.2 GB for 11) is in a private Kaggle
+  Dataset, `anthony73/esa-<NN>-<technique>-external` (v1), and every file is
+  listed in the technique's `run_manifest.json` with its sha256. The local
+  weights of 06, 07 and 11 were removed after a hash-checked download.
+  `tools/run_manifest.py fetch` restores a folder from its manifest and
+  keeps a file only if its hash matches. 07 restored this way reproduces its
+  committed test probabilities on all 450 posts (largest difference 0.0053
+  on MPS, tolerance 0.01). The datasets are private, so a reader outside the
+  author team cannot fetch them; making them public is an author decision.
 * **Every notebook follows the primed template** (WP0). Each loads
   `tools/notebook_kit.py` and passes `tools/check_notebook.py`. 00 to 07 and
   11 carry their Kaggle outputs. 08 to 10 are empty (closed lines). 12 is
@@ -817,8 +824,8 @@ and the checker, with its helpers in `tools/probe_kit.py`;
 `tools/layer_probes_report.py` checks and summarises the tables locally.
 
 *Author action.* Run notebook 13 on a Kaggle GPU (instructions in its first
-cell; the 07 and 11 weights must be uploaded as Kaggle datasets first, which
-decision 11 already requires), unzip its outputs, then
+cell; the 07 and 11 weights it attaches are the Kaggle datasets recorded in
+their run manifests, uploaded on 2026-11-06), unzip its outputs, then
 `layer_probes_report.py --check` and `--write`.
 
 ### WP10. Zero-shot LLM with self-explanation (Kaggle GPU). Primed 2026-11-05.
@@ -958,7 +965,8 @@ and WP7b take the cautious reading; WP10 uses an open-weight model on a
 Kaggle GPU, so no dataset text leaves the authors' control; WP9 probes are
 done now (notebook written locally, run on Kaggle); report-card slurs are
 redacted in figures only; the SHAP check keeps its preregistered rule;
-external assets are uploaded before submission. Earlier decisions (SHAP
+external assets are uploaded before submission (done 2026-11-06, section
+3). Earlier decisions (SHAP
 background, notebook 12 twin, DeBERTa member, RQ1 Holm family) stand as
 recorded in the git history of this section.
 

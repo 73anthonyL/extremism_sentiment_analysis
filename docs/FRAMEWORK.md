@@ -201,7 +201,9 @@ one that fails, naming it:
 Stages 11 to 13 restore the predictor from `external/<TECHNIQUE>/` and
 re-score edited test posts, so they run only with `--with-perturbation`
 (`--with-counterfactual` is an alias); without it they print `SKIP ... not
-requested`. With it, `check-contract` must find a restorable predictor. They
+requested`. With it, `check-contract` must find a restorable predictor
+(`run_manifest.py fetch --technique <TECHNIQUE> --predictor` downloads one
+that the run manifest records, checked against its sha256). They
 run one after another, one model in memory at a time; pass `--device` and
 `--sequential-checkpoints` through for large ensembles. Re-scoring frozen
 models at their locked thresholds selects nothing, so it is a perturbation

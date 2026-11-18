@@ -24,7 +24,62 @@
   },
   "committed_hashed_utc": "2026-11-05T09:31:19+00:00",
   "created_utc": "2026-10-08T16:37:58+00:00",
-  "external_assets": [],
+  "external_assets": [
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-04-char-tf-idf-lin-svm-external/v1/attributions_local/shap-partition_test_seed30.csv",
+      "sha256": "7e1e2a53b7acb3d261e5bb905f6f6145dd8ba9176609b4815176f68933f98870",
+      "size_bytes": 398742
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "local_attributions",
+      "location": "kaggle://datasets/anthony73/esa-04-char-tf-idf-lin-svm-external/v1/attributions_local/shap-partition_validation_seed30.csv",
+      "sha256": "882a03f4a66125d8f9571d28089b27d003522edfc1fd8c0dbffbc62a5aa6ecf4",
+      "size_bytes": 408082
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "other",
+      "location": "kaggle://datasets/anthony73/esa-04-char-tf-idf-lin-svm-external/v1/plots/diagnostics_test.png",
+      "sha256": "1a3ebe1817f52a46ba882afe7d8f6ca6bce6cad53f357e72b6535b23f7116bde",
+      "size_bytes": 166407
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "predictions_with_text",
+      "location": "kaggle://datasets/anthony73/esa-04-char-tf-idf-lin-svm-external/v1/predictions/predictions_test.csv",
+      "sha256": "81fdea64f1ac94488afcc96f9163eb59bf4dcf58649f10872d6f73b517de2f62",
+      "size_bytes": 79274
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": true,
+      "description": null,
+      "kind": "predictions_with_text",
+      "location": "kaggle://datasets/anthony73/esa-04-char-tf-idf-lin-svm-external/v1/predictions/predictions_validation.csv",
+      "sha256": "4456c71aec30159e73bdcb7294ff6555dc3065b3465db49665ec001a55c263f3",
+      "size_bytes": 83577
+    },
+    {
+      "added_utc": "2026-11-06T22:35:25+00:00",
+      "contains_text": false,
+      "description": null,
+      "kind": "weights",
+      "location": "kaggle://datasets/anthony73/esa-04-char-tf-idf-lin-svm-external/v1/weights/pipeline.joblib",
+      "sha256": "535b818cc1842737f2ae84e537b61f6af7ee1ba4316850948fa642f22a22eec1",
+      "size_bytes": 2728433
+    }
+  ],
   "run_id": "04_CHAR-TF-IDF_LIN-SVM_20261008T073910Z",
   "source": {
     "git_commit": "79a988f3",

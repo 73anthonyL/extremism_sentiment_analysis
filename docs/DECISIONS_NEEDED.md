@@ -16,10 +16,10 @@ recommendation; decision 7 (WP9 probes) was changed from "future work" to
 | 8 | Report cards print top words verbatim, including a racial slur | Any report-card figure in the paper | Redact in figures only / redact in committed cards | Redact in figures only; committed cards are an audit record | Figures only |
 | 9 | Make support >= 2 the SHAP-validation pass rule | WP2 rule | Keep the preregistered rule / switch | Keep; report support >= 2 as a diagnostic (already done) | Keep original rule |
 | 10 | Drop `--primed` from the CLAUDE.md pre-commit list | Contributor docs | Drop / keep | Drop; notebooks now carry outputs and the flag fails | Drop the flag |
-| 11 | Upload external assets (weights, per-post files) to Kaggle Datasets and record them | Reproducing the perturbation stages (faithfulness, WP7, WP7b) | Upload / leave local | Upload before submission; files with text marked `--contains-text` | Before submission |
+| 11 | Upload external assets (weights, per-post files) to Kaggle Datasets and record them | Reproducing the perturbation stages (faithfulness, WP7, WP7b) | Upload / leave local | Upload before submission; files with text marked `--contains-text` | Before submission. **Done 2026-11-06**: private Kaggle Datasets, every file recorded in `run_manifest.json`; `run_manifest.py fetch` restores them |
 | 12 | Push and open PRs | Everything on `research/integration` (stacked on PR #22) | One stacked PR / several | One PR from `research/integration` after PR #22 merges | Merge #22, then one PR |
 
 Local follow-ups: WP3 (HurtLex slurs, `aliens`, freeze and re-run), the
 section 5 wording, the WP7/WP7b reading, the CLAUDE.md checklist, and the
 WP9 and WP10 notebooks. Author actions: run notebook 12, WP9 and WP10 on
-Kaggle; upload external assets before submission.
+Kaggle. External assets were uploaded on 2026-11-06.

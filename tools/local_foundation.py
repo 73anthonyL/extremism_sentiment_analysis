@@ -32,7 +32,12 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from repo_paths import DATASET_MANIFEST_JSON, EXTERNAL_DIR, REPO_ROOT, SPLIT_ASSIGNMENTS_CSV  # noqa: E402
+from repo_paths import (  # noqa: E402
+    DATASET_MANIFEST_JSON,
+    EXTERNAL_DIR,
+    SPLIT_ASSIGNMENTS_CSV,
+    outside_repo_or_under_external,
+)
 
 FOUNDATION_FOLDER = "research_foundation"
 
@@ -44,12 +49,10 @@ class LocalFoundationError(RuntimeError):
 def check_out_dir(out_dir):
     """Refuse a destination inside the repository unless it is under external/."""
     out_dir = Path(out_dir).resolve()
-    inside_repo = out_dir == REPO_ROOT or REPO_ROOT in out_dir.parents
-    under_external = out_dir == EXTERNAL_DIR.resolve() or EXTERNAL_DIR.resolve() in out_dir.parents
-    if inside_repo and not under_external:
+    if not outside_repo_or_under_external(out_dir):
         raise LocalFoundationError(
             f"{out_dir} is inside the repository; processed_dataset.csv carries post text and may only be "
-            f"written outside it or under {EXTERNAL_DIR.relative_to(REPO_ROOT)}/"
+            f"written outside it or under {EXTERNAL_DIR.name}/"
         )
     return out_dir
 

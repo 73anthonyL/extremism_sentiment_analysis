@@ -105,7 +105,7 @@ extremism_sentiment_analysis/
 │   ├── faithfulness.py           # RQ2: deletion test of the SHAP word rankings (needs external weights)
 │   ├── same_post_stability.py    # RQ2/RQ3 on the posts every technique explained (needs per-post files)
 │   ├── rq2_rq4_relation.py       # rank relation of identity reliance and identity-term FPR ratio
-│   ├── run_manifest.py           # reconciles committed files with external assets
+│   ├── run_manifest.py           # reconciles committed files with external assets; fetch restores them
 │   ├── validate_results_folder.py
 │   ├── render_tables.py          # regenerates every doc results table
 │   ├── scan_text_leakage.py      # dataset text in committed files
@@ -353,6 +353,8 @@ untracked `external/`; the gallery is its own repository. To rebuild it from
 downloaded `external/<TECHNIQUE>/` folders:
 
 ```bash
+python3 tools/run_manifest.py fetch --all --predictor                 # weights and tokenizers the loaders read
+python3 tools/run_manifest.py fetch --all --kind local_attributions   # per-post attributions (dataset text)
 python3 tools/curated_examples.py explain --texts curated.txt --labels labels.txt --all \
     --out external/curated_examples_34        # add --sequential-checkpoints on an 8 GB machine
 python3 tools/curated_plots.py --out external/curated_examples_34
@@ -491,7 +493,9 @@ procedure; in short:
 4. Each notebook writes `<TECHNIQUE>_repo_files.zip`, which unpacks at the
    repository root, and an `external/` folder (weights and per-post files)
    that is uploaded to a Kaggle Dataset and recorded with
-   `tools/run_manifest.py`. Per-post files and weights are never committed.
+   `tools/run_manifest.py`. Per-post files and weights are never committed;
+   `tools/run_manifest.py fetch` downloads a recorded folder back and checks
+   every file against its sha256.
 5. Run the tools on the copied artifacts, regenerate the tables, and check
    the notebook and the repository for leaked text before committing.
 
