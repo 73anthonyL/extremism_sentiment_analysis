@@ -249,13 +249,14 @@
   function segments(categories, tall) {
     const parts = categories.filter((c) => !missing(c.share) && c.share > 0);
     const summary = categories.map((c) => `${categoryLabel(c.key)} ${pct(c.share)}`).join(", ");
-    return h("div", { class: tall ? "seg" : "seg thin", role: "img", "aria-label": summary },
-      parts.map((c) => {
-        const el = h("span", { class: `c-${c.key}`, tabindex: "0", tip: `${categoryLabel(c.key)}: ${pct(c.share)} of positive attribution` },
-          tall && c.share >= 0.15 ? pct(c.share) : null);
-        el.style.flex = `${c.share} 1 0`;
-        return el;
-      }));
+    const sized = (el, c) => { el.style.flex = `${c.share} 1 0`; return el; };
+    const bar = h("div", { class: tall ? "seg" : "seg thin", role: "img", "aria-label": summary },
+      parts.map((c) => sized(h("span", { class: `c-${c.key}`, tabindex: "0",
+        tip: `${categoryLabel(c.key)}: ${pct(c.share)} of positive attribution` }), c)));
+    if (!tall) return bar;
+    // The percentages sit under the bar in ink: no text is set on a category colour.
+    return h("div", null, bar, h("div", { class: "seg-labels", "aria-hidden": "true" },
+      parts.map((c) => sized(h("span", null, c.share >= 0.15 ? pct(c.share) : null), c))));
   }
 
   function axis(lo, hi, step, format) {
