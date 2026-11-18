@@ -171,6 +171,29 @@ def outside_comparison_technique_dirs(results_dir=None):
     that must not move the paper's numbers)."""
     return [d for d in technique_dirs(results_dir) if not in_comparison(d.name, results_dir)]
 
+
+def outside_repo_or_under_external(path):
+    """Whether `path` may hold files that carry dataset text or are too large for git.
+
+    True for a path outside the repository or under external/. Existing
+    folders are compared by identity as well as by name, so another spelling
+    of a repository folder (letter case on a case-insensitive volume, a
+    symlink) is not a way round.
+    """
+    import os
+
+    path = Path(path).resolve()
+
+    def within(root):
+        root = Path(root).resolve()
+        if path == root or root in path.parents:
+            return True
+        if not root.exists():
+            return False
+        return any(c.exists() and os.path.samefile(c, root) for c in (path, *path.parents))
+
+    return within(EXTERNAL_DIR) or not within(REPO_ROOT)
+
 # Sensitivity of RQ4 / WP7 to ambiguous identity terms, and identity-lexicon
 # gap candidates for WP3; written by tools/identity_sensitivity.py.
 RQ4_IDENTITY_FPR_SENSITIVITY_CSV = RQ_DIR / "rq4_identity_fpr_sensitivity.csv"
