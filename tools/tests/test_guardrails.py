@@ -5,7 +5,6 @@ introduces a defect that has either already occurred in this repository or is
 the direct analogue of one, and asserts the tooling refuses it.
 """
 
-import json
 import sys
 from pathlib import Path
 

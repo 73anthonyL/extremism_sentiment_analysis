@@ -38,7 +38,7 @@ from scipy.stats import spearmanr
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from attributions import list_runs, load_run, top_words
+from attributions import load_run, top_words
 from repo_paths import (
     CATEGORIES,
     RQ2_CATEGORY_SHARES_CSV,

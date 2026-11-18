@@ -42,7 +42,6 @@ from repo_paths import (
     DEFAULT_CATEGORY,
     RQ2_CATEGORY_SHARES_CSV,
     RQ2_LEXICON_COVERAGE_CSV,
-    RQ_DIR,
     technique_dirs,
 )
 
