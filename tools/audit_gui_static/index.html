@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="audit-token" content="{{AUDIT_TOKEN}}">
+<title>Audit workbench</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<a class="skip" href="#sheet">Skip to the content</a>
+
+<header class="top">
+  <p class="brand">Audit workbench</p>
+  <nav class="views" aria-label="Views">
+    <button type="button" data-view="technique">One technique</button>
+    <button type="button" data-view="compare">Across techniques</button>
+    <button type="button" data-view="add">Add your classifier</button>
+  </nav>
+  <label class="mask-toggle" title="Words the lexicon marks as slurs are masked on this page. The committed report cards keep them verbatim.">
+    <input type="checkbox" id="verbatim"> Show slurs verbatim
+  </label>
+</header>
+
+<div class="layout" id="layout">
+  <aside class="rail" id="rail" aria-label="Techniques"></aside>
+  <main class="sheet" id="sheet" tabindex="-1"></main>
+</div>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<template id="tpl-add">
+  <header>
+    <h1 class="title">Add your classifier</h1>
+  </header>
+  <p class="lede">The framework audits any text classifier for this task that meets one contract. Your classifier
+    is then run through the same tools as the techniques in the paper and gets the same report card, without
+    changing any of their numbers.</p>
+
+  <section class="prose">
+    <h2>The contract</h2>
+    <p>A classifier enters by committing two kinds of file. Without both it cannot take part in the questions
+      about what a model relies on, whatever its accuracy.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Item</th><th>Where it lives</th><th>Required</th></tr></thead>
+        <tbody>
+          <tr><td>Probabilities on the frozen test and validation splits: exactly <code>row_id, split, y_true, y_prob</code>, 450 rows each</td><td><code>research_loop/probs/&lt;TECHNIQUE&gt;__{test,validation}.csv</code></td><td>yes</td></tr>
+          <tr><td>A decision threshold selected on validation only</td><td><code>results_summary/&lt;TECHNIQUE&gt;/best_config.json</code>, key <code>selected_threshold</code></td><td>yes</td></tr>
+          <tr><td>A whole-model word-level SHAP run on test posts, and one on validation posts</td><td><code>results_summary/&lt;TECHNIQUE&gt;/attributions/&lt;run_id&gt;.csv</code> and <code>.json</code></td><td>yes</td></tr>
+          <tr><td>Coefficients over words, for a linear model</td><td><code>attributions/coefficients.csv</code></td><td>no; checked if present</td></tr>
+          <tr><td>A restorable <code>predict_proba_texts</code> and the per-post attribution files</td><td><code>external/&lt;TECHNIQUE&gt;/</code> (never committed)</td><td>no; only for the perturbation stages</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The attribution artifact is exactly <code>word, mean_abs_attribution, mean_attribution, support</code>.
+      One attribution method is used for every technique, <code>nk.explain</code> (SHAP's partition explainer
+      over a word-level text masker), so that word lists are comparable across model families.</p>
+  </section>
+
+  <section class="prose">
+    <h2>From a notebook to a report card</h2>
+    <ol>
+      <li><strong>Start from the notebook template.</strong> Name the notebook <code>NN_NAME.ipynb</code> with a
+        number nobody has used, and name it for what it is, not for a result. Every export goes through
+        <code>tools/notebook_kit.py</code>, loaded as <code>nk</code>.
+        <div class="pick">
+          <label for="role">Sections for a</label>
+          <select id="role"></select>
+          <span>notebook:</span>
+        </div>
+        <pre class="cmd" id="template-outline">Loading the outline.</pre>
+      </li>
+      <li><strong>Keep it outside the paper's comparison.</strong> Set <code>"in_comparison": False</code> in
+        <code>CONFIG</code>. Your classifier then gets its own Holm family, and no table in the paper changes.</li>
+      <li><strong>Run it.</strong> On Kaggle, or locally after rebuilding the kit's inputs outside the repository:
+        <pre class="cmd">python3 tools/local_foundation.py --out /tmp/kit_inputs</pre>
+        Select the threshold on validation, and evaluate the test split once.</li>
+      <li><strong>Unpack the outputs.</strong> The last cell writes <code>&lt;TECHNIQUE&gt;_repo_files.zip</code>.
+        Unzip it at the repository root; that is the one sanctioned way into <code>research_loop/</code>.
+        <pre class="cmd">unzip &lt;TECHNIQUE&gt;_repo_files.zip -d .</pre></li>
+      <li><strong>Check and audit it here.</strong> Reload this page. Your technique appears in the list under
+        “One technique”, with its contract check. When the contract is met, run the audit.</li>
+      <li><strong>Before committing,</strong> run the checks in <code>docs/FRAMEWORK.md</code>, “Before committing”.
+        <code>scan_text_leakage.py</code> must pass: no post text, row id or text hash in any committed file.</li>
+    </ol>
+    <p>The full guide is <code>docs/FRAMEWORK.md</code>; every committed file is defined in
+      <code>docs/RESULTS_SCHEMA.md</code>.</p>
+  </section>
+
+  <section class="prose">
+    <h2>Other ways to build on this</h2>
+    <ul>
+      <li><strong>Change a lexicon.</strong> The four attribution categories (extremist framing, identity term,
+        slur, topical) come from <code>data/lexicons/</code>. A change there changes the answers about reliance
+        and about false positives on identity terms, so re-run both and say what changed. Do not add a term on
+        test-split evidence.</li>
+      <li><strong>Add an analysis.</strong> A new tool reads the two committed artifacts and nothing else, writes
+        a text-free table under <code>results_summary/rq/</code>, and comes with a test that proves a specific
+        bad artifact is refused.</li>
+      <li><strong>Restore a model.</strong> <code>python3 tools/run_manifest.py fetch --technique &lt;TECHNIQUE&gt;
+        --predictor</code> downloads recorded weights for the perturbation stages, if you have access to the
+        datasets.</li>
+    </ul>
+  </section>
+
+  <section class="prose">
+    <h2>What this page does not do</h2>
+    <ul>
+      <li>It does not classify text. The framework audits classifiers; it is not a moderation tool, and a report
+        card is not evidence that a model is safe to deploy.</li>
+      <li>It does not run the perturbation stages (identity counterfactual, deletion faithfulness). They load
+        model weights and can take a long time; each technique's page gives the command.</li>
+      <li>It shows no post text, row id or text hash, and it masks slurs unless you ask for them.</li>
+    </ul>
+    <h3>Limits of the audit itself</h3>
+    <ul>
+      <li>Labels are post-level and features are text-only. The audit is about extremist content in single posts,
+        not about accounts or radicalization over time.</li>
+      <li>One dataset and one frozen split. Nothing here shows how a model behaves on another platform or period.</li>
+      <li>The test split has 450 rows. About 14 rows of difference is the rough floor for a McNemar test, and the
+        Holm-corrected column decides. Most gaps between similar models do not clear it.</li>
+      <li>Word-level SHAP describes what moves a model's output on masked text. It is not a causal claim about
+        language, and it cannot separate quotation, reporting or counter-speech from endorsement.</li>
+    </ul>
+  </section>
+</template>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
