@@ -88,6 +88,7 @@ extremism_sentiment_analysis/
 │   └── probs/                # sanitized probability artifacts (row_id, split, y_true, y_prob)
 ├── tools/
 │   ├── audit.py                  # one entry point: contract check, tool chain, report cards
+│   ├── audit_gui.py              # the same on a local web page (audit_gui_static/ holds the page)
 │   ├── local_foundation.py       # rebuilds notebook 00's kit inputs outside the repo, for local runs
 │   ├── notebook_kit.py           # the helper every notebook loads: split, metrics, exports
 │   ├── metrics_core.py           # the one metric function, pinned to the kit by a test
@@ -196,6 +197,9 @@ python3 tools/rq2_rq4_relation.py                                # RQ2 x RQ4 ran
 
 `python3 tools/audit.py run --technique <T>` runs all of these in order for
 one technique; add `--with-perturbation` for the stages that load a model.
+`python3 tools/audit_gui.py` opens a local page with the contract check, that
+run and the report cards, for auditing a classifier of your own
+(`docs/FRAMEWORK.md`).
 
 Notebooks are committed with their cell outputs on purpose, so a reader can
 follow them. `scan_text_leakage.py` is what keeps a post, a text hash, or a

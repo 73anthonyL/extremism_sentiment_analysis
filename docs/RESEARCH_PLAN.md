@@ -351,7 +351,11 @@ Other facts that shape the order of work:
   RQ2-RQ4 relation, and, with `--with-perturbation`, the two counterfactuals
   and the deletion faithfulness test; a stage whose inputs are absent prints
   SKIP with its reason. Each card gains a faithfulness section and the
-  ambiguous-term rows (2026-11-04).
+  ambiguous-term rows (2026-11-04). `tools/audit_gui.py` (2026-11-18) is a
+  local page over the same entry point: the contract check, the standard
+  chain and the committed cards and tables. It adds no analysis and no
+  artifact, does not classify text, and leaves the perturbation stages
+  to the command line.
 * **Every technique has its attribution runs.** Two whole-model SHAP runs
   per technique (test and validation samples), and one test run per
   admitted member of 11 (`A_anchor`, `B_dynabench`, `C_hatebert`,

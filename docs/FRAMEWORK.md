@@ -128,6 +128,39 @@ Without `working_root` the kit writes to `./kit_output`, which inside the
 repository would put per-post files in the tree. After the run, unzip
 `/tmp/kit_output/<TECHNIQUE>_repo_files.zip` at the repository root as above.
 
+## The page for all of this
+
+`tools/audit_gui.py` puts the contract check, the audit and the report cards
+on one local web page, for a reader who would rather not start with the
+command line:
+
+```bash
+python3 tools/audit_gui.py            # opens http://127.0.0.1:8765
+```
+
+* **One technique.** Every folder under `results_summary/` is listed. Its
+  page shows the seven contract items with the validator's message for each,
+  a button that runs `audit.py run --technique <TECHNIQUE>` and shows each
+  stage as it finishes, the files the run changed (none, on the committed
+  state), and the committed report card.
+* **Across techniques.** The committed tables, one view per research
+  question, with a technique outside the comparison marked as such.
+* **Add your classifier.** The steps of this guide, with the notebook
+  template's sections for the role you choose.
+
+The page adds no analysis and writes no artifact of its own: every number on
+it is read from a committed file. It needs nothing beyond the repository's
+requirements and works offline. Three things it does not do, on purpose. It
+does not classify text, because the framework audits classifiers and is not a
+moderation tool. It does not start the perturbation stages, which load model
+weights; each technique's page gives the command. And it shows no post text,
+row id or text hash: a payload carrying one is refused rather than served.
+Words a card lists under the `slur` category are masked unless the reader
+ticks "Show slurs verbatim"; the committed cards are unchanged.
+
+The server listens on the loopback address only, refuses a request addressed
+to any other host, and starts a run only for the page it served.
+
 ## Running the audit
 
 From the repository root, with `source .venv/bin/activate`:
